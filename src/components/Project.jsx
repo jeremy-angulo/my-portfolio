@@ -1,5 +1,6 @@
 import Tilt from "react-parallax-tilt";
 import { motion, transform } from "framer-motion";
+import { Link } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { styles } from "../styles";
 import { github } from "../assets";
@@ -11,10 +12,6 @@ import { aiAndDeepTechProjects, entrepreneurshipProjects, itConsultingProjects, 
 import ProjectList from "./ProjectList";
 import "./Project.scss";
 
-// --- CONFIGURABLE HEIGHT VARIABLES ---
-// Controls the total height of every project card.
-const cardHeight = 320; // in pixels
-
 const ProjectCard = ({
   index,
   name,
@@ -24,60 +21,65 @@ const ProjectCard = ({
   source_code_link,
   source_link,
 }) => {
-  return (
-    <motion.div key={`${name}-${index}`} whileInView={{ opacity: 1, transform: 'none' }} variants={fadeIn("up", "spring", index * 0.5, 0.75)}>
-      <Tilt
-        options={{ max: 45, scale: 1, speed: 450 }}
-        className={`project-box bg-tertiary p-5 rounded-2xl sm:w-[360px] w-full flex flex-col h-[800px]`}
-      >
-        {/* The image container's height is now controlled by the `imageHeight` variable. */}
-        <div className={`Box1 relative w-full h-[200px]`}>
-          <img
-            src={image}
-            alt='project_image'
-            className='image w-full h-full object-cover rounded-2xl'
-          />
-          <div className='absolute inset-0 flex justify-center card-img_hover' style={{ alignItems: "center" }}>
-            <h3 className='text-black font-bold text-center text-[18px] p-2'>{name}</h3>
-          </div>
-          <div className='title absolute inset-0 flex justify-end card-img_hover'>
-            {source_link && (
-              <div onClick={() => window.open(source_link, "_blank")} className='black-gradient w-10 h-10 m-2 rounded-full flex justify-center items-center cursor-pointer'>
-                <img src={demo} alt='live demo link' className='w-1-2 h-1/2 object-contain' />
-              </div>
-            )}
-            {source_code_link && (
-              <div onClick={() => window.open(source_code_link, "_blank")} className='black-gradient w-10 h-10 m-2 rounded-full flex justify-center items-center cursor-pointer'>
-                <img src={github} alt='github source code' className='w-1/2 h-1/2 object-contain' />
-              </div>
-            )}
-          </div>
-        </div>
+  const projectId = name.toLowerCase().replace(/\s+/g, '-');
 
-        <div className='content mt-5 flex flex-col flex-grow'>
-          <p className='text-white text-[15px]'>{description.hook}</p>
-          
-          <div className='mt-4 space-y-2 flex-grow'>
-            {description.highlights.map((highlight, idx) => (
-              <div key={`${name}-highlight-${idx}`} className='flex flex-row items-start'>
-                <div className='mr-3 flex-shrink-0 w-2 h-2 rounded-full bg-cyan-400 mt-[12px]'></div>
-                <p className='text-slate-200 text-[13px] tracking-wider'>
-                  <strong>{highlight.title}</strong> {highlight.text}
-                </p>
-              </div>
+  return (
+    <Link to={`/project/${projectId}`}>
+      <motion.div key={`${name}-${index}`} whileInView={{ opacity: 1, transform: 'none' }} variants={fadeIn("up", "spring", index * 0.5, 0.75)}>
+        <Tilt
+          options={{ max: 45, scale: 1, speed: 450 }}
+          className={`project-box bg-tertiary p-5 rounded-2xl sm:w-[360px] w-full flex flex-col h-[800px]`}
+        >
+          {/* The image container's height is now controlled by the `imageHeight` variable. */}
+          <div className={`Box1 relative w-full h-[200px]`}>
+            <motion.img
+              layoutId={`image-${projectId}`} // <-- ADD THIS PROP
+              src={image}
+              alt='project_image'
+              className='image w-full h-full object-cover rounded-2xl'
+            />
+            <div className='absolute inset-0 flex justify-center card-img_hover' style={{ alignItems: "center" }}>
+              <h3 className='text-black font-bold text-center text-[18px] p-2'>{name}</h3>
+            </div>
+            <div className='title absolute inset-0 flex justify-end card-img_hover'>
+              {source_link && (
+                <div onClick={() => window.open(source_link, "_blank")} className='black-gradient w-10 h-10 m-2 rounded-full flex justify-center items-center cursor-pointer'>
+                  <img src={demo} alt='live demo link' className='w-1-2 h-1/2 object-contain' />
+                </div>
+              )}
+              {source_code_link && (
+                <div onClick={() => window.open(source_code_link, "_blank")} className='black-gradient w-10 h-10 m-2 rounded-full flex justify-center items-center cursor-pointer'>
+                  <img src={github} alt='github source code' className='w-1/2 h-1/2 object-contain' />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className='content mt-5 flex flex-col flex-grow'>
+            <p className='text-white text-[15px]'>{description.hook}</p>
+            
+            <div className='mt-4 space-y-2 flex-grow'>
+              {description.highlights.map((highlight, idx) => (
+                <div key={`${name}-highlight-${idx}`} className='flex flex-row items-start'>
+                  <div className='mr-3 flex-shrink-0 w-2 h-2 rounded-full bg-cyan-400 mt-[12px]'></div>
+                  <p className='text-slate-200 text-[13px] tracking-wider'>
+                    <strong>{highlight.title}</strong> {highlight.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className='content mt-4 flex flex-wrap gap-2'>
+            {tags.map((tag) => (
+              <p key={`${name}-${tag.name}`} className={`text-[14px] ${tag.color}`}>
+                #{tag.name}
+              </p>
             ))}
           </div>
-        </div>
-
-        <div className='content mt-4 flex flex-wrap gap-2'>
-          {tags.map((tag) => (
-            <p key={`${name}-${tag.name}`} className={`text-[14px] ${tag.color}`}>
-              #{tag.name}
-            </p>
-          ))}
-        </div>
-      </Tilt>
-    </motion.div>
+        </Tilt>
+      </motion.div>
+    </Link>
   );
 };
 

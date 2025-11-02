@@ -10,6 +10,8 @@ import Profile from './Profile';
 import Achievement from './Achievement';
 import Education from './Education';
 import Footer from './Footer'
+import HomePage from './HomePage';
+import ProjectDetail from './ProjectDetail';
 
 export {
   Hero,
@@ -27,4 +29,6 @@ export {
   Profile,
   Footer,
   Achievement,
+  HomePage,
+  ProjectDetail,
 }

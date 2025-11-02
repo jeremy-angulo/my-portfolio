@@ -462,5 +462,11 @@ const experiences = [
     }
   ];
   
+  const allProjects = [
+    ...entrepreneurshipProjects,
+    ...aiAndDeepTechProjects,
+    ...itConsultingProjects,
+    ...leadershipAndInitiativesProjects,
+  ];
 
-  export { list, profiles, achievements, skills, experiences, educations, entrepreneurshipProjects, aiAndDeepTechProjects, itConsultingProjects, leadershipAndInitiativesProjects };
+  export { list, profiles, achievements, skills, experiences, educations, entrepreneurshipProjects, aiAndDeepTechProjects, itConsultingProjects, leadershipAndInitiativesProjects, allProjects };

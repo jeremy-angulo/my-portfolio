@@ -1,0 +1,72 @@
+// src/components/ProjectDetail.scss
+
+.project-detail-container {
+  padding-top: 100px;
+  min-height: 100vh;
+
+  .back-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    color: #aaa6c3;
+    margin-bottom: 2rem;
+    &:hover {
+      color: white;
+    }
+  }
+
+  .detail-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .detail-image {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: 20px;
+  }
+
+  .detail-text {
+    .hook {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: white;
+    }
+    .highlights {
+      margin-top: 1.5rem;
+      .highlight-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 0.75rem;
+        .dot {
+          margin-top: 7px;
+          flex-shrink: 0;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: #00e9ff;
+        }
+        p {
+          font-size: 0.9rem;
+          color: #aaa6c3;
+        }
+      }
+    }
+    .tags {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+  }
+}
