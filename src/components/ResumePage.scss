@@ -1,0 +1,55 @@
+// src/components/ResumePage.scss
+
+.resume-container {
+  display: flex;
+  flex-direction: column;
+  // This ensures the container itself spans the full viewport height
+  height: 190vh;
+  padding-top: 40px; // Keep the offset for the fixed navbar
+
+  .resume-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    color: white;
+    // Add flex-shrink: 0 to prevent the header from shrinking
+    flex-shrink: 0;
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    .download-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background-color: #915EFF;
+      color: white;
+      border-radius: 9999px;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: #a272ff;
+      }
+    }
+  }
+
+  .pdf-viewer {
+    // This is the key: it will now grow to fill ALL remaining vertical space.
+    flex-grow: 1;
+    width: 1050px;
+    // Center horizontally to the page
+    margin: 0 auto;
+    
+    border-radius: 12px;
+    overflow: hidden;
+
+    object {
+      border-radius: 12px;
+    }
+  }
+}

@@ -1,63 +1,59 @@
-import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+// src/components/Navbar.jsx
 
+import React from "react";
+// Import Link and useLocation from react-router-dom
+import { Link, useLocation } from "react-router-dom";
 import { styles } from "../styles";
 import { logo } from "../assets";
 import "./Navbar.scss";
 
 const Navbar = () => {
-  const [active, setActive] = useState("");
-  const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
+  // Check if the current path is the resume page
+  const isResumePage = location.pathname === '/resume';
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      if (scrollTop > 100) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
+  // No need for the scroll-related state anymore if we want the navbar consistent
+  
   return (
     <nav
-      className={`${
-        styles.paddingX
-      } w-full flex items-center py-3 fixed top-0 z-20 ${
-        scrolled ? "bg-primary" : "bg-transparent"
-      }`}
+      className={`${styles.paddingX} w-full flex items-center py-3 fixed top-0 z-20 bg-primary`}
     >
       <div className='w-full flex justify-between items-center max-w mx-auto'>
         <Link
           to='/'
           className='flex items-center gap-2'
-          onClick={() => {
-            setActive("");
-            window.scrollTo(0, 0);
-          }}
+          onClick={() => { window.scrollTo(0, 0); }}
         >
           <img src={logo} alt='logo' className='w-9 h-9 object-contain logo' />
           <p className='sm:block text-white text-[18px] font-bold cursor-pointer flex '>
-          jeremy.angulo
+            jeremy.angulo
           </p>
         </Link>
 
-        <div className='sm:flex gap-5'>
-          <div
-              className={`top2 ${"text-secondary"
-              } hover:text-white text-[15px] font-medium cursor-pointer`}
+        <div className='sm:flex'>
+          {/* --- THIS IS THE DYNAMIC PART --- */}
+          {isResumePage ? (
+            // If on the resume page, show a "Go back" link
+            <Link 
+              to="/"
+              className="text-white border border-white rounded-full px-4 py-2 text-[15px] font-medium cursor-pointer hover:bg-white hover:text-primary transition-colors duration-300"
             >
-              <a href="https://drive.google.com/drive/folders/13YGuvdkXQdyFzfuJd3YdUaG99dhCPz22?pli=1" target="_blank">Resume</a>
-          </div>
+              Go back
+            </Link>
+          ) : (
+            // Otherwise, show the "Open Resume" link
+            <Link 
+              to="/resume"
+              // REMOVED target="_blank" to open in the same tab
+              className="text-white border border-white rounded-full px-4 py-2 text-[15px] font-medium cursor-pointer hover:bg-white hover:text-primary transition-colors duration-300"
+            >
+              Open Resume
+            </Link>
+          )}
         </div>
       </div>
     </nav>
   )
 }
 
-export default Navbar
+export default Navbar;

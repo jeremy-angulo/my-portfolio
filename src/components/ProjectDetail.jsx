@@ -20,7 +20,7 @@ const ProjectDetail = () => {
 
   return (
     <div className="project-detail-container">
-      <Link to="/" className="back-link">
+      <Link to="/#project" className="back-link">
         <FaArrowLeft /> Back to all projects
       </Link>
 

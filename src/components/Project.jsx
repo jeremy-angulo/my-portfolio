@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import Tilt from "react-parallax-tilt";
 import { motion, transform } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -24,36 +25,38 @@ const ProjectCard = ({
   const projectId = name.toLowerCase().replace(/\s+/g, '-');
 
   return (
-    <Link to={`/project/${projectId}`}>
-      <motion.div key={`${name}-${index}`} whileInView={{ opacity: 1, transform: 'none' }} variants={fadeIn("up", "spring", index * 0.5, 0.75)}>
+    <motion.div key={`${name}-${index}`} whileInView={{ opacity: 1, transform: 'none' }} variants={fadeIn("up", "spring", index * 0.5, 0.75)}>
         <Tilt
           options={{ max: 45, scale: 1, speed: 450 }}
           className={`project-box bg-tertiary p-5 rounded-2xl sm:w-[360px] w-full flex flex-col h-[800px]`}
         >
           {/* The image container's height is now controlled by the `imageHeight` variable. */}
-          <div className={`Box1 relative w-full h-[200px]`}>
-            <motion.img
-              layoutId={`image-${projectId}`} // <-- ADD THIS PROP
-              src={image}
-              alt='project_image'
-              className='image w-full h-full object-cover rounded-2xl'
-            />
-            <div className='absolute inset-0 flex justify-center card-img_hover' style={{ alignItems: "center" }}>
-              <h3 className='text-black font-bold text-center text-[18px] p-2'>{name}</h3>
+          <Link to={`/project/${projectId}`}>
+            <div className={`Box1 relative w-full h-[200px]`}>
+              <img
+                // layoutId={`image-${projectId}`} // <-- ADD THIS FOR ANIMATION
+                src={image}
+                alt='project_image'
+                transition={{ duration: 1.6, ease: [0.43, 0.13, 0.23, 0.96] }}
+                className='image w-full h-full object-cover rounded-2xl'
+              />
+              <div className='absolute inset-0 flex justify-center card-img_hover' style={{ alignItems: "center" }}>
+                <h3 className='text-black font-bold text-center text-[18px] p-2'>{name}</h3>
+              </div>
+              <div className='title absolute inset-0 flex justify-end card-img_hover'>
+                {source_link && (
+                  <div onClick={(event) => { event.preventDefault(); event.stopPropagation(); window.open(source_link, "_blank"); }} className='black-gradient w-10 h-10 m-2 rounded-full flex justify-center items-center cursor-pointer'>
+                    <img src={demo} alt='live demo link' className='w-1-2 h-1/2 object-contain' />
+                  </div>
+                )}
+                {source_code_link && (
+                  <div onClick={(event) => { event.preventDefault(); event.stopPropagation(); window.open(source_code_link, "_blank"); }} className='black-gradient w-10 h-10 m-2 rounded-full flex justify-center items-center cursor-pointer'>
+                    <img src={github} alt='github source code' className='w-1/2 h-1/2 object-contain' />
+                  </div>
+                )}
+              </div>
             </div>
-            <div className='title absolute inset-0 flex justify-end card-img_hover'>
-              {source_link && (
-                <div onClick={() => window.open(source_link, "_blank")} className='black-gradient w-10 h-10 m-2 rounded-full flex justify-center items-center cursor-pointer'>
-                  <img src={demo} alt='live demo link' className='w-1-2 h-1/2 object-contain' />
-                </div>
-              )}
-              {source_code_link && (
-                <div onClick={() => window.open(source_code_link, "_blank")} className='black-gradient w-10 h-10 m-2 rounded-full flex justify-center items-center cursor-pointer'>
-                  <img src={github} alt='github source code' className='w-1/2 h-1/2 object-contain' />
-                </div>
-              )}
-            </div>
-          </div>
+          </Link>
 
           <div className='content mt-5 flex flex-col flex-grow'>
             <p className='text-white text-[15px]'>{description.hook}</p>
@@ -79,16 +82,16 @@ const ProjectCard = ({
           </div>
         </Tilt>
       </motion.div>
-    </Link>
   );
 };
 
-
 const Project = () => {
+  const [selected, setSelected] = useState(
+    sessionStorage.getItem('activeProjectTab') || "entrepreneurship"
+  );
 
-  const [selected, setSelected] = useState("entrepreneurship");
   const [data, setData] = useState([]);
-
+  
   useEffect(() => {
     switch (selected) {
       case "entrepreneurship":
@@ -103,11 +106,16 @@ const Project = () => {
       case "leadership_initiatives":
         setData(leadershipAndInitiativesProjects);
         break;
-
-      default:
-        setData(aiAndDeepTechProjects);
-    }
-  }, [selected]);
+        
+        default:
+          setData(aiAndDeepTechProjects);
+        }
+      }, [selected]);
+      
+  const handleSelectTab = (id) => {
+    setSelected(id);
+    sessionStorage.setItem('activeProjectTab', id);
+  };
 
   return (
     <>
@@ -127,7 +135,7 @@ const Project = () => {
             key={`${item.title}-${index}`}
             title={item.title}
             active={selected === item.id}
-            setSelected={setSelected}
+            setSelected={handleSelectTab}
             id={item.id}
           />
         ))}

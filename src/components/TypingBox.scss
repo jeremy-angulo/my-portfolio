@@ -1,0 +1,15 @@
+// This ensures the blinking cursor from the animation is a bright color
+// that is visible against the dark background.
+.ityped-cursor {
+  color: #915EFF;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

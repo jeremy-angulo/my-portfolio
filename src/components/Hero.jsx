@@ -7,10 +7,15 @@ import { AiOutlineGithub } from "react-icons/ai";
 import { ImLinkedin } from "react-icons/im";
 import { jeremy } from "../assets";
 import "./Hero.scss";
-import AnimatedValueProposition from "./AnimatedValueProposition";
+import TypingBox from "./TypingBox";
 
 const Hero = () => {
   const textRef = useRef();
+
+  const introLines = [
+    "I am an IT Engineer specializing in bridging the gap between complex technical projects and strategic business goals.",
+    "My passion is to lead teams and transform innovative ideas into concrete, high-impact digital solutions."
+  ];
 
   useEffect(() => {
     let itypedInstance = null; // Variable pour stocker l'instance
@@ -33,6 +38,14 @@ const Hero = () => {
       }
     };
   }, []);
+
+  
+  const handleScrollToProjects = () => {
+    const projectSection = document.getElementById('project');
+    if (projectSection) {
+      projectSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <section className={`relative w-full h-screen mx-auto`}>
@@ -82,9 +95,11 @@ const Hero = () => {
           <img src={jeremy} alt="" className="object-contain" />
         </div>
       </div>
-
-      {/* <ComputersCanvas /> */}
-      {/* <AnimatedValueProposition /> */}
+  
+      <div className="absolute bottom-10 w-full flex flex-col items-center justify-center px-4">
+        {/* Render the self-contained component */}
+        <TypingBox lines={introLines} />
+      </div>
 
       <div className="absolute xs:bottom-2 bottom-6 w-10 flex justify-end items-center">
         <a href="#education">
