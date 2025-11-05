@@ -3,6 +3,8 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { HomePage, ProjectDetail, ResumePage, Navbar, StarsCanvas } from "./components";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const App = () => {
   const location = useLocation();
@@ -27,6 +29,8 @@ const App = () => {
 
 const AppWrapper = () => (
   <BrowserRouter basename="/my-portfolio">
+    <Analytics />
+    <SpeedInsights />
     <App />
   </BrowserRouter>
 );
