@@ -6,7 +6,7 @@ import demo from "./demo.png"
 
 import ltu from "./LTU_Logo.png";
 import ltu_square from "./LTU_Logo_Square.png";
-import enseeiht from "./ENSEEIHT_Logo.png";
+import enseeiht from "./ENSEEIHT_logo.png";
 import paulsab_squared from "./Logo_PaulSab_Squared.png";
 import paulsab from "./Logo_PaulSab.png";
 import thesis from "./Thesis.png";
