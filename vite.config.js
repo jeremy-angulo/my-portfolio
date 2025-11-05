@@ -6,5 +6,6 @@ export default defineConfig({
   plugins: [react()],
     build: {
         chunkSizeWarningLimit: 100000000
-    }
+    },
+    base: "/my-portfolio",
 })
