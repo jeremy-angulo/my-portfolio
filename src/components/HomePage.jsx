@@ -1,7 +1,7 @@
 // src/components/HomePage.jsx
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Contact, Profile, Achievement, Experience, Education, Hero, Navbar, Tech, Project, StarsCanvas, Content, Footer } from ".";
+import { Contact, Achievement, Experience, Education, Hero, Project, Content, Footer } from ".";
 
 const HomePage = () => {
   const location = useLocation();
@@ -35,8 +35,6 @@ const HomePage = () => {
       <Project />
       <Experience />
       <Achievement />
-      <Profile/>
-      <Tech />
       <div className='relative z-0'>
         <Contact />
       </div>

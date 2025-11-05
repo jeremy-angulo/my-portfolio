@@ -11,18 +11,18 @@ const Achievement = () => {
   return (
     <div className={`mt-12 bg-black-100 rounded-[20px]`}>
       <div
-        className={`bg-tertiary rounded-2xl ${styles.padding}`}
+        className={`bg-tertiary rounded-2xl ${styles.padding} sm:h-[200px] h-[150px]`}
       >
         <motion.div variants={textVariant()}>
           <p className={styles.sectionSubText}>Some Glimpses on...</p>
           <h2 className={styles.sectionHeadText}>Achievements.</h2>
         </motion.div>
       </div>
-      <div className={`-mt-20 justify-center p-6 ${styles.paddingX} gap-7`}>
-      <ul className='mt-5 list-disc ml-5 space-y-2'>
-        {achievements.map((achievement, index) => (
-          <li key={achievement.id || index} className='text-white-100 text-[16px] pl-1'>{achievement.title}</li>
-        ))}
+      <div className={`-mt-[25px] justify-center p-6 ${styles.paddingX} gap-7`}>
+        <ul className='mt-5 list-disc ml-5 space-y-2'>
+          {achievements.map((achievement, index) => (
+            <li key={achievement.id || index} className='text-white-100 text-[16px] pl-1'>{achievement.title}</li>
+          ))}
         </ul>
       </div>
     </div>

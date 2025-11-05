@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import { styles } from "../styles";
-import { ComputersCanvas } from "./canvas";
 import { init } from "ityped";
 import React, { useEffect, useRef } from "react";
 import { AiOutlineGithub } from "react-icons/ai";

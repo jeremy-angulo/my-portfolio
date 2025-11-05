@@ -1,12 +1,11 @@
 import {
-    javascript, html, css, reactjs, tailwind, nodejs, mongodb, git, threejs,
-    ltu, enseeiht, paulsab, paulsab_squared, alten, n7consulting, storizzz, klatterhuset, man3d, vinci,
+    ltu, enseeiht, paulsab, paulsab_squared, alten, n7consulting, klatterhuset, man3d, vinci,
     freelance,
     grinp, // Placeholder for Gr'INP logo
     n7chess, // Placeholder for Chess club logo
     bafa, // Placeholder for BAFA logo
     cnes, cnes_white, boost, bocalenvers, continentphone, ltu_square,
-    zzz, presentation_storizzz, presentation_continentphone, thesis, presentation_boost
+    zzz, presentation_storizzz, presentation_continentphone, thesis, presentation_boost, presentation_BAFA,
   } from "../assets"; // Assuming asset variables are correctly mapped
 
   const profiles = [
@@ -35,49 +34,6 @@ import {
     },
     {
       title: "Competed in the French Cup of Engineering Schools twice (2023, 2024), finishing in the top 20 on both occasions.",
-    },
-  ];
-
-  const skills = [
-    {
-      name: "Python (Django, FastAPI)",
-      icon: "https://img.icons8.com/color/480/000000/python.png",
-    },
-    {
-      name: "JavaScript (React)",
-      icon: javascript,
-    },
-    {
-      name: "Flutter",
-      icon: "https://img.icons8.com/color/480/000000/flutter.png",
-    },
-    {
-      name: "Java",
-      icon: "https://img.icons8.com/color/480/000000/java-coffee-cup-logo.png",
-    },
-    {
-      name: "Agile & Scrum",
-      icon: "https://cdn.iconscout.com/icon/free/png-512/free-scrum-logo-icon-svg-download-png-458188.png?f=webp&w=512",
-    },
-    {
-      name: "Git",
-      icon: git,
-    },
-    {
-      name: "AWS",
-      icon: "https://img.icons8.com/color/480/000000/amazon-web-services.png",
-    },
-    {
-      name: "Project Management",
-      icon: "https://img.icons8.com/color/480/000000/project-management.png",
-    },
-    {
-      name: "Business Strategy",
-      icon: "https://img.icons8.com/color/480/000000/strategy.png",
-    },
-    {
-      name: "Public Speaking",
-      icon: "https://img.icons8.com/color/480/000000/speech-bubble.png",
     },
   ];
 
@@ -115,7 +71,7 @@ const entrepreneurshipProjects = [
     },
     tags: [ { name: "Entrepreneurship", color: "blue-text-gradient" }, { name: "Product_Management", color: "green-text-gradient" } ],
     image: presentation_storizzz,
-    source_code_link: "https://github.com/jeremy-angulo",
+    source_link: "https://www.storizzz.app/",
   },
   {
     name: "Vinci Energies - Innovation Challenge Winner",
@@ -142,6 +98,7 @@ const entrepreneurshipProjects = [
     },
     tags: [ { name: "Strategy", color: "blue-text-gradient" }, { name: "Process_Optimization", color: "green-text-gradient" }],
     image: n7consulting,
+    source_link: "https://www.n7consulting.fr/",
   },
 ];
 
@@ -161,6 +118,7 @@ const aiAndDeepTechProjects = [
     },
     tags: [ { name: "MachineLearning", color: "blue-text-gradient" }, { name: "ComputerVision", color: "green-text-gradient" }, { name: "R&D", color: "pink-text-gradient" } ],
     image: thesis,
+    source_link: "https://ltu.diva-portal.org/smash/record.jsf?dswid=29&pid=diva2%3A1969152"
   },
   {
     name: "MAN-3D - R&D Project Lead",
@@ -174,6 +132,7 @@ const aiAndDeepTechProjects = [
     },
     tags: [ { name: "Prototyping", color: "blue-text-gradient" }, { name: "R&D", color: "pink-text-gradient" }, { name: "Innovation", color: "orange-text-gradient" } ],
     image: man3d,
+    source_link:"https://www.univ-tlse3.fr/patrimoine-et-collections/medecine"
   },
   {
     name: "Continent Phone - Lead AI Researcher",
@@ -219,6 +178,7 @@ const itConsultingProjects = [
         },
         tags: [ { name: "SaaS", color: "blue-text-gradient" }, { name: "API_Design", color: "green-text-gradient" } ],
         image: presentation_boost,
+        source_link: "https://boost-frontend-eu-34ab372e4bcf.herokuapp.com/"
     },
     {
         name: "Bocalenvers - Agile Project Lead",
@@ -232,6 +192,7 @@ const itConsultingProjects = [
         },
         tags: [ { name: "Agile", color: "blue-text-gradient" }, { name: "Mobile_Dev", color: "green-text-gradient" }, { name: "Project_Delivery", color: "orange-text-gradient" } ],
         image: bocalenvers,
+        source_link: "https://www.bocalenvers.org/"
     },
     {
         name: "Freelance - IT & Data Strategy Consultant",
@@ -258,34 +219,37 @@ const leadershipAndInitiativesProjects = [
             hook: "Cultivated a journey in the world of climbing, progressing from a competitive athlete to an international leader.",
             highlights: [
                 { title: 'Coordinated', text: 'corporate team-building events and technical courses in English in Sweden.' },
-                { title: 'Functioned', text: 'as a certified regional and national competition judge for the French Climbing Federation.' },
+                { title: 'Volunteered', text: 'as a certified regional and national competition judge for the French Climbing Federation.' },
                 { title: 'Mentored', text: 'and trained climbers of all levels, fostering a passion for the sport.' },
             ],
         },
-        tags: [ { name: "Leadership", color: "blue-text-gradient" }, { name: "EventManagement", color: "green-text-gradient" }, { name: "International", color: "pink-text-gradient" }, { name: "Training", color: "orange-text-gradient" } ],
+        tags: [ { name: "Leadership", color: "green-text-gradient" }, { name: "International", color: "pink-text-gradient" }, { name: "Training", color: "orange-text-gradient" } ],
         image: klatterhuset,
+        source_link: "https://www.klatterhuset.se/",
+        
     },
     {
         name: "Camp Director & BAFA Trainer",
         description: {
-            hook: "Applied professional project management principles to direct over 20 large-scale youth camps and train future leaders.",
+            hook: "Animated and directed over 20 large-scale youth camps and trained future leaders in France and abroad.",
             highlights: [
                 { title: 'Directed', text: 'all project phases: from budget allocation and logistics to team leadership.' },
                 { title: 'Guided', text: 'and motivated teams of animators to deliver high-quality educational programs.' },
-                { title: 'Crafted', text: 'and delivered official BAFA training modules to certify youth work professionals.' },
+                { title: 'Designed', text: 'official BAFA training modules to certify youth work professionals.' },
             ],
         },
-        tags: [ { name: "ProjectManagement", color: "blue-text-gradient" }, { name: "Leadership", color: "green-text-gradient" }, { name: "Training", color: "pink-text-gradient" }, { name: "Mentorship", color: "orange-text-gradient" } ],
-        image: bafa,
+        tags: [ { name: "Leadership", color: "green-text-gradient" }, { name: "Training", color: "pink-text-gradient" }, { name: "Mentorship", color: "orange-text-gradient" } ],
+        image: presentation_BAFA,
     },
     {
         name: "Gr'INP - Climbing Club President",
         description: {
-            hook: "As President, directed all operations for the Toulouse-INP climbing club, fostering a vibrant and active community.",
+            hook: "As President, directed all operations for the Toulouse-INP climbing club, fostering a dynamic and active community.",
             highlights: [
                 { title: 'Oversaw', text: 'a team of instructors and was responsible for over 100 active members.' },
-                { title: 'Organized', text: 'the annual event calendar, including competitions and social gatherings.' },
-                { title: 'Administered', text: 'the club\'s budget and upheld all equipment and safety standards.' },
+                { title: 'Participated', text: 'in the University French Cup 2023/2024, finishing in the top 20 twice.' },
+                { title: 'Organized', text: 'several events, including competitions and social gatherings.' },
+                { title: 'Administered', text: 'the club\'s budget and upheld all safety standards.' },
             ],
         },
         tags: [ { name: "Management", color: "blue-text-gradient" }, { name: "Leadership", color: "green-text-gradient" }, { name: "Community", color: "pink-text-gradient" } ],
@@ -469,4 +433,4 @@ const experiences = [
     ...leadershipAndInitiativesProjects,
   ];
 
-  export { list, profiles, achievements, skills, experiences, educations, entrepreneurshipProjects, aiAndDeepTechProjects, itConsultingProjects, leadershipAndInitiativesProjects, allProjects };
+  export { list, profiles, achievements, experiences, educations, entrepreneurshipProjects, aiAndDeepTechProjects, itConsultingProjects, leadershipAndInitiativesProjects, allProjects };

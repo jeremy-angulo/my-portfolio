@@ -31,7 +31,7 @@ const ProjectCard = ({
           className={`project-box bg-tertiary p-5 rounded-2xl sm:w-[360px] w-full flex flex-col h-[800px]`}
         >
           {/* The image container's height is now controlled by the `imageHeight` variable. */}
-          <Link to={`/project/${projectId}`}>
+          {/* <Link to={`/project/${projectId}`}> */}
             <div className={`Box1 relative w-full h-[200px]`}>
               <img
                 // layoutId={`image-${projectId}`} // <-- ADD THIS FOR ANIMATION
@@ -56,7 +56,7 @@ const ProjectCard = ({
                 )}
               </div>
             </div>
-          </Link>
+          {/* </Link> */}
 
           <div className='content mt-5 flex flex-col flex-grow'>
             <p className='text-white text-[15px]'>{description.hook}</p>
