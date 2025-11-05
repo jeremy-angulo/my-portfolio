@@ -8,7 +8,7 @@ import './ResumePage.scss';
 
 const ResumePage = () => {
   // Construct the full path to the PDF including the base path
-  const pdfPath = "/my-portfolio/Jeremy_Angulo_Resume.pdf";
+  const pdfPath = "/Jeremy_Angulo_Resume.pdf";
 
   return (
     <div className="resume-container">

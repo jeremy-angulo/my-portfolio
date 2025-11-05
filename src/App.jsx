@@ -28,7 +28,7 @@ const App = () => {
 }
 
 const AppWrapper = () => (
-  <BrowserRouter basename="/my-portfolio">
+  <BrowserRouter basename="/">
     <Analytics />
     <SpeedInsights />
     <App />
