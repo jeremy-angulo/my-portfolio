@@ -2,13 +2,17 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import useIsMobile from '../hooks/useIsMobile';
 import { SectionWrapper } from '../hoc';
 import { FaArrowLeft, FaDownload } from 'react-icons/fa';
 import './ResumePage.scss';
 
 const ResumePage = () => {
-  // Construct the full path to the PDF including the base path
+  const isMobile = useIsMobile(); 
+
   const pdfPath = "/Jeremy_Angulo_Resume.pdf";
+  const fullPdfUrl= window.location.origin + pdfPath;
+  const googleViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fullPdfUrl)}&embedded=true`;
 
   return (
     <div className="resume-container">
@@ -33,18 +37,30 @@ const ResumePage = () => {
         </a>
       </div>
       <div className="pdf-viewer">
-        <object
-          data={pdfPath}
-          type="application/pdf"
-          width="100%"
-          height="100%"
-        >
-          {/* Fallback content if the PDF cannot be displayed */}
-          <p>
-            It seems your browser doesn't support embedding PDFs. 
-            You can <a href={pdfPath} download="Jeremy_Angulo_Resume.pdf">download the resume directly</a> instead.
-          </p>
+       {isMobile ? (
+          // --- MOBILE FALLBACK ---
+          // Use an iframe with Google Docs Viewer for maximum compatibility
+          <iframe
+            src={googleViewerUrl}
+            width="100%"
+            height="100%"
+            frameBorder="0"
+            title="Resume Viewer"
+          ></iframe>
+        ) : (
+          // --- DESKTOP VERSION ---
+          // Use the <object> tag with the special #view=Fit parameter
+          <object
+            data={`${pdfPath}#view=Fit`}
+            type="application/pdf"
+            width="100%"
+            height="100%"
+          >
+            <p>
+              Your browser doesn't support embedding PDFs.
+            </p>
         </object>
+        )}
       </div>
     </div>
   );

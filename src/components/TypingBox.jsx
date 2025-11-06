@@ -1,82 +1,46 @@
 // src/components/TypingBox.jsx
 
-import React, { useEffect, useRef } from 'react';
-import { init } from 'ityped';
+import React from 'react';
+import { ReactTyped } from 'react-typed';
 import './TypingBox.scss';
 
-const TypingBox = ({ lines }) => {
-  const lineRefs = useRef([]);
-  const instancesRef = useRef([]);
-  // This ref will act as our guard. It will be true when mounted, false when unmounted.
-  const isMounted = useRef(true);
-
-  useEffect(() => {
-    // When the effect runs, we set our guard to true.
-    isMounted.current = true;
-
-    if (!lines || lines.length === 0) {
-      return;
-    }
-
-    const typeLine = (index) => {
-      // If the component is unmounted or we're done, stop immediately.
-      if (!isMounted.current || index >= lines.length) {
-        return;
-      }
-
-      const element = lineRefs.current[index];
-      if (element) {
-        element.innerHTML = '';
-
-        const instance = init(element, {
-          strings: [lines[index]],
-          typeSpeed: 10,
-          showCursor: false,
-          disableBackTyping: true,
-          onFinished: () => {
-            // Before starting the next line, check if we are still mounted.
-            if (!isMounted.current) return;
-            typeLine(index + 1);
-          },
-        });
-        instancesRef.current.push(instance);
-      }
-    };
-
-    typeLine(0);
-
-    // This is the cleanup function.
-    return () => {
-      // First, set the guard to false. This will stop any pending onFinished callbacks.
-      isMounted.current = false;
-      
-      // Then, safely destroy all instances that were created.
-      instancesRef.current.forEach(instance => {
-        // Add an extra safety check in case an undefined value somehow got in.
-        if (instance) {
-          instance.destroy();
-        }
-      });
-      instancesRef.current = [];
-    };
-  }, [lines]);
-
+const TypingBox = ({ line }) => {
   return (
-    <div className="value-prop-box border border-[#915EFF] p-6 rounded-2xl max-w-3xl w-full h-[13.5rem]">
-      <p className="text-[#FFFFFF] text-lg leading-relaxed text-left">
-        {lines.map((line, index) => (
-          <span
-            key={index}
-            ref={el => (lineRefs.current[index] = el)}
-            className="block"
-            style={{ 
-              fontWeight: '250', 
-              fontSize: '1.4rem',
-              marginTop: index > 0 ? '1rem' : '0' 
-            }}
-          ></span>
-        ))}
-      </p>
+    // 1. THE PARENT CONTAINER
+    // It is 'relative' to act as an anchor for the absolute child.
+    // Padding is REMOVED from here to be controlled by the children.
+    <div className="relative border border-[#915EFF] rounded-2xl max-w-3xl w-full">
+      
+      {/* 2. THE INVISIBLE "GHOST" LAYER */}
+      {/* This layer is NOT absolute. It sits in the normal layout flow. */}
+      {/* 'invisible' class makes it take up space but not be seen. */}
+      {/* It has the padding, which defines the final size of the box. */}
+      <div className="invisible p-6">
+        <p 
+          style={{ fontWeight: '250', fontSize: '1.4rem' }} 
+          className="text-[#FFFFFF] text-base sm:text-lg leading-relaxed text-left"
+          // We need to render the HTML to calculate the correct height with line breaks
+          dangerouslySetInnerHTML={{ __html: line }}
+        />
+      </div>
+
+      {/* 3. THE VISIBLE "TYPING" LAYER */}
+      {/* This layer IS absolute. It sits on top of the ghost layer. */}
+      {/* 'inset-0' makes it fill the parent completely. */}
+      {/* It has the same padding to align the text perfectly. */}
+      <div className="absolute inset-0 p-6">
+        <p 
+          style={{ fontWeight: '250', fontSize: '1.4rem' }} 
+          className="text-[#FFFFFF] text-base sm:text-lg leading-relaxed text-left"
+        >
+          <ReactTyped
+            strings={[line]}
+            typeSpeed={10}
+            showCursor={true}
+            // The component automatically stops and cleans up on its own.
+          />
+        </p>
+      </div>
     </div>
   );
 };

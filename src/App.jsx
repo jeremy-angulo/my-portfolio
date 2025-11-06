@@ -5,9 +5,12 @@ import { AnimatePresence } from "framer-motion";
 import { HomePage, ProjectDetail, ResumePage, Navbar, StarsCanvas } from "./components";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import useScrollRestorationOnResize from './hooks/useScrollRestorationOnResize'; // Import the hook
 
 const App = () => {
   const location = useLocation();
+
+  useScrollRestorationOnResize(); // Call the hook
 
   return (
     // This main div provides the global background and star canvas
