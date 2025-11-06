@@ -31,84 +31,51 @@ const Contact = () => {
     });
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    // TODO: Replace with my own email service
-    // const formData = new FormData(event.target);
-    // setLoading(true);
+  // --- C'EST LA FONCTION QUE NOUS ACTIVONS ---
+  const handleSubmit = (e) => {
+    e.preventDefault();
 
-    // formData.append("access_key", "5f5b91cf-2fc6-4dc3-9cd2-dc8838e33f09");
+    // Ajout d'une validation simple
+    if (!form.name || !form.email || !form.message) {
+      alert("Please fill out all fields.");
+      return;
+    }
 
-    // const object = Object.fromEntries(formData);
-    // const json = JSON.stringify(object);
+    setLoading(true);
 
-    // const res = await fetch("https://api.web3forms.com/submit", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //     Accept: "application/json"
-    //   },
-    //   body: json
-    // }).then(
-    //   () => {
-    //     setLoading(false);
-    //     alert("Thank you. I will get back to you as soon as possible.");
+    emailjs
+      .send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        {
+          from_name: form.name,
+          to_name: "Jérémy Angulo", // Peut être n'importe quoi, ce n'est pas utilisé dans le template
+          from_email: form.email,
+          to_email: "jeremy.angulo@gmail.com", // Votre email de destination
+          message: form.message,
+          time: new Date().toLocaleString(),
+        },
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      )
+      .then(
+        () => {
+          setLoading(false);
+          alert("Thank you! I will get back to you as soon as possible.");
 
-    //     setForm({
-    //       name: "",
-    //       email: "",
-    //       message: "",
-    //     });
-    //   },
-    //   (error) => {
-    //     setLoading(false);
-    //     console.error(error);
-
-    //     alert("Ahh, something went wrong. Please try again.");
-    //   }
-    // );
-
-    // if (res.success) {
-    //   console.log("Success", res);
-    // }
+          setForm({
+            name: "",
+            email: "",
+            message: "",
+          });
+        },
+        (error) => {
+          setLoading(false);
+          console.error(error);
+          alert("Something went wrong. Please try again.");
+        }
+      );
   };
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-
-  //   emailjs
-  //     .send(
-  //       'service_6y5vft7',
-  //       'template_5g175sf',
-  //       {
-  //         from_name: form.name,
-  //         to_name: "Jérémy ANGULO",
-  //         from_email: form.email,
-  //         to_email: "jeremy.angulo@gmail.com",
-  //         message: form.message,
-  //       },
-  //       'FMQ4a1hK5NSAkumfj',
-  //     )
-  //     .then(
-  //       () => {
-  //         setLoading(false);
-  //         alert("Thank you. I will get back to you as soon as possible.");
-
-  //         setForm({
-  //           name: "",
-  //           email: "",
-  //           message: "",
-  //         });
-  //       },
-  //       (error) => {
-  //         setLoading(false);
-  //         console.error(error);
-
-  //         alert("Ahh, something went wrong. Please try again.");
-  //       }
-  //     );
-  // };
 
   return (
     <div
