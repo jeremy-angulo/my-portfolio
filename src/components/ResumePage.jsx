@@ -11,7 +11,7 @@ const ResumePage = () => {
   const isMobile = useIsMobile(); 
 
   const pdfPath = "/Jeremy_Angulo_Resume.pdf";
-  const fullPdfUrl= window.location.origin + pdfPath;
+  const fullPdfUrl = `https://jeremyangulo.fr${pdfPath}`;
   const googleViewerUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fullPdfUrl)}&embedded=true`;
 
   return (
@@ -43,7 +43,7 @@ const ResumePage = () => {
           <iframe
             src={googleViewerUrl}
             width="100%"
-            height="100%"
+            height="1000px"
             frameBorder="0"
             title="Resume Viewer"
           ></iframe>
@@ -53,13 +53,14 @@ const ResumePage = () => {
           <object
             data={`${pdfPath}#view=Fit`}
             type="application/pdf"
-            width="100%"
+            width="1300px"
             height="100%"
+            style={{ margin: "0 auto" }}
           >
             <p>
               Your browser doesn't support embedding PDFs.
             </p>
-        </object>
+          </object>
         )}
       </div>
     </div>
