@@ -1,3 +1,5 @@
+@use "../global.scss" as global;
+
 $maincolor: rgb(3, 3, 37);
 
 .project
@@ -11,18 +13,59 @@ $maincolor: rgb(3, 3, 37);
         height: 680px;
     }
 
-    ul
-    {
-        margin: 10px;
+    .project-tabs-container {
+        // width: 100%;
+
+        @include global.mobile3 {
+        // Annule le padding du parent pour s'étendre sur tout l'écran
+            margin-left: -1.5rem;
+            margin-right: -1.5rem;
+        }
+    }
+
+    // 2. Le conteneur intérieur : c'est LUI qui gère le défilement et le padding.
+    .scroll-wrapper {
+        @include global.mobile3 {
+        overflow-x: auto;
+        touch-action: pan-x;
+
+        // On s'assure que le contenu ne passe pas à la ligne
+        // white-space: nowrap;
+
+        // Cache la barre de défilement
+        &::-webkit-scrollbar { display: none; }
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        }
+    }
+
+    ul {
+        margin: 0px 0;
         padding: 0;
         list-style: none;
         display: flex;
-        justify-content: center;  
+        justify-content: center;
 
-        li
-        {
+        // Crée un "élément invisible" à la fin de la liste.
+        &::after {
+            content: '';
+            // Sa largeur est l'espace que vous voulez à droite.
+            width: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+
+        @include global.mobile3 {
+            justify-content: flex-start;
+            // 'inline-flex' est important pour que la liste s'adapte à son contenu
+            display: inline-flex; 
+        }
+
+        li {
             border: solid 2px #00e9ff;
             border-radius: 10px;
+            // Ajout de flex-shrink: 0 pour empêcher les boutons de se compresser
+            flex-shrink: 0;
         }     
     }
     .Box1

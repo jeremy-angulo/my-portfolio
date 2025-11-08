@@ -129,17 +129,24 @@ const Project = () => {
           variants={fadeIn("", "", 0.1, 1)}
           className='mt-3 text-secondary text-[17px] leading-[30px]'
         >
-        <ul>
-        {list.map((item, index) => (
-          <ProjectList
-            key={`${item.title}-${index}`}
-            title={item.title}
-            active={selected === item.id}
-            setSelected={handleSelectTab}
-            id={item.id}
-          />
-        ))}
-      </ul>
+        {/* 1. Le conteneur extérieur, qui gère la largeur de l'écran */}
+        <div className="project-tabs-container">
+          {/* 2. Le conteneur intérieur, qui gère le défilement ET le padding */}
+          <div className="scroll-wrapper">
+            {/* 3. La liste <ul> est maintenant un simple conteneur d'éléments */}
+              <ul>
+                {list.map((item, index) => (
+                  <ProjectList
+                    key={`${item.title}-${index}`}
+                    title={item.title}
+                    active={selected === item.id}
+                    setSelected={handleSelectTab}
+                    id={item.id}
+                  />
+                ))}
+              </ul>
+          </div>
+        </div>
 
       <div key={`project-list-${selected}`} className='box mt-20 flex flex-wrap justify-center'>
         {data.map((project, index) => (
