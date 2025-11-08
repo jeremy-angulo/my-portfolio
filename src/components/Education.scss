@@ -1,5 +1,55 @@
-.Box2
-{
+// src/components/Education.scss
+@use '../global.scss' as global;
+
+.Box2 {
     --tw-bg-opacity: 1;
     background-color: rgb(9 3 17 / var(--tw-bg-opacity));
+    // Ajout de flex-shrink: 0 pour garantir que la carte ne se compresse jamais
+    flex-shrink: 0;
+}
+
+// --- NOUVEAUX STYLES CI-DESSOUS ---
+
+// 1. Le conteneur extérieur : sa seule mission est de prendre toute la largeur sur mobile.
+.education-container {
+    // On utilise le même point de rupture que pour les projets pour la cohérence
+    @include global.mobile3 {
+        // margin-left: -1.5rem;
+        // margin-right: -1.5rem;
+    }
+}
+
+// 2. Le conteneur intérieur : il gère la mise en page et le défilement.
+.education-scroll-wrapper {
+    // --- Styles par défaut (pour ordinateur) ---
+    display: flex;
+    flex-wrap: wrap; // Les cartes passent à la ligne
+    justify-content: center; // Centré en grille
+    gap: 1.75rem; // L'espacement entre les cartes
+    padding-bottom: 3.5rem;
+    margin-top: -4rem;
+
+    // --- Styles pour mobile ---
+    @include global.mobile3 {
+        margin-top: -8rem;
+        // On change le comportement pour une seule ligne
+        flex-wrap: nowrap;
+        justify-content: flex-start; // Commence à gauche
+
+        // Active le défilement horizontal
+        overflow-x: auto;
+        touch-action: pan-x;
+
+        // Cache la barre de défilement pour l'esthétique
+        &::-webkit-scrollbar { display: none; }
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+
+        // Crée les "espaces fantômes" pour les marges intérieures
+        &::before, &::after {
+            content: '';
+            width: 0rem;
+            flex-shrink: 0;
+        }
+    }
 }

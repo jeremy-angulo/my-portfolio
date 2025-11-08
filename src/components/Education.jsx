@@ -18,7 +18,7 @@ const FeedbackCard = ({
 }) => (
   <motion.div
     variants={fadeIn("", "spring", index * 0.5, 0.75)}
-    className='Box2 p-5 rounded-3xl xs:w-[320px] w-full'
+    className='Box2 p-5 rounded-3xl w-[320px]'
   >
       <div className='mt-7 flex flex-col justify-between items-center gap-1'>
         <img
@@ -60,10 +60,13 @@ const Education = () => {
           <h2 className={styles.sectionHeadText}>Education.</h2>
         </motion.div>
       </div>
-      <div className={`-mt-20 justify-center pb-14 ${styles.paddingX} flex flex-wrap gap-7`}>
-        {educations.map((education, index) => (
-          <FeedbackCard key={`${education.name}-${index}`} index={index} {...education} />
-        ))}
+      <div className="education-container">
+        {/* 2. Le conteneur intérieur qui gère le défilement et les espaces */}
+        <div className="education-scroll-wrapper">
+          {educations.map((education, index) => (
+            <FeedbackCard key={`${education.name}-${index}`} index={index} {...education} />
+          ))}
+        </div>
       </div>
     </div>
   );

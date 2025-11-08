@@ -28,13 +28,10 @@ const ProjectCard = ({
     <motion.div key={`${name}-${index}`} whileInView={{ opacity: 1, transform: 'none' }} variants={fadeIn("up", "spring", index * 0.5, 0.75)}>
         <Tilt
           options={{ max: 45, scale: 1, speed: 450 }}
-          className={`project-box bg-tertiary p-5 rounded-2xl sm:w-[360px] w-full flex flex-col h-[800px]`}
+          className={`project-box bg-tertiary p-5 rounded-2xl sm:w-[360px] w-full flex flex-col xs:h-[850px] sm:h-[800px] h-[850px]`}
         >
-          {/* The image container's height is now controlled by the `imageHeight` variable. */}
-          {/* <Link to={`/project/${projectId}`}> */}
-            <div className={`Box1 relative w-full h-[200px]`}>
+            <div className={`Box1 relative w-full xs:h-[250px] sm:h-[200px]`}>
               <img
-                // layoutId={`image-${projectId}`} // <-- ADD THIS FOR ANIMATION
                 src={image}
                 alt='project_image'
                 transition={{ duration: 1.6, ease: [0.43, 0.13, 0.23, 0.96] }}
@@ -56,8 +53,7 @@ const ProjectCard = ({
                 )}
               </div>
             </div>
-          {/* </Link> */}
-
+          
           <div className='content mt-5 flex flex-col flex-grow'>
             <p className='text-white text-[15px]'>{description.hook}</p>
             
