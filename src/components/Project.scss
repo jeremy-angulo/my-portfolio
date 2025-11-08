@@ -27,7 +27,7 @@ $maincolor: rgb(3, 3, 37);
     .scroll-wrapper {
         @include global.mobile3 {
         overflow-x: auto;
-        touch-action: pan-x;
+        touch-action: pan-x pan-y;
 
         // On s'assure que le contenu ne passe pas à la ligne
         // white-space: nowrap;
