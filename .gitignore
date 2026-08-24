@@ -134,3 +134,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# App 3D vendorée (folio) : artefacts locaux uniquement
+folio/node_modules
+folio/dist
+folio/.env

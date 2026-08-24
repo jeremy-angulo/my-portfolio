@@ -1,4 +1,5 @@
-// Habillage de l'expérience 3D : le canvas plein écran et son HUD.
+// Habillage de la facette 3D : l'app est montée en iframe plein écran,
+// avec un unique bouton de retour discret par-dessus.
 
 .exp {
   position: fixed;
@@ -6,16 +7,17 @@
   z-index: 30;
   background: #0b0a21;
 
-  canvas {
+  &__frame {
     display: block;
+    width: 100%;
+    height: 100%;
+    border: none;
   }
 }
 
-// ------------------------------------------------------------------- HUD
-
 .exp-back {
   position: absolute;
-  top: 18px;
+  bottom: 18px;
   left: 18px;
   z-index: 3;
   display: inline-flex;
@@ -36,171 +38,5 @@
   &:hover {
     background: rgba(11, 10, 33, 0.9);
     transform: translateY(-1px);
-  }
-}
-
-.exp-hint {
-  position: absolute;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 3;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(11, 10, 33, 0.6);
-  color: #cabfe8;
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  pointer-events: none;
-  white-space: nowrap;
-}
-
-.exp-reset {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  z-index: 3;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 1px solid rgba(223, 217, 255, 0.35);
-  background: rgba(11, 10, 33, 0.72);
-  color: #dfd9ff;
-  font-size: 17px;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: transform 0.3s ease, background 0.25s ease;
-
-  &:hover {
-    background: rgba(11, 10, 33, 0.9);
-    transform: rotate(80deg);
-  }
-}
-
-// D-pad tactile
-.exp-pad {
-  position: absolute;
-  bottom: 24px;
-  right: 20px;
-  z-index: 3;
-  display: grid;
-  grid-template-columns: repeat(3, 54px);
-  grid-template-rows: repeat(2, 54px);
-  gap: 8px;
-  grid-template-areas:
-    ". forward ."
-    "left back right";
-
-  &__btn {
-    border: 1px solid rgba(223, 217, 255, 0.4);
-    background: rgba(11, 10, 33, 0.65);
-    color: #dfd9ff;
-    border-radius: 14px;
-    font-size: 17px;
-    cursor: pointer;
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-
-    &:active {
-      background: rgba(145, 94, 255, 0.55);
-    }
-
-    &--forward { grid-area: forward; }
-    &--left { grid-area: left; }
-    &--back { grid-area: back; }
-    &--right { grid-area: right; }
-  }
-}
-
-// ------------------------------------------------------------------ Intro
-
-.exp-intro {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: radial-gradient(120% 120% at 50% 40%, rgba(11, 10, 33, 0.25) 0%, rgba(11, 10, 33, 0.78) 100%);
-
-  &__card {
-    max-width: 520px;
-    width: 100%;
-    text-align: center;
-    background: rgba(13, 11, 36, 0.85);
-    border: 1px solid rgba(145, 94, 255, 0.4);
-    border-radius: 24px;
-    padding: clamp(28px, 5vw, 44px);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.8);
-  }
-
-  &__eyebrow {
-    font-size: 13px;
-    letter-spacing: 0.4em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: #9d95c9;
-    margin-bottom: 10px;
-  }
-
-  &__title {
-    font-family: "Fraunces", "Poppins", serif;
-    font-weight: 600;
-    font-size: clamp(30px, 5vw, 42px);
-    line-height: 1.1;
-    background: linear-gradient(100deg, #f59e0b 10%, #dfd9ff 55%, #915eff 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 14px;
-  }
-
-  &__sub {
-    color: #cabfe8;
-    font-size: 15px;
-    line-height: 1.65;
-    margin-bottom: 16px;
-  }
-
-  &__controls {
-    color: #8f87b8;
-    font-size: 12.5px;
-    letter-spacing: 0.04em;
-    margin-bottom: 26px;
-  }
-
-  &__actions {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-  }
-
-  &__start {
-    border: none;
-    cursor: pointer;
-    padding: 13px 34px;
-    border-radius: 999px;
-    font-family: inherit;
-    font-size: 15.5px;
-    font-weight: 700;
-    color: #ffffff;
-    background: linear-gradient(100deg, #f59e0b 0%, #915eff 100%);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-      filter: saturate(1.15);
-      box-shadow: 0 14px 34px -12px rgba(145, 94, 255, 0.8);
-    }
   }
 }
