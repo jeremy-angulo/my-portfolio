@@ -24,7 +24,8 @@ export class TimeMachineArea extends Area
             InteractivePoints.STATE_CONCEALED,
             () =>
             {
-                window.open('https://2019.bruno-simon.com')
+                // La machine à remonter le temps ouvre l'« ancien » portfolio : la facette nuit
+                window.open('https://jeremyangulo.fr/tech')
             },
             () =>
             {

@@ -138,4 +138,3 @@ dist
 # App 3D vendorée (folio) : artefacts locaux uniquement
 folio/node_modules
 folio/dist
-folio/.env

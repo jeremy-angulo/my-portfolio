@@ -468,8 +468,11 @@ export class ProjectsArea extends Area
         // Get resource and load
         this.images.getResourceAndLoad = (key) =>
         {
-            const path = `projects/images/${key}`
-            
+            // Comme dans Game.js : sans VITE_COMPRESSED, on charge les .png
+            // avec le loader de texture classique plutôt que les .ktx
+            const compressed = !!import.meta.env.VITE_COMPRESSED
+            const path = `projects/images/${compressed ? key : key.replace(/\.ktx$/, '.png')}`
+
             // Try to retrieve resource
             let resource = this.images.resources.get(key)
 
@@ -479,12 +482,18 @@ export class ProjectsArea extends Area
                 resource = {}
                 resource.loaded = false
 
-                const loader = this.game.resourcesLoader.getLoader('textureKtx')
+                const loader = this.game.resourcesLoader.getLoader(compressed ? 'textureKtx' : 'texture')
 
                 loader.load(
                     path,
                     (loadedTexture) =>
                     {
+                        // Aligne l'orientation des .png sur celle des .ktx
+                        if(!compressed)
+                        {
+                            loadedTexture.flipY = false
+                            loadedTexture.needsUpdate = true
+                        }
                         resource.texture = loadedTexture
                         resource.colorSpace = THREE.SRGBColorSpace
                         resource.flipY = false
