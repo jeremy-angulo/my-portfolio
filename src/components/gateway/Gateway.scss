@@ -1,0 +1,374 @@
+// L'écran d'entrée : un split Jour / Nuit séparé par une diagonale.
+
+.gateway {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  overflow: hidden;
+  z-index: 10;
+
+  // Quand rien n'est survolé, la facette correspondant à l'heure locale respire un peu plus.
+  &--favor-day:not(:hover) .gw-panel--day {
+    flex-grow: 1.18;
+  }
+  &--favor-night:not(:hover) .gw-panel--night {
+    flex-grow: 1.18;
+  }
+}
+
+// ------------------------------------------------------------------ Panneaux
+
+.gw-panel {
+  position: relative;
+  flex: 1 1 0;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  text-decoration: none;
+  transition: flex-grow 0.65s cubic-bezier(0.33, 1, 0.4, 1), filter 0.65s ease;
+
+  &:hover {
+    flex-grow: 1.42;
+  }
+
+  &__content {
+    position: relative;
+    z-index: 3;
+    width: 100%;
+    padding: 0 clamp(24px, 5vw, 72px) clamp(56px, 10vh, 110px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__eyebrow {
+    font-size: 13px;
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  &__title {
+    font-family: "Fraunces", "Poppins", serif;
+    font-weight: 600;
+    font-size: clamp(26px, 3.2vw, 46px);
+    line-height: 1.08;
+  }
+
+  &__sub {
+    font-size: clamp(13px, 1.05vw, 15.5px);
+    line-height: 1.65;
+    max-width: 420px;
+  }
+
+  &__cta {
+    margin-top: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    width: fit-content;
+    padding-bottom: 3px;
+    border-bottom: 1.5px solid currentColor;
+    transition: transform 0.35s ease;
+  }
+
+  &:hover &__cta {
+    transform: translateX(6px);
+  }
+}
+
+// --- Jour : une aube. -------------------------------------------------------
+
+.gw-panel--day {
+  background: linear-gradient(178deg, #bcd7f5 0%, #dbe9fa 34%, #fbe3b6 72%, #f8cf8d 100%);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 7vw) 100%, 0 100%);
+  margin-right: -7vw;
+  z-index: 2;
+  filter: drop-shadow(10px 0 34px rgba(250, 205, 120, 0.55));
+
+  .gw-panel__eyebrow {
+    color: #b45309;
+  }
+  .gw-panel__title {
+    color: #16233a;
+  }
+  .gw-panel__sub {
+    color: #3c4c68;
+  }
+  .gw-panel__cta {
+    color: #16233a;
+  }
+}
+
+.gw-day__sun {
+  position: absolute;
+  top: 16%;
+  left: 12%;
+  width: clamp(130px, 16vw, 230px);
+  height: clamp(130px, 16vw, 230px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, #fff7e0 0%, #fde68a 42%, #f59e0b 100%);
+  box-shadow: 0 0 90px 36px rgba(253, 224, 138, 0.75);
+  animation: gw-sun-breathe 9s ease-in-out infinite;
+}
+
+.gw-day__cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  filter: blur(18px);
+
+  &--1 {
+    width: 38%;
+    height: 60px;
+    top: 34%;
+    left: -6%;
+    animation: gw-cloud-drift 26s ease-in-out infinite alternate;
+  }
+  &--2 {
+    width: 30%;
+    height: 44px;
+    top: 55%;
+    right: 4%;
+    animation: gw-cloud-drift 34s ease-in-out infinite alternate-reverse;
+  }
+}
+
+// --- Nuit : le ciel du développeur. ----------------------------------------
+
+.gw-panel--night {
+  background: radial-gradient(120% 90% at 80% 12%, #171338 0%, #0b0a21 48%, #050816 100%);
+  z-index: 1;
+  padding-left: 7vw; // compense le chevauchement de la diagonale du jour
+
+  .gw-panel__eyebrow {
+    color: #915eff;
+  }
+  .gw-panel__title {
+    color: #f3f3f3;
+  }
+  .gw-panel__sub {
+    color: #aaa6c3;
+  }
+  .gw-panel__cta {
+    color: #dfd9ff;
+  }
+}
+
+.gw-night__stars {
+  position: absolute;
+  inset: 0;
+
+  span {
+    position: absolute;
+    border-radius: 50%;
+    background: #ffffff;
+    animation: gw-twinkle 3.8s ease-in-out infinite;
+  }
+}
+
+.gw-night__moon {
+  position: absolute;
+  top: 15%;
+  right: 14%;
+  width: clamp(70px, 8vw, 120px);
+  height: clamp(70px, 8vw, 120px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 62% 36%, #ffffff 0%, #dfd9ff 55%, #9d95c9 100%);
+  box-shadow: inset -16px -10px 24px rgba(21, 16, 48, 0.55), 0 0 60px 18px rgba(223, 217, 255, 0.28);
+  animation: gw-moon-float 11s ease-in-out infinite;
+}
+
+// ------------------------------------------------------ Le nom, au centre
+
+.gw-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 5;
+  mix-blend-mode: difference;
+  color: #ffffff;
+  padding: 0 16px;
+
+  &__name {
+    font-family: "Fraunces", "Poppins", serif;
+    font-weight: 600;
+    font-size: clamp(42px, 7.5vw, 96px);
+    line-height: 1.02;
+  }
+
+  &__tag {
+    font-size: clamp(12px, 1.2vw, 16px);
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+}
+
+.gw-lang {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 7;
+}
+
+.gw-social {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 22px;
+  z-index: 6;
+  mix-blend-mode: difference;
+
+  a {
+    color: #ffffff;
+    font-size: 21px;
+    display: inline-flex;
+    opacity: 0.85;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+
+    &:hover {
+      opacity: 1;
+      transform: translateY(-3px);
+    }
+  }
+}
+
+// ------------------------------------------------------------- Animations
+
+@keyframes gw-sun-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.03);
+  }
+}
+
+@keyframes gw-cloud-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(9vw);
+  }
+}
+
+@keyframes gw-twinkle {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(0.55);
+    filter: brightness(0.55);
+  }
+}
+
+@keyframes gw-moon-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gw-day__sun,
+  .gw-day__cloud,
+  .gw-night__stars span,
+  .gw-night__moon {
+    animation: none;
+  }
+  .gw-panel {
+    transition: none;
+  }
+}
+
+// --------------------------------------------------------------- Mobile
+
+@media (max-width: 767px) {
+  .gateway {
+    flex-direction: column;
+  }
+
+  .gw-panel {
+    align-items: flex-end;
+
+    &:hover {
+      flex-grow: 1.2;
+    }
+
+    &__content {
+      padding: 0 26px 34px;
+      gap: 7px;
+    }
+    &__sub {
+      font-size: 12.5px;
+    }
+  }
+
+  // Sur mobile, le contenu du jour monte en haut et celui de la nuit reste en bas :
+  // le centre reste libre pour le nom, posé sur la couture.
+  .gw-panel--day {
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 44px), 0 100%);
+    margin-right: 0;
+    margin-bottom: -44px;
+    filter: drop-shadow(0 10px 30px rgba(250, 205, 120, 0.5));
+    align-items: flex-start;
+
+    .gw-panel__content {
+      padding-top: 86px;
+      max-width: 78%;
+    }
+  }
+
+  .gw-panel--night {
+    padding-left: 0;
+  }
+
+  .gw-day__sun {
+    top: 6%;
+    left: auto;
+    right: 7%;
+    width: 92px;
+    height: 92px;
+  }
+
+  .gw-night__moon {
+    top: 32%;
+    right: 8%;
+    width: 60px;
+    height: 60px;
+  }
+
+  .gw-center {
+    gap: 8px;
+
+    &__tag {
+      letter-spacing: 0.22em;
+    }
+  }
+
+  .gw-social {
+    bottom: 12px;
+    gap: 18px;
+
+    a {
+      font-size: 18px;
+    }
+  }
+}

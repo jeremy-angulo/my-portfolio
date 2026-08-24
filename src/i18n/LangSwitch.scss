@@ -1,0 +1,84 @@
+// Sélecteur de langue : une pill à deux segments, déclinée par facette.
+
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 3px;
+  border-radius: 999px;
+  flex-shrink: 0;
+
+  &__btn {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 5px 9px;
+    border-radius: 999px;
+    line-height: 1;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  // --- Facette jour (fond clair)
+  &--day {
+    background: #ffffff;
+    border: 1px solid #e3daca;
+    box-shadow: 0 2px 10px rgba(22, 35, 58, 0.08);
+
+    .lang-switch__btn {
+      color: #6b7689;
+
+      &:hover {
+        color: #16233a;
+      }
+
+      &--active {
+        background: #16233a;
+        color: #ffffff;
+      }
+    }
+  }
+
+  // --- Facette nuit (fond sombre)
+  &--night {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    .lang-switch__btn {
+      color: #aaa6c3;
+
+      &:hover {
+        color: #ffffff;
+      }
+
+      &--active {
+        background: #dfd9ff;
+        color: #050816;
+      }
+    }
+  }
+
+  // --- Gateway (posé sur le split, en blend)
+  &--gateway {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    .lang-switch__btn {
+      color: rgba(255, 255, 255, 0.75);
+
+      &:hover {
+        color: #ffffff;
+      }
+
+      &--active {
+        background: #ffffff;
+        color: #16233a;
+      }
+    }
+  }
+}

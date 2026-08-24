@@ -1,0 +1,107 @@
+// Interrupteur Jour / Nuit partagé par les deux facettes.
+// Le survol se contente d'un halo : le knob ne bouge qu'au clic (état --switching),
+// où il glisse vers l'autre astre en changeant de couleur avant la bascule de page.
+
+.facet-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 66px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease;
+
+  &__icon {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    line-height: 1;
+    transition: color 0.25s ease;
+  }
+
+  &__knob {
+    position: absolute;
+    top: 4px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    z-index: 1;
+    transition: left 0.32s cubic-bezier(0.55, 0, 0.35, 1.2), background 0.3s ease;
+  }
+
+  // --- Variante affichée côté nuit (fond sombre) : le knob couvre la lune.
+  &--night {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    .facet-toggle__icon--sun {
+      color: #fbbf24;
+    }
+    .facet-toggle__icon--moon {
+      color: #050816;
+    }
+    .facet-toggle__knob {
+      left: 36px;
+      background: #dfd9ff;
+    }
+    &:hover {
+      box-shadow: 0 0 18px rgba(251, 191, 36, 0.5);
+    }
+
+    // Le clic : le knob rejoint le soleil et prend sa couleur, la lune se rallume.
+    &.facet-toggle--switching {
+      .facet-toggle__knob {
+        left: 4px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+      }
+      .facet-toggle__icon--sun {
+        color: #ffffff;
+      }
+      .facet-toggle__icon--moon {
+        color: #dfd9ff;
+      }
+    }
+  }
+
+  // --- Variante affichée côté jour (fond clair) : le knob couvre le soleil.
+  &--day {
+    background: #ffffff;
+    border: 1px solid #e3daca;
+    box-shadow: 0 2px 10px rgba(22, 35, 58, 0.08);
+
+    .facet-toggle__icon--sun {
+      color: #ffffff;
+    }
+    .facet-toggle__icon--moon {
+      color: #16233a;
+    }
+    .facet-toggle__knob {
+      left: 4px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+    &:hover {
+      box-shadow: 0 4px 18px rgba(22, 35, 58, 0.25);
+    }
+
+    // Le clic : le knob rejoint la lune et devient lunaire, le soleil se découvre.
+    &.facet-toggle--switching {
+      .facet-toggle__knob {
+        left: 36px;
+        background: #dfd9ff;
+      }
+      .facet-toggle__icon--sun {
+        color: #f59e0b;
+      }
+      .facet-toggle__icon--moon {
+        color: #16233a;
+      }
+    }
+  }
+}

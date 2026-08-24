@@ -6,12 +6,13 @@ import { styles } from "../styles";
 import { EarthCanvas } from "./canvas";
 import { SectionWrapper } from "../hoc";
 import { slideIn } from "../utils/motion";
-import { MdEmail } from "react-icons/md";
-import { BsWhatsapp } from "react-icons/bs";
+import { MdEmail, MdPhone } from "react-icons/md";
+import { useNightContent } from "../i18n/useContent";
 import "./Contact.scss";
 
 const Contact = () => {
-  
+  const { nightUi } = useNightContent();
+  const ui = nightUi.contactUi;
   const formRef = useRef();
   const [form, setForm] = useState({
     name: "",
@@ -37,7 +38,7 @@ const Contact = () => {
 
     // Ajout d'une validation simple
     if (!form.name || !form.email || !form.message) {
-      alert("Please fill out all fields.");
+      alert(ui.fillAll);
       return;
     }
 
@@ -60,7 +61,7 @@ const Contact = () => {
       .then(
         () => {
           setLoading(false);
-          alert("Thank you! I will get back to you as soon as possible.");
+          alert(ui.success);
 
           setForm({
             name: "",
@@ -71,7 +72,7 @@ const Contact = () => {
         (error) => {
           setLoading(false);
           console.error(error);
-          alert("Something went wrong. Please try again.");
+          alert(ui.error);
         }
       );
   };
@@ -92,8 +93,8 @@ const Contact = () => {
         variants={slideIn("right", "tween", 0.2, 1)}
         className='flex-[0.5] bg-black-100 p-8 rounded-2xl earth'
       >
-        <p className={styles.sectionSubText}>Get in touch</p>
-        <h3 className={styles.sectionHeadText}>Contact.</h3>
+        <p className={styles.sectionSubText}>{ui.sub}</p>
+        <h3 className={styles.sectionHeadText}>{ui.title}</h3>
 
         <form
           ref={formRef}
@@ -101,45 +102,45 @@ const Contact = () => {
           className='mt-3 flex flex-col gap-8 form1'
         >
           <label className='flex flex-col'>
-            <span className='text-white font-medium mb-3'>Your Name</span>
+            <span className='text-white font-medium mb-3'>{ui.nameLabel}</span>
             <input
               type='text'
               name='name'
               value={form.name}
               onChange={handleChange}
-              placeholder="Name"
+              placeholder={ui.namePlaceholder}
               className='bg-tertiary py-3 px-3 placeholder:text-secondary text-white rounded-lg border-none font-medium'
             />
           </label>
           <label className='flex flex-col'>
-            <span className='text-white font-medium mb-3'>Your email</span>
+            <span className='text-white font-medium mb-3'>{ui.emailLabel}</span>
             <input
               type='email'
               name='email'
               value={form.email}
               onChange={handleChange}
-              placeholder="Email"
+              placeholder={ui.emailPlaceholder}
               className='bg-tertiary py-3 px-3 placeholder:text-secondary text-white rounded-lg border-none font-medium'
             />
           </label>
           <label className='flex flex-col'>
-            <span className='text-white font-medium mb-2'>Your Message</span>
+            <span className='text-white font-medium mb-2'>{ui.messageLabel}</span>
             <textarea
               rows={7}
               name='message'
               value={form.message}
               onChange={handleChange}
-              placeholder='Message'
+              placeholder={ui.messagePlaceholder}
               className='bg-tertiary py-3 px-3 placeholder:text-secondary text-white rounded-lg border-none font-medium'
             />
           </label>
 
-          
+
           <button
             type='submit'
             className='bg-tertiary py-3 px-5 rounded-xl outline-none w-fit text-white font-bold shadow-md shadow-primary'
           >
-            {loading ? "Sending..." : "Send"}
+            {loading ? ui.sending : ui.send}
           </button>
         </form>
 
@@ -149,7 +150,7 @@ const Contact = () => {
             <a href="mailto:jeremy.angulo@gmail.com" target="_blank" className="blue-text-gradient">jeremy.angulo@gmail.com</a>
           </article>
           <article className="contact__option">
-            <BsWhatsapp />
+            <MdPhone />
             <a href="https://api.whatsapp.com/send/?phone=33782217788&text&app_absent=0&lang=en" target="_blank" className="blue-text-gradient">
               +33 7 82 21 77 88
             </a>

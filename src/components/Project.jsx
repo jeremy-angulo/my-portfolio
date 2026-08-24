@@ -7,9 +7,8 @@ import { styles } from "../styles";
 import { github } from "../assets";
 import { demo } from "../assets";
 import { SectionWrapper } from "../hoc";
-import {list} from "../constants"
 import { fadeIn, textVariant } from "../utils/motion";
-import { aiAndDeepTechProjects, entrepreneurshipProjects, itConsultingProjects, leadershipAndInitiativesProjects } from "../constants";
+import { useNightContent } from "../i18n/useContent";
 import ProjectList from "./ProjectList";
 import "./Project.scss";
 
@@ -82,32 +81,28 @@ const ProjectCard = ({
 };
 
 const Project = () => {
+  const {
+    list,
+    entrepreneurshipProjects,
+    aiAndDeepTechProjects,
+    itConsultingProjects,
+    leadershipAndInitiativesProjects,
+    nightUi,
+  } = useNightContent();
+
   const [selected, setSelected] = useState(
     sessionStorage.getItem('activeProjectTab') || "entrepreneurship"
   );
 
-  const [data, setData] = useState([]);
-  
-  useEffect(() => {
-    switch (selected) {
-      case "entrepreneurship":
-        setData(entrepreneurshipProjects);
-        break;
-      case "ai_deep_tech":
-        setData(aiAndDeepTechProjects);
-        break;
-      case "it_consulting":
-        setData(itConsultingProjects);
-        break;
-      case "leadership_initiatives":
-        setData(leadershipAndInitiativesProjects);
-        break;
-        
-        default:
-          setData(aiAndDeepTechProjects);
-        }
-      }, [selected]);
-      
+  // Dérivé plutôt que stocké : les données changent aussi avec la langue.
+  const dataMap = {
+    entrepreneurship: entrepreneurshipProjects,
+    ai_deep_tech: aiAndDeepTechProjects,
+    it_consulting: itConsultingProjects,
+    leadership_initiatives: leadershipAndInitiativesProjects,
+  };
+  const data = dataMap[selected] || aiAndDeepTechProjects;
+
   const handleSelectTab = (id) => {
     setSelected(id);
     sessionStorage.setItem('activeProjectTab', id);
@@ -116,8 +111,8 @@ const Project = () => {
   return (
     <>
       <motion.div whileInView={{ opacity: 1 , transform : 'none'}} variants={textVariant()}>
-        <p className={`${styles.sectionSubText} `}>My work</p>
-        <h2 className={`${styles.sectionHeadText}`}>Projects.</h2>
+        <p className={`${styles.sectionSubText} `}>{nightUi.sections.projectsSub}</p>
+        <h2 className={`${styles.sectionHeadText}`}>{nightUi.sections.projectsTitle}</h2>
       </motion.div>
 
       <div className='project w-full flex'>

@@ -1,59 +1,57 @@
 // src/components/Navbar.jsx
+// Navbar de la facette nuit : même squelette que la navbar du jour (ProNavbar),
+// pour que la bascule jour/nuit se fasse sans que rien ne bouge.
 
 import React from "react";
-// Import Link and useLocation from react-router-dom
 import { Link, useLocation } from "react-router-dom";
-import { styles } from "../styles";
 import { logo } from "../assets";
+import FacetToggle from "./FacetToggle";
+import LangSwitch from "../i18n/LangSwitch";
+import { useNightContent } from "../i18n/useContent";
 import "./Navbar.scss";
 
 const Navbar = () => {
   const location = useLocation();
-  // Check if the current path is the resume page
-  const isResumePage = location.pathname === '/resume';
+  const isResumePage = location.pathname === "/cv";
+  const { nightUi } = useNightContent();
+  const nav = nightUi.nav;
 
-  // No need for the scroll-related state anymore if we want the navbar consistent
-  
   return (
-    <nav
-      className={`${styles.paddingX} w-full flex items-center py-3 fixed top-0 z-20 bg-primary`}
-    >
-      <div className='w-full flex justify-between items-center max-w mx-auto'>
+    <nav className="night-nav">
+      <div className="night-container night-nav__inner">
         <Link
-          to='/'
-          className='flex items-center gap-2'
+          to="/tech"
+          className="night-nav__brand"
           onClick={() => { window.scrollTo(0, 0); }}
         >
-          <img src={logo} alt='logo' className='w-9 h-9 object-contain logo' />
-          <p className='sm:block text-white text-[18px] font-bold cursor-pointer flex '>
-            jeremy.angulo
-          </p>
+          <img src={logo} alt="Logo JA" />
+          <span>jeremy.angulo</span>
         </Link>
 
-        <div className='sm:flex'>
-          {/* --- THIS IS THE DYNAMIC PART --- */}
+        <div className="night-nav__links">
+          <Link to="/tech#project">{nav.projects}</Link>
+          <Link to="/tech#experience">{nav.experience}</Link>
+          <Link to="/tech#contact">{nav.contact}</Link>
+        </div>
+
+        <div className="night-nav__right">
+          <LangSwitch mode="night" />
+          <FacetToggle mode="night" />
+          {/* Le CTA occupe la même place que "Me contacter" côté jour :
+              le toggle ne bouge pas d'un pixel en basculant de facette. */}
           {isResumePage ? (
-            // If on the resume page, show a "Go back" link
-            <Link 
-              to="/"
-              className="text-white border border-white rounded-full px-4 py-2 text-[15px] font-medium cursor-pointer hover:bg-white hover:text-primary transition-colors duration-300"
-            >
-              Go back
+            <Link to="/tech" className="night-nav__back">
+              {nav.back}
             </Link>
           ) : (
-            // Otherwise, show the "Open Resume" link
-            <Link 
-              to="/resume"
-              // REMOVED target="_blank" to open in the same tab
-              className="text-white border border-white rounded-full px-4 py-2 text-[15px] font-medium cursor-pointer hover:bg-white hover:text-primary transition-colors duration-300"
-            >
-              Open Resume
+            <Link to="/tech#contact" className="night-nav__cta">
+              {nav.cta}
             </Link>
           )}
         </div>
       </div>
     </nav>
-  )
-}
+  );
+};
 
 export default Navbar;

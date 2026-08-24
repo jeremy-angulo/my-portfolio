@@ -1,9 +1,114 @@
-.top2
-{
-    text-decoration: underline;
+// Navbar nuit : géométrie identique à .pro-nav (facette jour), palette sombre.
+
+.night-container {
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: clamp(20px, 4vw, 32px);
 }
 
-.logo
-{
-    border-radius: 50%;
+.night-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: rgba(5, 8, 22, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(145, 94, 255, 0.22);
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 66px;
+    gap: 16px;
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 17px;
+
+    img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+      border-radius: 50%;
+    }
+  }
+
+  &__links {
+    display: flex;
+    align-items: center;
+    gap: clamp(16px, 3vw, 34px);
+
+    a {
+      text-decoration: none;
+      color: #aaa6c3;
+      font-size: 14.5px;
+      font-weight: 500;
+      transition: color 0.25s ease;
+
+      &:hover {
+        color: #915eff;
+      }
+    }
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__back {
+    text-decoration: none;
+    color: #ffffff;
+    border: 1.5px solid #dfd9ff;
+    border-radius: 999px;
+    padding: 9px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background 0.3s ease, color 0.3s ease;
+
+    &:hover {
+      background: #dfd9ff;
+      color: #050816;
+    }
+  }
+
+  // Même gabarit que le bouton "Me contacter" de la navbar jour.
+  &__cta {
+    display: inline-flex;
+    justify-content: center;
+    min-width: 132px;
+    text-decoration: none;
+    background: #915eff;
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 9px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      background: #7a45ea;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px -8px rgba(145, 94, 255, 0.75);
+    }
+  }
+
+  @media (max-width: 830px) {
+    &__links {
+      display: none;
+    }
+    &__cta {
+      display: none;
+    }
+  }
 }

@@ -273,11 +273,24 @@ const leadershipAndInitiativesProjects = [
 
 const experiences = [
   {
+    title: "Business Manager (Ingénieur d'Affaires)",
+    company_name: "ALTEN",
+    icon: alten,
+    iconBg: "#383E56",
+    date: "2026 - Present",
+    points: [
+      "Promoted to Business Manager to drive business development for engineering and IT projects in the Toulouse region.",
+      "Building and managing a team of consultants: sourcing, technical interviews, recruitment and career development of engineers.",
+      "Owning the full client relationship, from prospecting and proposal building to contract negotiation and delivery follow-up.",
+      "Leveraging a hands-on engineering background to translate complex technical needs into winning business proposals.",
+    ],
+  },
+  {
     title: "Business Analyst",
     company_name: "ALTEN (for Navblue, an Airbus subsidiary)",
     icon: alten,
     iconBg: "#383E56",
-    date: "Sept 2025 - Present",
+    date: "Sept 2025 - 2026",
     points: [
       "Serving as the key bridge between the Product Owner and international technical teams to align product delivery with strategic goals.",
       "Prioritizing the product backlog and coordinating development within a fast-paced Agile (Scrum) framework.",
@@ -420,7 +433,7 @@ const experiences = [
       name: "Université Paul Sabatier \n Toulouse, France",
       degree: "IT Bachelor's Degree",
       branch: "Computer Science \n - ",
-      marks: "GPA: 3.9/4 (1st/160)",
+      marks: "GPA: 3.9/4 (1st/180)",
       year: "(2020 - 2022)",
       image: paulsab,
     }
@@ -433,4 +446,49 @@ const experiences = [
     ...leadershipAndInitiativesProjects,
   ];
 
-  export { list, profiles, achievements, experiences, educations, entrepreneurshipProjects, aiAndDeepTechProjects, itConsultingProjects, leadershipAndInitiativesProjects, allProjects };
+  // Night facet UI labels (French version lives in nightFr.js with the same shape).
+  const nightUi = {
+    nav: { projects: "Projects", experience: "Experience", contact: "Contact", cta: "Contact me", back: "Go back" },
+    hero: {
+      badge: "IT Engineer & Builder — Toulouse",
+      titlePre: "Hi there, I'm",
+      name: "Jérémy Angulo",
+      typed: ["IT Engineer", "AI Builder", "Business Manager by day"],
+      intro: "I am an IT Engineer specializing in bridging the gap between complex technical projects and strategic business goals.<br/><br/>My passion is to lead teams and transform innovative ideas into concrete, high-impact digital solutions.",
+      ctaProjects: "Explore my projects",
+      chipTop: "Code after hours",
+      chipBottom: "AI · Full-stack · Mobile",
+      alt: "Jérémy Angulo, engineer by night",
+    },
+    sections: {
+      educationSub: "Education Details...",
+      educationTitle: "Education.",
+      projectsSub: "My work",
+      projectsTitle: "Projects.",
+      experienceSub: "What I have done so far",
+      experienceTitle: "Work Experience.",
+      achievementSub: "Some Glimpses on...",
+      achievementTitle: "Achievements.",
+      link: "LINK",
+    },
+    contactUi: {
+      sub: "Get in touch",
+      title: "Contact.",
+      nameLabel: "Your Name",
+      namePlaceholder: "Name",
+      emailLabel: "Your email",
+      emailPlaceholder: "Email",
+      messageLabel: "Your Message",
+      messagePlaceholder: "Message",
+      send: "Send",
+      sending: "Sending...",
+      fillAll: "Please fill out all fields.",
+      success: "Thank you! I will get back to you as soon as possible.",
+      error: "Something went wrong. Please try again.",
+    },
+    detail: { back: "Back to all projects", notFound: "Project not found!" },
+    resume: { title: "My Resume", download: "Download" },
+    contentNav: { home: "Home", education: "Education", projects: "Projects", experience: "Experience", contact: "Contact" },
+  };
+
+  export { list, profiles, achievements, experiences, educations, entrepreneurshipProjects, aiAndDeepTechProjects, itConsultingProjects, leadershipAndInitiativesProjects, allProjects, nightUi };

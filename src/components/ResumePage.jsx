@@ -5,10 +5,12 @@ import { Link } from 'react-router-dom';
 import useIsMobile from '../hooks/useIsMobile';
 import { SectionWrapper } from '../hoc';
 import { FaArrowLeft, FaDownload } from 'react-icons/fa';
+import { useNightContent } from '../i18n/useContent';
 import './ResumePage.scss';
 
 const ResumePage = () => {
-  const isMobile = useIsMobile(); 
+  const isMobile = useIsMobile();
+  const { nightUi } = useNightContent();
 
   const pdfPath = "/Jeremy_Angulo_Resume.pdf";
   const fullPdfUrl = `https://jeremyangulo.fr${pdfPath}`;
@@ -19,21 +21,21 @@ const ResumePage = () => {
       <div className="resume-header">
         <div className="flex items-center gap-5">
           <Link 
-            to="/" 
+            to="/tech" 
             className="text-white text-3xl hover:text-[#915EFF] transition-colors duration-300"
             aria-label="Return to Home" // Good for accessibility
           >
             <FaArrowLeft />
           </Link>
-          <h1>My Resume</h1>
+          <h1>{nightUi.resume.title}</h1>
         </div>
-        
-        <a 
-          href={pdfPath} 
+
+        <a
+          href={pdfPath}
           download="Jeremy_Angulo_Resume.pdf" // The 'download' attribute forces download on this specific link
           className="download-button"
         >
-          <FaDownload /> Download
+          <FaDownload /> {nightUi.resume.download}
         </a>
       </div>
       <div className="pdf-viewer">

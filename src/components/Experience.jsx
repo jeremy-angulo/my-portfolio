@@ -8,11 +8,11 @@ import { motion } from "framer-motion";
 import "react-vertical-timeline-component/style.min.css";
 
 import { styles } from "../styles";
-import { experiences } from "../constants";
 import { SectionWrapper } from "../hoc";
 import { textVariant } from "../utils/motion";
+import { useNightContent } from "../i18n/useContent";
 
-const ExperienceCard = ({ experience }) => {
+const ExperienceCard = ({ experience, linkLabel }) => {
   return (
     <VerticalTimelineElement
       contentStyle={{
@@ -52,7 +52,7 @@ const ExperienceCard = ({ experience }) => {
           </li>
         ))}
           <a href={experience.link} className="align-center flex justify-center blue-text-gradient" target="_blank">
-            LINK
+            {linkLabel}
           </a>
       </ul>
     </VerticalTimelineElement>
@@ -60,14 +60,16 @@ const ExperienceCard = ({ experience }) => {
 };
 
 const Experience = () => {
+  const { experiences, nightUi } = useNightContent();
+
   return (
     <>
       <motion.div id="experience" variants={textVariant()}>
         <p className={`${styles.sectionSubText}`}>
-          What I have done so far
+          {nightUi.sections.experienceSub}
         </p>
         <h2 className={`${styles.sectionHeadText}`}>
-          Work Experience.
+          {nightUi.sections.experienceTitle}
         </h2>
       </motion.div>
 
@@ -77,6 +79,7 @@ const Experience = () => {
             <ExperienceCard
               key={`experience-${index}`}
               experience={experience}
+              linkLabel={nightUi.sections.link}
             />
           ))}
         </VerticalTimeline>

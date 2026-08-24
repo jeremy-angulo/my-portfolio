@@ -4,13 +4,16 @@ import { AiOutlineHome, AiOutlineFundProjectionScreen } from "react-icons/ai";
 import { BiBook } from "react-icons/bi";
 import { MdMessage } from "react-icons/md";
 import { BsPersonWorkspace } from "react-icons/bs";
+import { useNightContent } from "../i18n/useContent";
 
 const Content = () => {
   const [activeNav, setActiveNav] = useState("#");
+  const { nightUi } = useNightContent();
+  const labels = nightUi.contentNav;
   return (
     <div className="nav">
       <a
-        title="Home"
+        title={labels.home}
         href="#"
         onClick={() => setActiveNav("#")}
         className={activeNav === "#" ? "active" : ""}
@@ -18,7 +21,7 @@ const Content = () => {
         <AiOutlineHome />
       </a>
       <a
-        title="Education"
+        title={labels.education}
         href="#education"
         onClick={() => setActiveNav("#education")}
         className={activeNav === "#education" ? "active" : ""}
@@ -26,7 +29,7 @@ const Content = () => {
         <BiBook />
       </a>
       <a
-        title="Projects"
+        title={labels.projects}
         href="#project"
         onClick={() => setActiveNav("#project")}
         className={activeNav === "#project" ? "active" : ""}
@@ -34,7 +37,7 @@ const Content = () => {
         <AiOutlineFundProjectionScreen />
       </a>
       <a
-        title="Experience"
+        title={labels.experience}
         href="#experience"
         onClick={() => setActiveNav("#experience")}
         className={activeNav === "#experience" ? "active" : ""}
@@ -42,7 +45,7 @@ const Content = () => {
         <BsPersonWorkspace />
       </a>
       <a
-        title="Contact"
+        title={labels.contact}
         href="#contact"
         onClick={() => setActiveNav("#contact")}
         className={activeNav === "#contact" ? "active" : ""}

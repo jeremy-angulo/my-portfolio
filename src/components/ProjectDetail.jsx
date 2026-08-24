@@ -2,26 +2,27 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { allProjects } from '../constants'; // We will create this in the next step
 import { SectionWrapper } from '../hoc';
 import { styles } from '../styles';
 import { FaArrowLeft } from 'react-icons/fa';
+import { useNightContent } from '../i18n/useContent';
 import './ProjectDetail.scss';
 
 const ProjectDetail = () => {
   const { projectId } = useParams();
+  const { allProjects, nightUi } = useNightContent();
   const project = allProjects.find(
     (p) => p.name.toLowerCase().replace(/\s+/g, '-') === projectId
   );
 
   if (!project) {
-    return <div>Project not found!</div>;
+    return <div>{nightUi.detail.notFound}</div>;
   }
 
   return (
     <div className="project-detail-container">
-      <Link to="/#project" className="back-link">
-        <FaArrowLeft /> Back to all projects
+      <Link to="/tech#project" className="back-link">
+        <FaArrowLeft /> {nightUi.detail.back}
       </Link>
 
       <motion.div
