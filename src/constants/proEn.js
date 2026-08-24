@@ -122,7 +122,7 @@ const proTicker = [
 const proContact = {
   title: "Let's work together.",
   text: "An engineering need to staff, an engineering career to build, or simply keen to chat? Write to me, I answer fast.",
-  email: "jeremy.angulo@gmail.com",
+  email: "jeremy.angulo@alten.com",
   whatsapp: "https://api.whatsapp.com/send/?phone=33782217788&text&app_absent=0&lang=en",
   phoneLabel: "+33 7 82 21 77 88",
   linkedin: "https://www.linkedin.com/in/jeremy-angulo/",

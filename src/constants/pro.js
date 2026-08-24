@@ -121,7 +121,7 @@ const proTicker = [
 const proContact = {
   title: "Travaillons ensemble.",
   text: "Un besoin d'ingénierie à staffer, une carrière d'ingénieur à construire, ou simplement envie d'échanger ? Écrivez-moi, je réponds vite.",
-  email: "jeremy.angulo@gmail.com",
+  email: "jeremy.angulo@alten.com",
   whatsapp: "https://api.whatsapp.com/send/?phone=33782217788&text&app_absent=0&lang=fr",
   phoneLabel: "+33 7 82 21 77 88",
   linkedin: "https://www.linkedin.com/in/jeremy-angulo/",
