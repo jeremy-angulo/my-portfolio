@@ -454,8 +454,11 @@ export class LabArea extends Area
         // Get resource and load
         this.images.getResourceAndLoad = (key) =>
         {
-            const path = `lab/images/${key}`
-            
+            // Comme dans Game.js : sans VITE_COMPRESSED, on charge les .png
+            // avec le loader de texture classique plutôt que les .ktx
+            const compressed = !!import.meta.env.VITE_COMPRESSED
+            const path = `lab/images/${compressed ? key : key.replace(/\.ktx$/, '.png')}`
+
             // Try to retrieve resource
             let resource = this.images.resources.get(key)
 
@@ -465,12 +468,18 @@ export class LabArea extends Area
                 resource = {}
                 resource.loaded = false
 
-                const loader = this.game.resourcesLoader.getLoader('textureKtx')
+                const loader = this.game.resourcesLoader.getLoader(compressed ? 'textureKtx' : 'texture')
 
                 loader.load(
                     path,
                     (loadedTexture) =>
                     {
+                        // Aligne l'orientation des .png sur celle des .ktx
+                        if(!compressed)
+                        {
+                            loadedTexture.flipY = false
+                            loadedTexture.needsUpdate = true
+                        }
                         resource.texture = loadedTexture
                         resource.colorSpace = THREE.SRGBColorSpace
                         resource.flipY = false
@@ -838,10 +847,12 @@ export class LabArea extends Area
                         if(mini.startedLoading)
                             return
 
-                        const loader = this.game.resourcesLoader.getLoader('textureKtx')
+                        // Comme dans Game.js : .png + loader classique sans VITE_COMPRESSED
+                        const compressed = !!import.meta.env.VITE_COMPRESSED
+                        const loader = this.game.resourcesLoader.getLoader(compressed ? 'textureKtx' : 'texture')
 
                         loader.load(
-                            `lab/images/${project.imageMini}`,
+                            `lab/images/${compressed ? project.imageMini : project.imageMini.replace(/\.ktx$/, '.png')}`,
                             (loadedTexture) =>
                             {
                                 const alpha = uniform(0)

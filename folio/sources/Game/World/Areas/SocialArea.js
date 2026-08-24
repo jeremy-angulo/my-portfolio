@@ -24,8 +24,8 @@ export class SocialArea extends Area
         }
 
         this.setLinks()
-        this.setFans()
-        this.setOnlyFans()
+        // setFans / setOnlyFans retirés : le gag OnlyFans est parti avec les
+        // statues de Bruno (les références refFan/refOnlyFans restent dans le GLB)
         this.setStatue()
         // this.setFWA()
         this.setAchievement()
