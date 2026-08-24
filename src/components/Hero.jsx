@@ -3,9 +3,10 @@
 // pour une bascule fluide — badge, titre, intro, CTAs à gauche ; portrait à droite.
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ReactTyped } from "react-typed";
-import { FiMoon, FiCpu } from "react-icons/fi";
+import { FiMoon, FiCpu, FiBox } from "react-icons/fi";
 import { AiOutlineGithub } from "react-icons/ai";
 import { jeremy } from "../assets";
 import TypingBox from "./TypingBox";
@@ -72,6 +73,10 @@ const Hero = () => {
               <AiOutlineGithub />
               GitHub
             </a>
+            <Link to="/3d" className="night-btn night-btn--3d">
+              <FiBox />
+              {ui.cta3d}
+            </Link>
           </div>
         </motion.div>
 

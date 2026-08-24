@@ -1,6 +1,6 @@
 // src/App.jsx
 
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { HomePage, ProjectDetail, ResumePage, Navbar, StarsCanvas } from "./components";
@@ -8,6 +8,10 @@ import Gateway from "./components/gateway/Gateway";
 import ProPage from "./pro/ProPage";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { Analytics } from "@vercel/analytics/react";
+
+// L'expérience 3D embarque three + la physique rapier (WASM) : chargée en
+// lazy pour que son chunk ne pèse pas sur le reste du site.
+const ExperiencePage = lazy(() => import("./experience/ExperiencePage"));
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import useScrollRestorationOnResize from './hooks/useScrollRestorationOnResize'; // Import the hook
 
@@ -23,12 +27,13 @@ const App = () => {
 
   const isNight = NIGHT_PATHS.some((path) => location.pathname.startsWith(path));
   const isPortfolio = location.pathname === "/portfolio";
+  const is3d = location.pathname === "/3d";
 
   // Le fond du document — visible en overscroll et sous les pages courtes —
-  // suit la facette : ivoire le jour, nuit noire côté nuit et portfolio.
+  // suit la facette : ivoire le jour, nuit noire côté nuit, portfolio et 3D.
   // La couleur de la barre de défilement (color-scheme) suit aussi.
   useEffect(() => {
-    const dark = isNight || isPortfolio;
+    const dark = isNight || isPortfolio || is3d;
     const color = dark ? "#050816" : "#faf6ee";
     document.documentElement.style.backgroundColor = color;
     document.body.style.backgroundColor = color;
@@ -57,6 +62,16 @@ const App = () => {
           <Route path="/" element={<ProPage />} />
           <Route path="/pro" element={<Navigate to="/" replace />} />
           <Route path="/portfolio" element={<Gateway />} />
+          <Route
+            path="/3d"
+            element={
+              <Suspense
+                fallback={<div style={{ position: "fixed", inset: 0, background: "#0b0a21" }} />}
+              >
+                <ExperiencePage />
+              </Suspense>
+            }
+          />
           <Route path="/tech" element={<HomePage />} />
           <Route path="/project/:projectId" element={<ProjectDetail />} />
           <Route path="/cv" element={<ResumePage />} />

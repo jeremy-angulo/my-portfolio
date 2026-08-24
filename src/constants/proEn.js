@@ -133,6 +133,7 @@ const proUi = {
   nav: { expertises: "Expertise", parcours: "Journey", contact: "Contact", cta: "Get in touch" },
   heroTitle: { pre: "The bridge between engineering and ", em: "business", post: "." },
   heroAlt: "Jérémy Angulo, Business Manager at ALTEN",
+  cta3d: "Discover me in 3D",
   chipTop: "ALTEN · Toulouse",
   chipBottom: "ENSEEIHT Engineer & Data Scientist",
   expertise: {

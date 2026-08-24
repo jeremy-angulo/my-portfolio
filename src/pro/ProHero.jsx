@@ -1,8 +1,9 @@
 // src/pro/ProHero.jsx
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiSun, FiBriefcase, FiAward, FiLinkedin } from "react-icons/fi";
+import { FiSun, FiBriefcase, FiAward, FiLinkedin, FiBox } from "react-icons/fi";
 import { jeremy } from "../assets";
 import { useProContent } from "../i18n/useContent";
 import { rise } from "./proMotion";
@@ -40,6 +41,10 @@ const ProHero = () => {
               <FiLinkedin />
               {proHero.ctaSecondary}
             </a>
+            <Link to="/3d" className="pro-btn pro-btn--3d">
+              <FiBox />
+              {proUi.cta3d}
+            </Link>
           </div>
         </motion.div>
 
