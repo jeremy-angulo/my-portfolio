@@ -12,7 +12,8 @@
 import fs from 'node:fs'
 import * as THREE from 'three'
 import opentype from 'opentype.js'
-import { NodeIO } from '@gltf-transform/core'
+import { NodeIO, VertexLayout } from '@gltf-transform/core'
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
 import { prune } from '@gltf-transform/functions'
 
 const GLB_PATH = 'static/areas/areas.glb'
@@ -76,7 +77,15 @@ const buildLetterGeometry = (char) => {
 
 // ------------------------------------------------------------------- GLB
 
+// ALL_EXTENSIONS : sans enregistrement, la réécriture supprimerait
+// silencieusement KHR_materials_emissive_strength (les émissifs du monde).
+// VertexLayout.SEPARATE : le layout entrelacé (défaut de gltf-transform) fait
+// paniquer Rapier — le moteur passe geometry.attributes.position.array brut
+// aux colliders trimesh/hull, et sur un attribut entrelacé ce tableau mélange
+// positions, normales et UV.
 const io = new NodeIO()
+    .registerExtensions(ALL_EXTENSIONS)
+    .setVertexLayout(VertexLayout.SEPARATE)
 const doc = await io.read(GLB_PATH)
 const root = doc.getRoot()
 
@@ -138,8 +147,15 @@ built.forEach((b, i) => {
     for (let v = 0; v < count; v += 1) { uvArray[v * 2] = UV[0]; uvArray[v * 2 + 1] = UV[1] }
     const texcoord = doc.createAccessor().setType('VEC2').setArray(uvArray).setBuffer(buffer)
 
+    // Index séquentiel : tout l'export Blender est indexé et le moteur lit
+    // geometry.index — une géométrie non indexée fait paniquer Rapier.
+    const indexArray = new Uint32Array(count)
+    for (let v = 0; v < count; v += 1) indexArray[v] = v
+    const indices = doc.createAccessor().setType('SCALAR').setArray(indexArray).setBuffer(buffer)
+
     const prim = doc.createPrimitive()
         .setMode(4)
+        .setIndices(indices)
         .setAttribute('POSITION', position)
         .setAttribute('NORMAL', normal)
         .setAttribute('TEXCOORD_0', texcoord)
@@ -171,8 +187,9 @@ for (const node of oldLetters) {
     if (mesh) mesh.dispose()
 }
 
-// keepLeaves est vital : les nœuds vides (cuboid, refZone*, refCheckpoints…)
-// encodent la physique et les déclencheurs de zones de tout le monde.
-await doc.transform(prune({ keepLeaves: true, keepExtras: true }))
+// keepLeaves : les nœuds vides (cuboid, refZone*…) encodent la physique et
+// les zones. keepAttributes : les matériaux du GLB n'ont pas de texture (la
+// palette est branchée au runtime), sans ce flag prune supprime les UV.
+await doc.transform(prune({ keepLeaves: true, keepAttributes: true, keepExtras: true }))
 await io.write(GLB_PATH, doc)
 console.log(`OK : ${madeCount} lettres écrites, ${oldLetters.length} supprimées → ${GLB_PATH}`)
