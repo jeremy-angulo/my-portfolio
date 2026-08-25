@@ -89493,130 +89493,8 @@ https://github.com/browserify/crypto-browserify`);
         }), r++;
       }
     }
-    setFans() {
-      const e = this.references.items.get("fan")[0];
-      e.castShadow = true, e.receiveShadow = true, e.position.set(0, 0, 0), this.game.materials.updateObject(e), e.removeFromParent(), this.fans = {}, this.fans.spawnerPosition = this.references.items.get("onlyFans")[0].position, this.fans.count = 30, this.fans.visibleCount = 0, this.fans.currentIndex = 0, this.fans.mass = 0.02, this.fans.objects = [];
-      const r = [];
-      for (let s = 0; s < this.fans.count; s++) {
-        const o = new Object3D$1();
-        o.position.copy(this.fans.spawnerPosition), o.position.y += 99, o.needsUpdate = true, r.push(o);
-        const a = this.game.objects.add({
-          model: o,
-          updateMaterials: false,
-          castShadow: false,
-          receiveShadow: false,
-          parent: null
-        }, {
-          type: "dynamic",
-          position: o.position,
-          rotation: o.quaternion,
-          friction: 0.7,
-          mass: this.fans.mass,
-          sleeping: true,
-          enabled: false,
-          colliders: [
-            {
-              shape: "cuboid",
-              parameters: [
-                0.45,
-                0.65,
-                0.45
-              ],
-              category: "object"
-            }
-          ],
-          waterGravityMultiplier: -1
-        });
-        this.fans.objects.push(a);
-      }
-      this.fans.instancedGroup = new InstancedGroup(r, e), this.fans.pop = () => {
-        const s = this.fans.objects[this.fans.currentIndex], o = this.fans.spawnerPosition.clone();
-        o.x += (Math.random() - 0.5) * 4, o.y += 4 * Math.random(), o.z += (Math.random() - 0.5) * 4, s.physical.body.setTranslation(o), s.physical.body.setEnabled(true), s.physical.body.setLinvel({
-          x: 0,
-          y: 0,
-          z: 0
-        }), s.physical.body.setAngvel({
-          x: 0,
-          y: 0,
-          z: 0
-        }), s.physical.body.wakeUp(), this.fans.currentIndex = (this.fans.currentIndex + 1) % this.fans.count, this.fans.visibleCount = Math.min(this.fans.visibleCount + 1, this.fans.count), this.game.audio.groups.get("click").play(true), this.game.achievements.setProgress("fan", 1);
-      };
-    }
-    setOnlyFans() {
-      this.game.interactivePoints.create(this.references.items.get("onlyFans")[0].position, "OnlyFans", InteractivePoints.ALIGN_RIGHT, InteractivePoints.STATE_CONCEALED, () => {
-        this.fans.pop();
-      }, () => {
-        this.game.inputs.interactiveButtons.addItems([
-          "interact"
-        ]);
-      }, () => {
-        this.game.inputs.interactiveButtons.removeItems([
-          "interact"
-        ]);
-      }, () => {
-        this.game.inputs.interactiveButtons.removeItems([
-          "interact"
-        ]);
-      });
-    }
     setStatue() {
       this.statue = {}, this.statue.body = this.references.items.get("statue")[0].userData.object.physical.body, this.statue.down = false;
-    }
-    setFWA() {
-      this.fwa = {};
-      let e = 0;
-      this.fwa.positions = [
-        new Vector3$1(23.5, 0, -18.5),
-        new Vector3$1(27, 0, -19.5)
-      ];
-      const r = () => {
-        e++;
-        const s = this.fwa.positions[e % this.fwa.positions.length];
-        this.game.world.confetti.pop(s), setTimeout(r, 500 + Math.random() * 1500);
-      };
-      setTimeout(r, 2e3), game.interactivePoints.temporaryHide(), this.game.inputs.addActions([
-        {
-          name: "startFWA",
-          categories: [
-            "intro",
-            "modal",
-            "menu",
-            "racing",
-            "cinematic",
-            "wandering"
-          ],
-          keys: [
-            "Keyboard.k"
-          ]
-        },
-        {
-          name: "winFWA",
-          categories: [
-            "intro",
-            "modal",
-            "menu",
-            "racing",
-            "cinematic",
-            "wandering"
-          ],
-          keys: [
-            "Keyboard.j"
-          ]
-        }
-      ]), this.game.inputs.events.on("startFWA", (s) => {
-        s.active && (game.view.zoom.baseRatio = 0.55, game.view.zoom.ratio = 0.55, game.view.zoom.smoothedRatio = 0.55, game.view.focusPoint.position.set(25, 0, -19.2), game.view.focusPoint.isTracking = false, window.setTimeout(() => {
-          this.game.view.setMode(View.MODE_FREE);
-        }, 1e3), this.game.weather.override.start({
-          humidity: 0,
-          electricField: 0,
-          clouds: 0,
-          wind: 0
-        }, 0), this.game.dayCycles.override.start({
-          progress: 0.87
-        }, 0), document.querySelector(".js-menu-trigger").style.display = "none", document.querySelector(".js-map-trigger").style.display = "none");
-      }), this.game.inputs.events.on("winFWA", (s) => {
-        s.active && this.game.achievements.setProgress("foty", 1);
-      });
     }
     setAchievement() {
       this.events.on("boundingIn", () => {
@@ -89624,16 +89502,10 @@ https://github.com/browserify/crypto-browserify`);
       });
     }
     update() {
-      if (this.fans.visibleCount) {
-        let e = true;
-        for (const r of this.fans.objects) e = e && r.physical.body.isSleeping();
-        e || this.fans.instancedGroup.updateBoundings();
-      }
       if (this.statue && !this.statue.down && !this.statue.body.isSleeping()) {
         const e = new Vector3$1(0, 1, 0);
         e.applyQuaternion(this.statue.body.rotation()), e.y < 0.25 && (this.statue.down = true, this.game.achievements.setProgress("statueDown", 1));
       }
-      for (const e of this.fans.objects) !e.physical.body.isSleeping() && e.physical.body.isEnabled() && (e.visual.object3D.needsUpdate = true);
     }
   }
   class ToiletArea extends Area {
@@ -90349,7 +90221,7 @@ https://github.com/browserify/crypto-browserify`);
       this.data = {}, this.data.storageKey = "circuitScores", this.data.maxCount = 10, this.data.get = () => {
         try {
           const r = JSON.parse(localStorage.getItem(this.data.storageKey));
-          if (Array.isArray(r)) return r.filter((s) => Array.isArray(s) && typeof s[0] == "string" && typeof s[2] == "number");
+          if (Array.isArray(r)) return r.filter((s) => Array.isArray(s) && typeof s[0] == "string" && typeof s[2] == "number").sort((s, o) => s[2] - o[2]).slice(0, this.data.maxCount);
         } catch {
         }
         return [];
@@ -105308,7 +105180,7 @@ ${e.tab}if ( ${m} ) {
           }
         ]
       ]), this.options = new Options(), this.respawns = new Respawns("landing"), this.view = new View(), this.rendering.setPostprocessing(), this.rendering.start(), this.reveal = new Reveal(), this.noises = new Noises(), this.weather = new Weather(), this.wind = new Wind(), this.tracks = new Tracks(), this.lighting = new Lighting(), this.fog = new Fog(), this.water = new Water(), this.materials = new Materials(), this.objects = new Objects(), this.explosions = new Explosions(), this.world = new World();
-      const a = __vitePreload(() => import("./rapier-D-b5LtZ8.js").then(async (m) => {
+      const a = __vitePreload(() => import("./rapier-BjfFYa-2.js").then(async (m) => {
         await m.__tla;
         return m;
       }), [], import.meta.url), h = this.resourcesLoader.load([

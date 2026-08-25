@@ -1333,7 +1333,10 @@ export class CircuitArea extends Area
                 const scores = JSON.parse(localStorage.getItem(this.data.storageKey))
 
                 if(Array.isArray(scores))
-                    return scores.filter((score) => Array.isArray(score) && typeof score[0] === 'string' && typeof score[2] === 'number')
+                    return scores
+                        .filter((score) => Array.isArray(score) && typeof score[0] === 'string' && typeof score[2] === 'number')
+                        .sort((a, b) => a[2] - b[2])
+                        .slice(0, this.data.maxCount)
             }
             catch(error) {}
 
