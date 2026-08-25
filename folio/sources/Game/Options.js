@@ -1,4 +1,5 @@
 import { Game } from './Game.js'
+import { lang, t, toggleLang } from './I18n.js'
 
 export class Options
 {
@@ -12,7 +13,7 @@ export class Options
         this.setRespawn()
         this.setReset()
         this.setRenderer()
-        this.setServer()
+        this.setLanguage()
     }
 
     setSound()
@@ -26,17 +27,18 @@ export class Options
     {
         const element = this.element.querySelector('.js-quality-toggle')
         const text = element.querySelector('span')
-        text.textContent = this.game.quality.level === 0 ? 'High' : 'Low'
+        const update = () =>
+        {
+            text.textContent = this.game.quality.level === 0 ? t('High', 'Élevée') : t('Low', 'Basse')
+        }
+        update()
 
         element.addEventListener('click', () =>
         {
             this.game.quality.changeLevel(this.game.quality.level === 0 ? 1 : 0)
         })
 
-        this.game.quality.events.on('change', () =>
-        {
-            text.textContent = this.game.quality.level === 0 ? 'High' : 'Low'
-        })
+        this.game.quality.events.on('change', update)
     }
 
     setRespawn()
@@ -62,7 +64,7 @@ export class Options
     }
 
     setRenderer()
-    {        
+    {
         if(this.game.rendering.renderer.backend.isWebGLBackend)
         {
             const element = this.element.querySelector('.js-renderer')
@@ -73,46 +75,22 @@ export class Options
             text.textContent = 'WebGL'
 
             const tooltip = element.querySelector('.js-tooltip')
-            tooltip.innerHTML = /* html */`Your browser is <strong>not compatible</strong> with WebGPU resulting in performance loss`
+            tooltip.innerHTML = t(
+                /* html */`Your browser is <strong>not compatible</strong> with WebGPU resulting in performance loss`,
+                /* html */`Ton navigateur n'est <strong>pas compatible</strong> WebGPU, les performances seront réduites`
+            )
         }
     }
 
-    setServer()
+    setLanguage()
     {
-        const element = this.element.querySelector('.js-server')
+        const element = this.element.querySelector('.js-lang-toggle')
         const text = element.querySelector('span')
-        const tooltip = element.querySelector('.js-tooltip')
-        
-        const update = (connected) =>
+        text.textContent = lang === 'fr' ? 'Français' : 'English'
+
+        element.addEventListener('click', () =>
         {
-            if(connected)
-            {
-                element.classList.add('is-success')
-                element.classList.remove('is-danger')
-                
-                text.textContent = 'Online'
-
-                tooltip.innerHTML = /* html */`Enjoy the <strong>multiplayer</strong> features`
-            }
-            else
-            {
-                element.classList.remove('is-success')
-                element.classList.add('is-danger')
-                text.textContent = 'Offline'
-
-                tooltip.innerHTML = /* html */`Should be back soon`
-            }
-        }
-
-        update(this.game.server.connected)
-
-        this.game.server.events.on('connected', () =>
-        {
-            update(true)
-        })
-        this.game.server.events.on('disconnected', () =>
-        {
-            update(false)
+            toggleLang()
         })
     }
 }

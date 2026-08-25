@@ -39,8 +39,8 @@ const text = `
 ╚═══════════════════════╝
 
 ╔═ Crédits ═════════════╗
-║ Ce monde est bâti sur le folio-2025 de Bruno Simon, publié sous licence MIT. Merci Bruno !
-║ https://github.com/brunosimon/folio-2025
+║ Ce monde est né du folio open source d'un mentor, publié sous licence MIT. Merci à lui !
+║ https://github.com/brunosimon/folio-2019
 ║ Les musiques sont de Kounine, en licence CC0.
 ║ https://linktr.ee/Kounine
 ╚═══════════════════════╝

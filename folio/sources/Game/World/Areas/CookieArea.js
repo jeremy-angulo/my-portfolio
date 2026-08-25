@@ -7,6 +7,7 @@ import { InteractivePoints } from '../../InteractivePoints.js'
 import { MeshDefaultMaterial } from '../../Materials/MeshDefaultMaterial.js'
 import { alea } from 'seedrandom'
 import { Area } from './Area.js'
+import { t } from '../../I18n.js'
 
 export class CookieArea extends Area
 {
@@ -270,7 +271,7 @@ export class CookieArea extends Area
     {
         this.game.interactivePoints.create(
             this.references.items.get('interactivePoint')[0].position,
-            'Accept cookie',
+            t('Accept cookie', 'Accepter le cookie'),
             InteractivePoints.ALIGN_RIGHT,
             InteractivePoints.STATE_CONCEALED,
             () =>
@@ -365,8 +366,6 @@ export class CookieArea extends Area
         this.counter.add = () =>
         {
             this.counter.value++
-            // this.counter.value *= 2
-            this.throttleAmount++
             this.counter.update()
         }
 
@@ -401,54 +400,11 @@ export class CookieArea extends Area
         }
 
         /**
-         * Server
+         * Compteur local : l'ancien total mondial (serveur) devient ton total
+         * personnel, déjà persisté dans un vrai cookie (setActualCookies)
          */
-        this.throttleAmount = 0
-        this.counter.throttleUpdate = () =>
-        {
-            if(this.throttleAmount > 0)
-            {
-                this.game.server.send({
-                    type: 'cookiesInsert',
-                    amount: this.throttleAmount
-                })
-                this.throttleAmount = 0
-            }
-        }
-        
-        setInterval(() =>
-        {
-            this.counter.throttleUpdate()
-        }, 1000)
-
-        // Server message event
-        this.game.server.events.on('message', (data) =>
-        {
-            // Init and insert
-            if(data.type === 'init' || data.type === 'cookiesUpdate')
-            {
-                if(data.cookiesCount > this.counter.value)
-                {
-                    this.counter.value = data.cookiesCount
-                    this.counter.update()
-                }
-            }
-        })
-
-        // Message already received
-        if(this.game.server.initData)
-        {
-            this.counter.value = this.game.server.initData.cookiesCount
-        }
-
-        // Server connect / disconnect
-        if(this.game.server.connected)
-            this.counter.init()
-            
-        this.game.server.events.on('connected', () =>
-        {
-            this.counter.init()
-        })
+        this.counter.value = this.actualCookies.count
+        this.counter.init()
     }
 
     setAchievement()

@@ -7,8 +7,8 @@ import { Player } from '../../Player.js'
 import { MeshDefaultMaterial } from '../../Materials/MeshDefaultMaterial.js'
 import { add, color, float, Fn, max, mix, normalGeometry, objectPosition, PI, positionGeometry, positionWorld, rotateUV, sin, texture, uniform, uv, vec2, vec3, vec4 } from 'three/tsl'
 import { alea } from 'seedrandom'
-import { InputFlag } from '../../InputFlag.js'
 import { Area } from './Area.js'
+import { t } from '../../I18n.js'
 import { timeToRaceString, timeToReadableString } from '../../utilities/time.js'
 
 export class CircuitArea extends Area
@@ -582,7 +582,7 @@ export class CircuitArea extends Area
     {
         this.interactivePoint = this.game.interactivePoints.create(
             this.references.items.get('interactivePoint')[0].position,
-            'Start race!',
+            t('Start race!', 'Départ course !'),
             InteractivePoints.ALIGN_RIGHT,
             InteractivePoints.STATE_CONCEALED,
             () =>
@@ -851,9 +851,6 @@ export class CircuitArea extends Area
         ]
         const interline = resolution / 12
 
-        const loadedFlags = new Map()
-        const flagsWidth = 54
-        const flagsHeight = 36
         this.leaderboard.update = (scores = null) =>
         {
             const draw = () =>
@@ -861,21 +858,13 @@ export class CircuitArea extends Area
                 // Clear
                 context.clearRect(0, 0, canvas.width, canvas.height)
 
-                if(scores === null)
-                {
-                    context.font = font
-                    context.fillStyle = '#ff87a2'
-                    context.textBaseline = 'middle'
-                    context.textAlign = 'center'
-                    context.fillText('OFFLINE', resolution * 0.5, resolution * 0.5)
-                }
-                else if(scores.length === 0)
+                if(scores === null || scores.length === 0)
                 {
                     context.font = font
                     context.fillStyle = '#ffffff'
                     context.textBaseline = 'middle'
                     context.textAlign = 'center'
-                    context.fillText('NO SCORE YET TODAY', resolution * 0.5, resolution * 0.5)
+                    context.fillText(t('NO SCORE YET', 'AUCUN TEMPS'), resolution * 0.5, resolution * 0.5)
                 }
                 else
                 {
@@ -889,17 +878,6 @@ export class CircuitArea extends Area
                         context.textAlign = columsSettings[0].align
                         context.fillText(rank, columsSettings[0].x, (rank + 0.5) * interline)
 
-                        const image = loadedFlags.get(score[1])
-
-                        if(image)
-                            context.drawImage(
-                                image,
-                                columsSettings[1].x,
-                                (rank + 0.4) * interline - flagsHeight / 2,
-                                flagsWidth,
-                                flagsHeight
-                            )
-
                         context.textAlign = columsSettings[2].align
                         context.fillText(score[0], columsSettings[2].x, (rank + 0.5) * interline)
 
@@ -911,14 +889,6 @@ export class CircuitArea extends Area
                 }
                 textTexture.needsUpdate = true
             }
-            const testFlagsLoaded = () =>
-            {
-                if(flagsToLoad === 0)
-                    draw()
-            }
-
-            let flagsToLoad = 0
-
             this.leaderboard.maxTime = 0
             this.leaderboard.scores = scores
 
@@ -926,39 +896,15 @@ export class CircuitArea extends Area
             {
                 for(const score of scores)
                 {
-                    const countryCode = score[1]
-                    if(countryCode)
-                    {                    
-                        const country = this.menu.inputFlag.countries.get(countryCode)
-
-                        if(country)
-                        {
-                            if(!loadedFlags.has(countryCode))
-                            {
-                                const image = new Image()
-                                image.onload = () =>
-                                {
-                                    flagsToLoad--
-                                    testFlagsLoaded()
-                                }
-                                image.src = country.imageUrl
-
-                                loadedFlags.set(countryCode, image)
-
-                                flagsToLoad++
-                            }
-                        }
-                    }
-
                     if(score[2] > this.leaderboard.maxTime)
                         this.leaderboard.maxTime = score[2]
                 }
             }
 
-            testFlagsLoaded()
+            draw()
         }
 
-        this.leaderboard.update(null)
+        this.leaderboard.update([])
         // this.leaderboard.update([
         //     [ 'BRU', '00:25:150' ],
         //     [ 'TTU', '00:27:153' ],
@@ -975,14 +921,8 @@ export class CircuitArea extends Area
 
     setResetTime()
     {
-        this.resetTime = {}
-        this.resetTime.isActive = false
-        this.resetTime.interval = null
-        this.resetTime.resetTime = null
-        this.resetTime.lastTimeToReset = null
-        this.resetTime.finalFormatedTime = null
-        this.resetTime.lastTimeDrawn = null
-
+        // L'ancien compte à rebours de remise à zéro quotidienne (serveur) est
+        // devenu une étiquette fixe : les temps sont locaux et permanents
         const width = 128
         const height = 32
 
@@ -990,11 +930,6 @@ export class CircuitArea extends Area
         const font = `700 ${height / 1.75}px "Nunito"`
 
         const canvas = document.createElement('canvas')
-        canvas.style.position = 'fixed'
-        canvas.style.zIndex = 999
-        canvas.style.top = 0
-        canvas.style.left = 0
-        // document.body.append(canvas)
 
         const context = canvas.getContext('2d')
         context.font = font
@@ -1032,63 +967,14 @@ export class CircuitArea extends Area
         const mesh = this.references.items.get('leaderboardReset')[0]
         mesh.material = material
 
-        this.resetTime.activate = (resetTime = 0) =>
-        {
-            this.resetTime.isActive = true
-            this.resetTime.resetTime = resetTime
-
-            this.resetTime.interval = setInterval(this.resetTime.tryDraw, 1000)
-            this.resetTime.tryDraw()
-        }
-
-        this.resetTime.deactivate = () =>
-        {
-            this.resetTime.isActive = true
-            this.resetTime.lastTimeDrawn = null
-            clearInterval(this.resetTime.interval)
-            this.resetTime.draw(null)
-        }
-
-        const dayDuration = 24 * 60 * 60 * 1000
-
-        this.resetTime.tryDraw = () =>
-        {
-            const timeToReset = dayDuration - (Date.now() - this.resetTime.resetTime) % dayDuration
-
-            const formatedTime = timeToReadableString(timeToReset / 1000, true, true, false)
-
-            if(formatedTime !== this.resetTime.lastTimeDrawn)
-            {
-                this.resetTime.lastTimeDrawn = formatedTime
-
-                this.resetTime.finalFormatedTime = formatedTime === '' ? 'now' : `in ${formatedTime}`
-                this.resetTime.draw(this.resetTime.finalFormatedTime)
-
-                if(this.menu.instance.isOpen)
-                    this.menu.resetTimeElement.textContent = this.resetTime.finalFormatedTime
-            }
-
-            this.resetTime.lastTimeToReset = timeToReset
-        }
-
-        this.resetTime.draw = (text = null) =>
-        {
-            // Clear
-            context.fillStyle = '#000000'
-            context.fillRect(0, 0, canvas.width, canvas.height)
-
-            // Draw text
-            if(text !== null)
-            {
-                context.fillStyle = '#ffffff'
-                context.textAlign = 'center'
-                context.textBaseline = 'middle'
-                context.font = font
-                context.fillText(text, canvas.width * 0.5, canvas.height * 0.5)
-            }
-
-            textTexture.needsUpdate = true
-        }
+        context.fillStyle = '#000000'
+        context.fillRect(0, 0, canvas.width, canvas.height)
+        context.fillStyle = '#ffffff'
+        context.textAlign = 'center'
+        context.textBaseline = 'middle'
+        context.font = font
+        context.fillText(t('BEST TIMES', 'MEILLEURS TEMPS'), canvas.width * 0.5, canvas.height * 0.5)
+        textTexture.needsUpdate = true
     }
 
     setPodium()
@@ -1147,7 +1033,6 @@ export class CircuitArea extends Area
     {
         this.menu = {}
         this.menu.instance = this.game.menu.items.get('circuit')
-        this.menu.resetTimeElement = this.menu.instance.contentElement.querySelector('.js-reset-time')
         this.menu.leaderboardContainerElement = this.menu.instance.contentElement.querySelector('.js-leaderboard-container')
         this.menu.leaderboardElement = this.menu.leaderboardContainerElement.querySelector('.js-leaderboard tbody')
         this.menu.racingButtons = this.menu.instance.contentElement.querySelector('.js-racing-buttons')
@@ -1170,21 +1055,17 @@ export class CircuitArea extends Area
             // Menu open => Update content
             else
             {
+                if(!scores)
+                    scores = []
+
                 let html = ''
                 let rank = 1
                 
                 for(const score of scores)
                 {
-                    let flag = ''
-                    const country = this.menu.inputFlag.countries.get(score[1])
-
-                    if(country)
-                        flag = /* html */`<img width="27" height="18" src="${country.imageUrl}" loading="lazy">`
-
                     html += /* html */`
                         <tr>
                             <td>${rank}</td>
-                            <td>${flag}</td>
                             <td>${score[0]}</td>
                             <td>${timeToRaceString(score[2] / 1000)}</td>
                         </tr>
@@ -1235,12 +1116,6 @@ export class CircuitArea extends Area
             this.game.menu.open('controls')
         })
 
-        // Reset time
-        this.menu.instance.events.on('open', () =>
-        {
-            if(this.resetTime.finalFormatedTime)
-                this.menu.resetTimeElement.textContent = this.resetTime.finalFormatedTime
-        })
     }
 
     setEndModal()
@@ -1284,16 +1159,12 @@ export class CircuitArea extends Area
         {
             const sanatized = sanatize(this.menu.input.value, true, true, true, true)
             
-            if(sanatized.length === 3 && this.game.server.connected)
+            if(sanatized.length === 3)
             {
-                // Insert
-                this.game.server.send({
-                    type: 'circuitInsert',
-                    countryCode: this.menu.inputFlag.country ? this.menu.inputFlag.country.code : '',
-                    tag: sanatized,
-                    duration: Math.round(this.timer.elapsedTime * 1000),
-                    checkpointTimings: this.checkpoints.timings
-                })
+                // Enregistrement local
+                const scores = this.data.insert(sanatized, Math.round(this.timer.elapsedTime * 1000))
+                this.leaderboard.update(scores)
+                this.menu.updateLeaderboard(scores)
 
                 // Achievement
                 this.game.achievements.setProgress('circuitLeaderboard', 1)
@@ -1305,7 +1176,7 @@ export class CircuitArea extends Area
 
         const updateGroup = () =>
         {
-            if(this.menu.input.value.length === 3 && this.game.server.connected)
+            if(this.menu.input.value.length === 3)
                 this.menu.inputGroup.classList.add('is-valide')
             else
                 this.menu.inputGroup.classList.remove('is-valide')
@@ -1329,23 +1200,7 @@ export class CircuitArea extends Area
         {
             this.menu.input.value = ''
             updateGroup()
-            this.menu.inputFlag.close()
         })
-            
-        this.game.server.events.on('connected', () =>
-        {
-            updateGroup()
-        })
-
-        this.game.server.events.on('disconnected', () =>
-        {
-            updateGroup()
-        })
-
-        /**
-         * Flag
-         */
-        this.menu.inputFlag = new InputFlag(this.menu.inputGroup.querySelector('.js-input-flag'))
     }
 
     restart()
@@ -1465,38 +1320,41 @@ export class CircuitArea extends Area
 
     setData()
     {
-        // Server message event
-        this.game.server.events.on('message', (data) =>
-        {
-            // Init and insert
-            if(data.type === 'init')
-            {
-                this.resetTime.activate(data.circuitResetTime)
-                this.leaderboard.update(data.circuitLeaderboard)
-                this.menu.updateLeaderboard(data.circuitLeaderboard)
-            }
-            else if(data.type === 'circuitUpdate')
-            {
-                this.leaderboard.update(data.circuitLeaderboard)
-                this.menu.updateLeaderboard(data.circuitLeaderboard)
-            }
-        })
+        // Meilleurs temps locaux et persistants (format [tag, '', durée en ms],
+        // le deuxième champ est l'ancien code pays, gardé vide par compatibilité)
+        this.data = {}
+        this.data.storageKey = 'circuitScores'
+        this.data.maxCount = 10
 
-        // Server disconnected
-        this.game.server.events.on('disconnected', () =>
+        this.data.get = () =>
         {
-            this.resetTime.deactivate()
-            this.leaderboard.update(null)
-            this.menu.updateLeaderboard(null)
-        })
+            try
+            {
+                const scores = JSON.parse(localStorage.getItem(this.data.storageKey))
 
-        // Message already received
-        if(this.game.server.initData)
-        {
-            this.resetTime.activate(this.game.server.initData.circuitResetTime)
-            this.leaderboard.update(this.game.server.initData.circuitLeaderboard)
-            this.menu.updateLeaderboard(this.game.server.initData.circuitLeaderboard)
+                if(Array.isArray(scores))
+                    return scores.filter((score) => Array.isArray(score) && typeof score[0] === 'string' && typeof score[2] === 'number')
+            }
+            catch(error) {}
+
+            return []
         }
+
+        this.data.insert = (tag, duration) =>
+        {
+            const scores = this.data.get()
+            scores.push([ tag, '', duration ])
+            scores.sort((a, b) => a[2] - b[2])
+
+            const bestScores = scores.slice(0, this.data.maxCount)
+            localStorage.setItem(this.data.storageKey, JSON.stringify(bestScores))
+
+            return bestScores
+        }
+
+        const scores = this.data.get()
+        this.leaderboard.update(scores)
+        this.menu.updateLeaderboard(scores)
     }
 
     setAchievement()
@@ -1602,8 +1460,8 @@ export class CircuitArea extends Area
                     })
                 }
 
-                // Circuit en modal (if server connected)
-                if(this.game.server.connected && !forced)
+                // Circuit en modal (enregistrement local du temps)
+                if(!forced)
                 {
                     gsap.delayedCall(1, () =>
                     {

@@ -1,232 +1,223 @@
 import labData from './lab.js'
 import projectsData from './projects.js'
 
+// [ groupe, titre, description, total, unique ]
+// titre/description : { en, fr } — résolus par I18n.pick dans Achievements.js
+
 export default
 [
     [
         'landingLeave',
-        'I’m going on an adventure!',
-        'Get out of the landing area.',
+        { en: 'I’m going on an adventure!', fr: 'Je pars à l’aventure !' },
+        { en: 'Get out of the landing area.', fr: 'Sors de la zone d’arrivée.' },
         1
     ],
     [
         'areas',
-        'Traveler',
-        'Vist every area.',
+        { en: 'Traveler', fr: 'Grand voyageur' },
+        { en: 'Vist every area.', fr: 'Visite toutes les zones.' },
         13,
         true // Unique
     ],
     [
         'projects',
-        'But can you fix the wifi?',
-        'Check every project in the <strong>projects</strong> area.',
+        { en: 'But can you fix the wifi?', fr: 'Mais tu sais réparer le wifi ?' },
+        { en: 'Check every project in the <strong>projects</strong> area.', fr: 'Regarde chaque projet de la zone <strong>projets</strong>.' },
         projectsData.length,
         true // Unique
     ],
     [
         'lab',
-        'I\'m a bit of a scientist myself',
-        'Check every project in the <strong>lab</strong> area.',
+        { en: 'I\'m a bit of a scientist myself', fr: 'Un peu scientifique moi-même' },
+        { en: 'Check every project in the <strong>lab</strong> area.', fr: 'Regarde chaque expérience du <strong>labo</strong>.' },
         labData.length,
         true // Unique
     ],
     [
         'cookie',
-        'Wake & bake',
-        'Accept <strong>1</strong> cookies.',
+        { en: 'Wake & bake', fr: 'Premier de la fournée' },
+        { en: 'Accept <strong>1</strong> cookies.', fr: 'Accepte <strong>1</strong> cookie.' },
         1
     ],
     [
         'cookie',
-        'Making some dough',
-        'Accept <strong>10</strong> cookies.',
+        { en: 'Making some dough', fr: 'La pâte monte' },
+        { en: 'Accept <strong>10</strong> cookies.', fr: 'Accepte <strong>10</strong> cookies.' },
         10
     ],
     [
         'cookie',
-        'So baked right now',
-        'Accept <strong>100</strong> cookies.',
+        { en: 'So baked right now', fr: 'Bien cuit' },
+        { en: 'Accept <strong>100</strong> cookies.', fr: 'Accepte <strong>100</strong> cookies.' },
         100
     ],
     [
         'cookie',
-        'Cookie Clicker',
-        'Accept <strong>1000</strong> cookies.',
+        { en: 'Cookie Clicker', fr: 'Cookie Clicker' },
+        { en: 'Accept <strong>1000</strong> cookies.', fr: 'Accepte <strong>1000</strong> cookies.' },
         1000
     ],
     [
-        'whisper',
-        'It\'s About Sending A Message',
-        'Post a whisper.',
-        1
-    ],
-    [
         'sea',
-        'Under the sea',
-        'Go make friend with the fishes.',
+        { en: 'Under the sea', fr: 'Sous l’océan' },
+        { en: 'Go make friend with the fishes.', fr: 'Va te faire des amis chez les poissons.' },
         1
     ],
     [
         'upsideDown',
-        'Turtle',
-        'Get upside down.',
+        { en: 'Turtle', fr: 'Tortue' },
+        { en: 'Get upside down.', fr: 'Retrouve-toi sur le toit.' },
         1
     ],
     [
         'frontFlip',
-        'Teeth first',
-        'Do a front flip and land on your 4 wheels.',
+        { en: 'Teeth first', fr: 'Les dents d’abord' },
+        { en: 'Do a front flip and land on your 4 wheels.', fr: 'Fais un front flip et retombe sur tes 4 roues.' },
         1
     ],
     [
         'backFlip',
-        'Flip of faith',
-        'Do a back flip and land on your 4 wheels.',
+        { en: 'Flip of faith', fr: 'Salto de la foi' },
+        { en: 'Do a back flip and land on your 4 wheels.', fr: 'Fais un back flip et retombe sur tes 4 roues.' },
         1
     ],
     [
         'suspensions',
-        'Lowrider',
-        'Use the vehicle suspensions.',
+        { en: 'Lowrider', fr: 'Lowrider' },
+        { en: 'Use the vehicle suspensions.', fr: 'Utilise les suspensions du véhicule.' },
         4
     ],
     [
         'honk',
-        'Honk',
-        'Honk me like one of your french driver.',
+        { en: 'Honk', fr: 'Tût tût' },
+        { en: 'Honk me like one of your french driver.', fr: 'Klaxonne comme un vrai conducteur français.' },
         10
     ],
     [
         'explosiveCrates',
-        'Great Explosion Murder God Dynamight',
-        'Blow up every explosive crate.',
+        { en: 'Great Explosion Murder God Dynamight', fr: 'Great Explosion Murder God Dynamight' },
+        { en: 'Blow up every explosive crate.', fr: 'Fais exploser toutes les caisses explosives.' },
         20,
         true // Unique
     ],
     [
         'goHigh',
-        'Limit the sky',
-        'Reach <strong>15 meters</strong> high.',
+        { en: 'Limit the sky', fr: 'Le ciel pour limite' },
+        { en: 'Reach <strong>15 meters</strong> high.', fr: 'Atteins <strong>15 mètres</strong> de haut.' },
         15
     ],
     [
         'strike',
-        'F*** it, dude. Let\'s go bowling',
-        'Accomplished a strike.',
+        { en: 'F*** it, dude. Let\'s go bowling', fr: 'Allez, on va au bowling' },
+        { en: 'Accomplished a strike.', fr: 'Réussis un strike.' },
         1
     ],
     [
         'toiletDown',
-        'Do not disturb',
-        'Knock down the latrine.',
+        { en: 'Do not disturb', fr: 'Ne pas déranger' },
+        { en: 'Knock down the latrine.', fr: 'Renverse les latrines.' },
         1
     ],
     [
         'circuitFinish',
-        'Participation medal',
-        'Finish a race.',
+        { en: 'Participation medal', fr: 'Médaille de participation' },
+        { en: 'Finish a race.', fr: 'Termine une course.' },
         1
     ],
     [
         'circuitFinishFast',
-        'KA-CHOW!',
-        'Finish a race in less than <strong>30s</strong>.',
+        { en: 'KA-CHOW!', fr: 'KATCHAO !' },
+        { en: 'Finish a race in less than <strong>30s</strong>.', fr: 'Termine une course en moins de <strong>30 s</strong>.' },
         1
     ],
     [
         'circuitLeaderboard',
-        'Early Bird gets the Worm',
-        'Make it to the leaderboard.',
+        { en: 'For the record', fr: 'Pour la postérité' },
+        { en: 'Save a time on the leaderboard.', fr: 'Enregistre un temps au classement.' },
         1
     ],
     [
         'fullDay',
-        'Don’t you have work to do?',
-        'Spend a full day cycle here in one go.',
+        { en: 'Don’t you have work to do?', fr: 'Tu n’as pas du travail, toi ?' },
+        { en: 'Spend a full day cycle here in one go.', fr: 'Passe un cycle jour/nuit entier d’une traite.' },
         1
     ],
     [
         'distanceDriven',
-        'Baby step',
-        'Drive 1km.',
+        { en: 'Baby step', fr: 'Premiers tours de roue' },
+        { en: 'Drive 1km.', fr: 'Roule 1 km.' },
         1
     ],
     [
         'distanceDriven',
-        'Are we there yet?',
-        'Drive 10km.',
+        { en: 'Are we there yet?', fr: 'On est bientôt arrivés ?' },
+        { en: 'Drive 10km.', fr: 'Roule 10 km.' },
         10
     ],
     [
         'distanceDriven',
-        'Honey, I’m home!',
-        'Drive 100km.',
+        { en: 'Honey, I’m home!', fr: 'Chérie, je suis rentré !' },
+        { en: 'Drive 100km.', fr: 'Roule 100 km.' },
         100
     ],
     [
         'sacrifice',
-        'One for the god of Chaos',
-        'Sacrifice yourself into the altar.',
-        1
-    ],
-    [
-        'cataclysm',
-        'Witness me!',
-        'Witness a cataclysm',
+        { en: 'One for the god of Chaos', fr: 'Un pour le dieu du Chaos' },
+        { en: 'Sacrifice yourself into the altar.', fr: 'Sacrifie-toi dans l’autel.' },
         1
     ],
     [
         'weatherSnow',
-        'Do you want to build a snowman?',
-        'Witness snowy weather.',
+        { en: 'Do you want to build a snowman?', fr: 'Je voudrais un bonhomme de neige' },
+        { en: 'Witness snowy weather.', fr: 'Assiste à une chute de neige.' },
         1
     ],
     [
         'weatherRain',
-        'I’m singing in the rain',
-        'Witness a rainy weather.',
+        { en: 'I’m singing in the rain', fr: 'Singin’ in the rain' },
+        { en: 'Witness a rainy weather.', fr: 'Assiste à une averse.' },
         1
     ],
     [
         'lightning',
-        '1.21 Gigawatts!',
-        'Get hit by a lightning.',
+        { en: '1.21 Gigawatts!', fr: '2,21 gigowatts !' },
+        { en: 'Get hit by a lightning.', fr: 'Fais-toi frapper par la foudre.' },
         1
     ],
     [
         'waterfall',
-        'Gamer instinct',
-        'What did you expect? A treasure?',
+        { en: 'Gamer instinct', fr: 'Instinct de gamer' },
+        { en: 'What did you expect? A treasure?', fr: 'Tu t’attendais à quoi ? Un trésor ?' },
         1
     ],
     [
         'reset',
-        'Clean your room',
-        'Put back everything as it was.',
+        { en: 'Clean your room', fr: 'Range ta chambre' },
+        { en: 'Put back everything as it was.', fr: 'Remets tout comme c’était.' },
         1
     ],
     [
         'statueDown',
-        'Revolution!',
-        'Tear that statue down.',
+        { en: 'Revolution!', fr: 'Révolution !' },
+        { en: 'Tear that statue down.', fr: 'Fais tomber cette statue.' },
         1
     ],
     [
         'konami',
-        'Up up down down…',
-        'You know the rest.',
+        { en: 'Up up down down…', fr: 'Haut haut bas bas…' },
+        { en: 'You know the rest.', fr: 'Tu connais la suite.' },
         1
     ],
     [
         'debug',
-        'It\'s not a bug, it\'s a feature',
-        'Access the debug UI.',
+        { en: 'It\'s not a bug, it\'s a feature', fr: 'C’est pas un bug, c’est une feature' },
+        { en: 'Access the debug UI.', fr: 'Ouvre l’interface de debug.' },
         1
     ],
     [
         'hacker',
-        'Hacker',
-        'This one can’t be achieved.',
+        { en: 'Hacker', fr: 'Hacker' },
+        { en: 'This one can’t be achieved.', fr: 'Celui-ci ne peut pas être obtenu.' },
         1
     ],
 ]

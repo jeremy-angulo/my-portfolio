@@ -3,6 +3,7 @@ import { add, color, cos, float, Fn, instancedArray, instancedBufferAttribute, i
 import { InteractivePoints } from '../../InteractivePoints.js'
 import { MeshDefaultMaterial } from '../../Materials/MeshDefaultMaterial.js'
 import { Area } from './Area.js'
+import { t } from '../../I18n.js'
 import { alea } from 'seedrandom'
 
 const rng = new alea('achievements')
@@ -291,7 +292,7 @@ export class AchievementsArea extends Area
     {
         this.interactivePoint = this.game.interactivePoints.create(
             this.references.items.get('interactivePoint')[0].position,
-            'Achievements',
+            t('Achievements', 'Succès'),
             InteractivePoints.ALIGN_RIGHT,
             InteractivePoints.STATE_CONCEALED,
             () =>

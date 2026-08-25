@@ -4,6 +4,7 @@ import { Game } from './Game.js'
 import { timeToReadableString } from './utilities/time.js'
 import { uniform } from 'three/tsl'
 import { Events } from './Events.js'
+import { pick, t } from './I18n.js'
 
 export class Achievements
 {
@@ -395,8 +396,10 @@ export class Achievements
     {
         const itemsElement = this.menu.instance.contentElement.querySelector('.js-items')
 
-        for(const [ name, title, description, total ] of achievementsData)
+        for(const [ name, rawTitle, rawDescription, total ] of achievementsData)
         {
+            const title = pick(rawTitle)
+            const description = pick(rawDescription)
             const achievement = {
                 total,
                 achieved: false
@@ -521,17 +524,17 @@ export class Achievements
 
             if(clickCount === 1)
             {
-                button.textContent = 'Are you sure?'
+                button.textContent = t('Are you sure?', 'Sûr ?')
             }
 
             else if(clickCount === 2)
             {
-                button.textContent = 'Definitely?'
+                button.textContent = t('Definitely?', 'Vraiment ?')
             }
 
             else if(clickCount === 3)
             {
-                button.textContent = 'Done!'
+                button.textContent = t('Done!', 'C’est fait !')
                 clickCount = 0
                 this.reset()
             }
@@ -542,7 +545,7 @@ export class Achievements
             event.preventDefault()
             clickCount = 0
 
-            button.textContent = 'Reset achievements'
+            button.textContent = t('Reset achievements', 'Réinitialiser les succès')
         })
     }
 
@@ -602,9 +605,6 @@ export class Achievements
         {
             debugAchievement.setProgress(1)
         }
-
-        if(this.game.tornado)
-            this.game.tornado.achievementAchieved = false
 
         if(this.game.world.rainLines)
             this.game.world.rainLines.achievementAchieved = false

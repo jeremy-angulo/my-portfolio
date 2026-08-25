@@ -24,13 +24,11 @@ import { Wind } from './Wind.js'
 import { Terrain } from './Terrain.js'
 import { Explosions } from './Explosions.js'
 import { YearCycles } from './Cycles/YearCycles.js'
-import { Server } from './Server.js'
 import { Modals } from './Modals.js'
 import { PhysicsVehicle } from './Physics/PhysicsVehicle.js'
 import { PhysicsWireframe } from './Physics/PhysicsWireframe.js'
 import { Zones } from './Zones.js'
 import { Overlay } from './Overlay.js'
-import { Tornado } from './Tornado.js'
 import { InteractivePoints } from './InteractivePoints.js'
 import { Respawns } from './Respawns.js'
 import { Audio } from './Audio.js'
@@ -79,7 +77,6 @@ export class Game
         this.debug = new Debug()
         this.resourcesLoader = new ResourcesLoader()
         this.quality = new Quality()
-        this.server = new Server()
         this.ticker = new Ticker()
         this.time = new Time()
         this.dayCycles = new DayCycles()
@@ -154,9 +151,7 @@ export class Game
                 [ 'sceneryModel',                          `scenery/scenery${compressedModelSuffix}.glb${cb}`,                                   'gltf' ],
                 [ 'areasModel',                            `areas/areas${compressedModelSuffix}.glb${cb}`,                                       'gltf' ],
                 [ 'poleLightsModel',                       `poleLights/poleLights${compressedModelSuffix}.glb${cb}`,                             'gltf' ],
-                [ 'whisperFlameTexture',                   `whispers/whisperFlame.${compressedTextureExtension}${cb}`,                           compressedTextureFormat, (resource) => { resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false } ],
                 [ 'satanStarTexture',                      `areas/satanStar.${compressedTextureExtension}${cb}`,                                 compressedTextureFormat, (resource) => { resource.minFilter = THREE.LinearFilter; resource.magFilter = THREE.LinearFilter; resource.generateMipmaps = false } ],
-                [ 'tornadoPathReferencesModel',            `tornado/tornadoPathReferences${compressedModelSuffix}.glb${cb}`,                     'gltf' ],
                 [ 'overlayPatternTexture',                 `overlay/overlayPattern.${compressedTextureExtension}${cb}`,                          compressedTextureFormat, (resource) => { resource.wrapS = THREE.RepeatWrapping; resource.wrapT = THREE.RepeatWrapping; resource.magFilter = THREE.NearestFilter; resource.minFilter = THREE.NearestFilter; resource.generateMipmaps = false } ],
                 [ 'interactivePointsKeyIconCrossTexture',  `interactivePoints/interactivePointsKeyIconCross.${compressedTextureExtension}${cb}`, compressedTextureFormat, (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false } ],
                 [ 'interactivePointsKeyIconEnterTexture',  `interactivePoints/interactivePointsKeyIconEnter.${compressedTextureExtension}${cb}`, compressedTextureFormat, (resource) => { resource.minFilter = THREE.NearestFilter; resource.magFilter = THREE.NearestFilter; resource.generateMipmaps = false } ],
@@ -191,7 +186,6 @@ export class Game
         this.interactivePoints = new InteractivePoints()
         this.konamiCode = new KonamiCode()
         this.achievements = new Achievements()
-        this.tornado = new Tornado()
         this.map = new Map()
         this.title = new Title()
         // this.monitoring = new Monitoring()
@@ -241,11 +235,15 @@ export class Game
             if(this.world.areas.toilet)
                 this.world.areas.toilet.cabin.down = false
 
-            // Social
+            // Social (les fans n'existent plus depuis le retrait du gag OnlyFans :
+            // un accès non gardé ici bloquait l'overlay en plein fondu)
             if(this.world.areas.social)
             {
-                this.world.areas.social.statue.down = false
-                this.world.areas.social.fans.instancedGroup.needsUpdate = true
+                if(this.world.areas.social.statue)
+                    this.world.areas.social.statue.down = false
+
+                if(this.world.areas.social.fans)
+                    this.world.areas.social.fans.instancedGroup.needsUpdate = true
             }
             
             // Benches

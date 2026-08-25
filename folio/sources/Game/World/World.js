@@ -10,9 +10,7 @@ import { WindLines } from './WindLines.js'
 import { Leaves } from './Leaves.js'
 import { Lightnings } from './Lightnings.js'
 import { Snow } from './Snow.js'
-import { Whispers } from './Whispers.js'
 import { VisualVehicle } from './VisualVehicle.js'
-import { VisualTornado } from './VisualTornado.js'
 import { Flowers } from './Flowers.js'
 import { Bricks } from './Bricks.js'
 import { Trees } from './Trees.js'
@@ -64,7 +62,6 @@ export class World
             this.lightnings = new Lightnings()
             this.fireballs = new Fireballs()
             this.snow = new Snow()
-            this.visualTornado = new VisualTornado()
             this.bushes = new Bushes()
             this.birchTrees = new Trees('Birch Tree', this.game.resources.birchTreesVisualModel.scene, this.game.resources.birchTreesReferencesModel.scene.children, '#ff4f2b', '#ff903f')
             this.oakTrees = new Trees('Oak Tree', this.game.resources.oakTreesVisualModel.scene, this.game.resources.oakTreesReferencesModel.scene.children, '#b4b536', '#d8cf3b')
@@ -81,7 +78,7 @@ export class World
         }
         else if(step === 2)
         {
-            this.whispers = new Whispers()
+            // Plus rien à instancier ici depuis le retrait des whispers
         }
     }
 

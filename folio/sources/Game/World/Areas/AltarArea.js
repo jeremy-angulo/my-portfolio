@@ -35,15 +35,6 @@ export class AltarArea extends Area
         this.setData()
         this.setAchievement()
 
-        // Offline counter
-        if(!this.game.server.connected)
-            this.updateText('...')
-            
-        this.game.server.events.on('disconnected', () =>
-        {
-            this.updateText('...')
-        })
-
         // Debug
         if(this.game.debug.active)
         {
@@ -402,7 +393,6 @@ export class AltarArea extends Area
                 this.animateBeam()
                 this.animateBeamParticles()
                 this.data.insert()
-                this.updateText(this.value + 1)
                 this.game.player.die()
                 this.sounds.deathBell2.play()
                 gsap.delayedCall(2.2, () =>
@@ -416,32 +406,30 @@ export class AltarArea extends Area
 
     setData()
     {
+        // Compteur de sacrifices local et persistant (le rituel collectif
+        // en ligne a disparu avec le serveur)
         this.data = {}
-        
+        this.data.storageKey = 'altarSacrifices'
+
+        this.data.get = () =>
+        {
+            const raw = parseInt(localStorage.getItem(this.data.storageKey))
+            return isNaN(raw) ? 0 : raw
+        }
+
         this.data.insert = () =>
         {
-            this.game.server.send({
-                type: 'cataclysmInsert'
-            })
+            const count = this.data.get() + 1
+            localStorage.setItem(this.data.storageKey, count)
+
+            this.updateText(count)
+            this.progressUniform.value = (count % 10) / 10
         }
 
-        // Server message event
-        this.game.server.events.on('message', (data) =>
-        {
-            // Init and insert
-            if(data.type === 'init' || data.type === 'cataclysmUpdate')
-            {
-                this.updateText(data.cataclysmCount)
-                this.progressUniform.value = data.cataclysmProgress
-            }
-        })
-
-        // Init message already received
-        if(this.game.server.initData)
-        {
-            this.updateText(this.game.server.initData.cataclysmCount)
-            this.progressUniform.value = this.game.server.initData.cataclysmProgress
-        }
+        const count = this.data.get()
+        this.value = - 1 // Force le premier tracé, même pour 0
+        this.updateText(count)
+        this.progressUniform.value = (count % 10) / 10
     }
 
     updateText(value)

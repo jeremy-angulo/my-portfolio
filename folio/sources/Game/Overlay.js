@@ -119,7 +119,19 @@ export class Overlay
         gsap.to(this.progress, { value: 1, ease: 'power1.inOut', overwrite: true, duration: 2, onComplete: () =>
         {
             if(typeof callback === 'function')
-                callback()
+            {
+                // Un callback qui jette laisserait l'écran couvert pour toujours :
+                // on rend la main au joueur quoi qu'il arrive
+                try
+                {
+                    callback()
+                }
+                catch(error)
+                {
+                    console.error(error)
+                    this.hide()
+                }
+            }
         } })
     }
 
@@ -132,7 +144,16 @@ export class Overlay
             this.mesh.visible = false
 
             if(typeof callback === 'function')
-                callback()
+            {
+                try
+                {
+                    callback()
+                }
+                catch(error)
+                {
+                    console.error(error)
+                }
+            }
         } })
     }
 

@@ -4,6 +4,7 @@ import { PortalSlabsGeometry } from '../../Geometries/PortalSlabsGeometry.js'
 import { attribute, color, float, Fn, mix, PI, PI2, positionGeometry, screenCoordinate, sin, texture, uniform, varying, vec2, vec3, vec4, viewportCoordinate } from 'three/tsl'
 import { InteractivePoints } from '../../InteractivePoints.js'
 import { Area } from './Area.js'
+import { t } from '../../I18n.js'
 
 export class BehindTheSceneArea extends Area
 {
@@ -118,7 +119,7 @@ export class BehindTheSceneArea extends Area
     {
         this.interactivePoint = this.game.interactivePoints.create(
             this.references.items.get('interactivePoint')[0].position,
-            'Behind the scene',
+            t('Behind the scene', 'Coulisses'),
             InteractivePoints.ALIGN_RIGHT,
             InteractivePoints.STATE_CONCEALED,
             () =>
