@@ -89288,7 +89288,7 @@ https://github.com/browserify/crypto-browserify`);
       });
     }
     setLines() {
-      this.lines = {}, this.lines.items = [], this.lines.activeElevation = 2.5, this.lines.padding = 0.25;
+      this.lines = {}, this.lines.items = [], this.lines.activeElevation = 2.5, this.lines.padding = 0.25, this.lines.labelFade = 0.4;
       const e = this.references.items.get("line"), r = {
         blue: uniform$1(color$1("#5390ff")),
         orange: uniform$1(color$1("#ff8039")),
@@ -89297,7 +89297,7 @@ https://github.com/browserify/crypto-browserify`);
       };
       for (const o of e) {
         const a = {};
-        a.group = o, a.size = parseFloat(a.group.userData.size), a.hasEnd = a.group.userData.hasEnd, a.color = a.group.userData.color, a.texture = this.game.resources[`${a.group.userData.texture}Texture`], a.stone = a.group.children.find((h) => h.name.startsWith("stone")), a.stone.position.y = 0, a.origin = a.group.position.clone(), a.isIn = false, a.isUp = false, a.elevationTarget = 0, a.offsetTarget = 0, a.labelReveal = uniform$1(0);
+        a.group = o, a.size = parseFloat(a.group.userData.size), a.hasEnd = a.group.userData.hasEnd, a.color = a.group.userData.color, a.texture = this.game.resources[`${a.group.userData.texture}Texture`], a.stone = a.group.children.find((h) => h.name.startsWith("stone")), a.stone.position.y = 0, a.origin = a.group.position.clone(), a.isIn = false, a.isUp = false, a.labelShown = false, a.elevationTarget = 0, a.offsetTarget = 0, a.labelReveal = uniform$1(0);
         {
           a.textMesh = a.stone.children.find((d) => d.name.startsWith("careerText"));
           const h = new MeshLambertNodeMaterial({
@@ -89418,15 +89418,12 @@ https://github.com/browserify/crypto-browserify`);
     update() {
       for (const o of this.lines.items) {
         const a = o.origin.z - this.game.player.position.z;
-        a > -this.lines.padding && a < o.size + this.lines.padding * 2 ? o.isIn || (o.isIn = true, gsapWithCSS.to(o.labelReveal, {
-          value: 1,
+        a > -this.lines.padding && a < o.size + this.lines.padding * 2 ? o.isIn = true : o.isIn = false;
+        const h = o.isIn && !(o.hasEnd && a > o.size - this.lines.labelFade);
+        h !== o.labelShown && (o.labelShown = h, gsapWithCSS.to(o.labelReveal, {
+          value: h ? 1 : 0,
           duration: 1,
-          delay: 0.3,
-          overwrite: true,
-          ease: "power2.inOut"
-        })) : o.isIn && (o.isIn = false, gsapWithCSS.to(o.labelReveal, {
-          value: 0,
-          duration: 1,
+          delay: h ? 0.3 : 0,
           overwrite: true,
           ease: "power2.inOut"
         })), o.isIn ? o.isUp || (o.isUp = true, this.sounds.stoneOut.play(o)) : a > o.size ? o.hasEnd && o.isUp && (o.isUp = false, gsapWithCSS.delayedCall(0.3, () => {
@@ -105148,286 +105145,294 @@ ${e.tab}if ( ${m} ) {
       this.domElement = document.querySelector(".game"), this.canvasElement = this.domElement.querySelector(".js-canvas"), document.documentElement.classList.add("is-started"), this.scene = new Scene$1(), this.debug = new Debug(), this.resourcesLoader = new ResourcesLoader(), this.quality = new Quality(), this.ticker = new Ticker(), this.time = new Time(), this.dayCycles = new DayCycles(), this.yearCycles = new YearCycles(), this.inputs = new Inputs([], [
         "intro"
       ]), this.audio = new Audio$1(), this.notifications = new Notifications(), this.rayCursor = new RayCursor(), this.viewport = new Viewport(this.domElement), this.modals = new Modals(), this.menu = new Menu(), this.rendering = new Rendering(), await this.rendering.setRenderer();
-      const e = "", r = "texture", s = "png", o = "?cb=1";
+      const e = "", r = "texture", s = "png", o = lang === "fr" ? "-fr" : "", a = "?cb=1";
       this.resources = await this.resourcesLoader.load([
         [
           "respawnsReferencesModel",
-          `respawns/respawnsReferences${e}.glb${o}`,
+          `respawns/respawnsReferences${e}.glb${a}`,
           "gltf"
         ],
         [
           "behindTheSceneStarsTexture",
-          `behindTheScene/stars.${s}${o}`,
+          `behindTheScene/stars.${s}${a}`,
           r,
-          (p) => {
-            p.colorSpace = SRGBColorSpace$1, p.minFilter = NearestFilter$1, p.magFilter = NearestFilter$1, p.generateMipmaps = false, p.wrapS = RepeatWrapping$1, p.wrapT = RepeatWrapping$1;
+          (f) => {
+            f.colorSpace = SRGBColorSpace$1, f.minFilter = NearestFilter$1, f.magFilter = NearestFilter$1, f.generateMipmaps = false, f.wrapS = RepeatWrapping$1, f.wrapT = RepeatWrapping$1;
           }
         ],
         [
           "soundTexture",
-          `intro/sound.${s}${o}`,
+          `intro/sound.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = LinearFilter$1, p.magFilter = LinearFilter$1, p.generateMipmaps = false, p.repeat.x = 0.5;
+          (f) => {
+            f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false, f.repeat.x = 0.5;
           }
         ],
         [
           "paletteTexture",
-          `palette.${s}${o}`,
+          `palette.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = NearestFilter$1, p.magFilter = NearestFilter$1, p.generateMipmaps = false, p.colorSpace = SRGBColorSpace$1;
+          (f) => {
+            f.minFilter = NearestFilter$1, f.magFilter = NearestFilter$1, f.generateMipmaps = false, f.colorSpace = SRGBColorSpace$1;
           }
         ]
       ]), this.options = new Options(), this.respawns = new Respawns("landing"), this.view = new View(), this.rendering.setPostprocessing(), this.rendering.start(), this.reveal = new Reveal(), this.noises = new Noises(), this.weather = new Weather(), this.wind = new Wind(), this.tracks = new Tracks(), this.lighting = new Lighting(), this.fog = new Fog(), this.water = new Water(), this.materials = new Materials(), this.objects = new Objects(), this.explosions = new Explosions(), this.world = new World();
-      const a = __vitePreload(() => import("./rapier-BjfFYa-2.js").then(async (m) => {
+      const h = __vitePreload(() => import("./rapier-D87YpUa5.js").then(async (m) => {
         await m.__tla;
         return m;
-      }), [], import.meta.url), h = this.resourcesLoader.load([
+      }), [], import.meta.url), c = this.resourcesLoader.load([
         [
           "foliageTexture",
-          `foliage/foliageSDF.${s}${o}`,
+          `foliage/foliageSDF.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = NearestFilter$1, p.magFilter = NearestFilter$1, p.generateMipmaps = false;
+          (f) => {
+            f.minFilter = NearestFilter$1, f.magFilter = NearestFilter$1, f.generateMipmaps = false;
           }
         ],
         [
           "bushesReferences",
-          `bushes/bushesReferences${e}.glb${o}`,
+          `bushes/bushesReferences${e}.glb${a}`,
           "gltf"
         ],
         [
           "vehicle",
-          `vehicle/default${e}.glb${o}`,
+          `vehicle/default${e}.glb${a}`,
           "gltf"
         ],
         [
           "playgroundVisual",
-          `playground/playgroundVisual${e}.glb${o}`,
+          `playground/playgroundVisual${e}.glb${a}`,
           "gltf"
         ],
         [
           "playgroundPhysical",
-          `playground/playgroundPhysical${e}.glb${o}`,
+          `playground/playgroundPhysical${e}.glb${a}`,
           "gltf"
         ],
         [
           "flowersReferencesModel",
-          `flowers/flowersReferences${e}.glb${o}`,
+          `flowers/flowersReferences${e}.glb${a}`,
           "gltf"
         ],
         [
           "bricksModel",
-          `bricks/bricks${e}.glb${o}`,
+          `bricks/bricks${e}.glb${a}`,
           "gltf"
         ],
         [
           "fencesModel",
-          `fences/fences${e}.glb${o}`,
+          `fences/fences${e}.glb${a}`,
           "gltf"
         ],
         [
           "benchesModel",
-          `benches/benches${e}.glb${o}`,
+          `benches/benches${e}.glb${a}`,
           "gltf"
         ],
         [
           "explosiveCratesModel",
-          `explosiveCrates/explosiveCrates${e}.glb${o}`,
+          `explosiveCrates/explosiveCrates${e}.glb${a}`,
           "gltf"
         ],
         [
           "lanternsModel",
-          `lanterns/lanterns${e}.glb${o}`,
+          `lanterns/lanterns${e}.glb${a}`,
           "gltf"
         ],
         [
           "terrainTexture",
-          `terrain/terrain.${s}${o}`,
+          `terrain/terrain.${s}${a}`,
           r,
-          (p) => {
-            p.flipY = false;
+          (f) => {
+            f.flipY = false;
           }
         ],
         [
           "terrainModel",
-          `terrain/terrain${e}.glb${o}`,
+          `terrain/terrain${e}.glb${a}`,
           "gltf"
         ],
         [
           "floorSlabsTexture",
           `floor/slabs.${s}`,
           r,
-          (p) => {
-            p.wrapS = RepeatWrapping$1, p.wrapT = RepeatWrapping$1, p.minFilter = LinearFilter$1, p.magFilter = LinearFilter$1, p.generateMipmaps = false;
+          (f) => {
+            f.wrapS = RepeatWrapping$1, f.wrapT = RepeatWrapping$1, f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false;
           }
         ],
         [
           "birchTreesVisualModel",
-          `birchTrees/birchTreesVisual${e}.glb${o}`,
+          `birchTrees/birchTreesVisual${e}.glb${a}`,
           "gltf"
         ],
         [
           "birchTreesReferencesModel",
-          `birchTrees/birchTreesReferences${e}.glb${o}`,
+          `birchTrees/birchTreesReferences${e}.glb${a}`,
           "gltf"
         ],
         [
           "oakTreesVisualModel",
-          `oakTrees/oakTreesVisual${e}.glb${o}`,
+          `oakTrees/oakTreesVisual${e}.glb${a}`,
           "gltf"
         ],
         [
           "oakTreesReferencesModel",
-          `oakTrees/oakTreesReferences${e}.glb${o}`,
+          `oakTrees/oakTreesReferences${e}.glb${a}`,
           "gltf"
         ],
         [
           "cherryTreesVisualModel",
-          `cherryTrees/cherryTreesVisual${e}.glb${o}`,
+          `cherryTrees/cherryTreesVisual${e}.glb${a}`,
           "gltf"
         ],
         [
           "cherryTreesReferencesModel",
-          `cherryTrees/cherryTreesReferences${e}.glb${o}`,
+          `cherryTrees/cherryTreesReferences${e}.glb${a}`,
           "gltf"
         ],
         [
           "sceneryModel",
-          `scenery/scenery${e}.glb${o}`,
+          `scenery/scenery${e}.glb${a}`,
           "gltf"
         ],
         [
           "areasModel",
-          `areas/areas${e}.glb${o}`,
+          `areas/areas${e}.glb${a}`,
           "gltf"
         ],
         [
           "poleLightsModel",
-          `poleLights/poleLights${e}.glb${o}`,
+          `poleLights/poleLights${e}.glb${a}`,
           "gltf"
         ],
         [
           "satanStarTexture",
-          `areas/satanStar.${s}${o}`,
+          `areas/satanStar.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = LinearFilter$1, p.magFilter = LinearFilter$1, p.generateMipmaps = false;
+          (f) => {
+            f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false;
           }
         ],
         [
           "overlayPatternTexture",
-          `overlay/overlayPattern.${s}${o}`,
+          `overlay/overlayPattern.${s}${a}`,
           r,
-          (p) => {
-            p.wrapS = RepeatWrapping$1, p.wrapT = RepeatWrapping$1, p.magFilter = NearestFilter$1, p.minFilter = NearestFilter$1, p.generateMipmaps = false;
+          (f) => {
+            f.wrapS = RepeatWrapping$1, f.wrapT = RepeatWrapping$1, f.magFilter = NearestFilter$1, f.minFilter = NearestFilter$1, f.generateMipmaps = false;
           }
         ],
         [
           "interactivePointsKeyIconCrossTexture",
-          `interactivePoints/interactivePointsKeyIconCross.${s}${o}`,
+          `interactivePoints/interactivePointsKeyIconCross.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = NearestFilter$1, p.magFilter = NearestFilter$1, p.generateMipmaps = false;
+          (f) => {
+            f.minFilter = NearestFilter$1, f.magFilter = NearestFilter$1, f.generateMipmaps = false;
           }
         ],
         [
           "interactivePointsKeyIconEnterTexture",
-          `interactivePoints/interactivePointsKeyIconEnter.${s}${o}`,
+          `interactivePoints/interactivePointsKeyIconEnter.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = NearestFilter$1, p.magFilter = NearestFilter$1, p.generateMipmaps = false;
+          (f) => {
+            f.minFilter = NearestFilter$1, f.magFilter = NearestFilter$1, f.generateMipmaps = false;
           }
         ],
         [
           "interactivePointsKeyIconATexture",
-          `interactivePoints/interactivePointsKeyIconA.${s}${o}`,
+          `interactivePoints/interactivePointsKeyIconA.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = NearestFilter$1, p.magFilter = NearestFilter$1, p.generateMipmaps = false;
+          (f) => {
+            f.minFilter = NearestFilter$1, f.magFilter = NearestFilter$1, f.generateMipmaps = false;
           }
         ],
         [
           "jukeboxMusicNotes",
-          `jukebox/jukeboxMusicNotes.${s}${o}`,
+          `jukebox/jukeboxMusicNotes.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = LinearFilter$1, p.magFilter = LinearFilter$1, p.generateMipmaps = false;
+          (f) => {
+            f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false;
           }
         ],
         [
-          "achievementsGlyphsTexture",
-          `achievements/glyphs.${s}${o}`,
+          "careerSabatierTexture",
+          `career/careerSabatier${o}.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = LinearFilter$1, p.magFilter = LinearFilter$1, p.generateMipmaps = false, p.wrapS = RepeatWrapping$1;
-          }
-        ],
-        [
-          "careerUpsTexture",
-          `career/careerUps.${s}${o}`,
-          r,
-          (p) => {
-            p.flipY = false, p.minFilter = LinearFilter$1, p.magFilter = LinearFilter$1, p.generateMipmaps = false, p.wrapS = ClampToEdgeWrapping$1, p.wrapT = ClampToEdgeWrapping$1;
+          (f) => {
+            f.flipY = false, f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false, f.wrapS = ClampToEdgeWrapping$1, f.wrapT = ClampToEdgeWrapping$1;
           }
         ],
         [
           "careerEnseeihtTexture",
-          `career/careerEnseeiht.${s}${o}`,
+          `career/careerEnseeiht${o}.${s}${a}`,
           r,
-          (p) => {
-            p.flipY = false, p.minFilter = LinearFilter$1, p.magFilter = LinearFilter$1, p.generateMipmaps = false, p.wrapS = ClampToEdgeWrapping$1, p.wrapT = ClampToEdgeWrapping$1;
+          (f) => {
+            f.flipY = false, f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false, f.wrapS = ClampToEdgeWrapping$1, f.wrapT = ClampToEdgeWrapping$1;
           }
         ],
         [
           "careerN7Texture",
-          `career/careerN7.${s}${o}`,
+          `career/careerN7${o}.${s}${a}`,
           r,
-          (p) => {
-            p.flipY = false, p.minFilter = LinearFilter$1, p.magFilter = LinearFilter$1, p.generateMipmaps = false, p.wrapS = ClampToEdgeWrapping$1, p.wrapT = ClampToEdgeWrapping$1;
+          (f) => {
+            f.flipY = false, f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false, f.wrapS = ClampToEdgeWrapping$1, f.wrapT = ClampToEdgeWrapping$1;
           }
         ],
         [
           "careerLuleaTexture",
-          `career/careerLulea.${s}${o}`,
+          `career/careerLulea${o}.${s}${a}`,
           r,
-          (p) => {
-            p.flipY = false, p.minFilter = LinearFilter$1, p.magFilter = LinearFilter$1, p.generateMipmaps = false, p.wrapS = ClampToEdgeWrapping$1, p.wrapT = ClampToEdgeWrapping$1;
+          (f) => {
+            f.flipY = false, f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false, f.wrapS = ClampToEdgeWrapping$1, f.wrapT = ClampToEdgeWrapping$1;
           }
         ],
         [
-          "careerAltenTexture",
-          `career/careerAlten.${s}${o}`,
+          "careerAnalystTexture",
+          `career/careerAnalyst${o}.${s}${a}`,
           r,
-          (p) => {
-            p.flipY = false, p.minFilter = LinearFilter$1, p.magFilter = LinearFilter$1, p.generateMipmaps = false, p.wrapS = ClampToEdgeWrapping$1, p.wrapT = ClampToEdgeWrapping$1;
+          (f) => {
+            f.flipY = false, f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false, f.wrapS = ClampToEdgeWrapping$1, f.wrapT = ClampToEdgeWrapping$1;
+          }
+        ],
+        [
+          "careerManagerTexture",
+          `career/careerManager${o}.${s}${a}`,
+          r,
+          (f) => {
+            f.flipY = false, f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false, f.wrapS = ClampToEdgeWrapping$1, f.wrapT = ClampToEdgeWrapping$1;
+          }
+        ],
+        [
+          "achievementsGlyphsTexture",
+          `achievements/glyphs.${s}${a}`,
+          r,
+          (f) => {
+            f.minFilter = LinearFilter$1, f.magFilter = LinearFilter$1, f.generateMipmaps = false, f.wrapS = RepeatWrapping$1;
           }
         ],
         [
           "timeMachineScreenMGSTexture",
-          `timeMachine/timeMachineScreenMGS.${s}${o}`,
+          `timeMachine/timeMachineScreenMGS.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = NearestFilter$1, p.magFilter = NearestFilter$1, p.generateMipmaps = false, p.wrapS = ClampToEdgeWrapping$1, p.wrapT = ClampToEdgeWrapping$1, p.colorSpace = SRGBColorSpace$1;
+          (f) => {
+            f.minFilter = NearestFilter$1, f.magFilter = NearestFilter$1, f.generateMipmaps = false, f.wrapS = ClampToEdgeWrapping$1, f.wrapT = ClampToEdgeWrapping$1, f.colorSpace = SRGBColorSpace$1;
           }
         ],
         [
           "timeMachineScreenFolioTexture",
-          `timeMachine/timeMachineScreenFolio.${s}${o}`,
+          `timeMachine/timeMachineScreenFolio.${s}${a}`,
           r,
-          (p) => {
-            p.minFilter = NearestFilter$1, p.magFilter = NearestFilter$1, p.generateMipmaps = false, p.wrapS = ClampToEdgeWrapping$1, p.wrapT = ClampToEdgeWrapping$1, p.colorSpace = SRGBColorSpace$1;
+          (f) => {
+            f.minFilter = NearestFilter$1, f.magFilter = NearestFilter$1, f.generateMipmaps = false, f.wrapS = ClampToEdgeWrapping$1, f.wrapT = ClampToEdgeWrapping$1, f.colorSpace = SRGBColorSpace$1;
           }
         ]
-      ], (p, f) => {
-        this.world.intro.updateProgress(1 - p / f);
-      }), [c, d] = await Promise.all([
-        h,
-        a
+      ], (f, m) => {
+        this.world.intro.updateProgress(1 - f / m);
+      }), [d, p] = await Promise.all([
+        c,
+        h
       ]);
-      this.RAPIER = d, this.resources = {
-        ...c,
+      this.RAPIER = p, this.resources = {
+        ...d,
         ...this.resources
       }, this.terrain = new Terrain(), this.physics = new Physics(), this.wireframe = new PhysicsWireframe(), this.physicalVehicle = new PhysicsVehicle(), this.zones = new Zones(), this.player = new Player(), this.closingManager = new ClosingManager(), this.interactivePoints = new InteractivePoints(), this.konamiCode = new KonamiCode(), this.achievements = new Achievements(), this.map = new Map$1(), this.title = new Title(), this.world.step(1), this.overlay = new Overlay(), this.quality.level === 0 && this.rendering.renderer.backend.isWebGPUBackend && PreRenderer.render(), this.ticker.wait(3, () => {
         this.reveal.updateStep(0);

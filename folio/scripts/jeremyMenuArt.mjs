@@ -53,42 +53,19 @@ const fit = (text, cap, maxWidth) =>
 }
 
 /**
- * 1. Preview options : nuit du monde (fond #1d1721, croisillons violets)
+ * 1. Preview options : capture du monde fournie par Jérémy, recadrée au carré
+ *    sur la voiture et le nom (le panneau du menu la recadre encore en
+ *    object-fit: cover, d'où le carré plutôt qu'un panoramique)
  */
 {
-    const S = 600
+    const png = await sharp('jeremy/images/landing-screenshot.png')
+        .extract({ left: 150, top: 60, width: 1510, height: 1510 })
+        .resize(600, 600)
+        .png()
+        .toBuffer()
 
-    // Croisillons du sol nocturne
-    let crosses = ''
-    for(let y = 30; y < S; y += 60)
-    {
-        for(let x = (y / 60) % 2 === 0 ? 30 : 60; x < S; x += 60)
-        {
-            crosses += `<path d="M ${x - 5} ${y} L ${x + 5} ${y} M ${x} ${y - 5} L ${x} ${y + 5}" stroke="#5b4a6e" stroke-width="2" stroke-linecap="round" opacity="0.55"/>`
-        }
-    }
-
-    const capName = fit('JEREMY', 92, S - 140)
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${S}" height="${S}">
-<defs>
-<radialGradient id="glow" cx="0.5" cy="0.42" r="0.8">
-<stop offset="0" stop-color="#3a2b4a"/>
-<stop offset="1" stop-color="#1d1721"/>
-</radialGradient>
-</defs>
-<rect width="${S}" height="${S}" fill="url(#glow)"/>
-${crosses}
-${textPath('JEREMY', capName, S / 2 + 5, 258 + 5, '#241b2e')}
-${textPath('JEREMY', capName, S / 2, 258, '#d9a0f2')}
-${textPath('ANGULO', capName, S / 2 + 5, 366 + 5, '#241b2e')}
-${textPath('ANGULO', capName, S / 2, 366, '#d9a0f2')}
-${textPath('BUSINESS BY DAY', 17, S / 2, 442, '#e4a90c')}
-${textPath('ENTREPRENEUR BY NIGHT', 17, S / 2, 478, '#e4a90c')}
-</svg>`
-
-    const png = await sharp(Buffer.from(svg)).png().toBuffer()
     await sharp(png).toFile('static/ui/previews/options.png')
-    await sharp(png).webp({ quality: 82 }).toFile('static/ui/previews/options.webp')
+    await sharp(png).webp({ quality: 86 }).toFile('static/ui/previews/options.webp')
     console.log('+ previews/options')
 }
 

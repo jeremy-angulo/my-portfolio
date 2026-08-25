@@ -1,10 +1,10 @@
 {
-  "careerUps": {
+  "careerSabatier": {
     "w": 352,
     "h": 60
   },
   "careerEnseeiht": {
-    "w": 336,
+    "w": 352,
     "h": 60
   },
   "careerN7": {
@@ -12,10 +12,14 @@
     "h": 60
   },
   "careerLulea": {
-    "w": 308,
+    "w": 352,
     "h": 60
   },
-  "careerAlten": {
+  "careerAnalyst": {
+    "w": 352,
+    "h": 60
+  },
+  "careerManager": {
     "w": 352,
     "h": 60
   }

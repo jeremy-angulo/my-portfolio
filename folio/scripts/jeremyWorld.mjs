@@ -1,9 +1,10 @@
 // scripts/jeremyWorld.mjs
 // Chirurgie du GLB static/areas/areas.glb — passe « monde de Jérémy » :
-//  1. Zone carrière : recible les 6 lignes de Bruno vers les 5 jalons de
-//     Jérémy (2020 → aujourd'hui, 1 unité Z = 1 an, z = 7.437 − (année − 2020)),
-//     supprime la 6e ligne, met à l'échelle les étiquettes careerText
-//     (échelle = pixels / 202, cf. scripts/careerSizes.json).
+//  1. Zone carrière : premier recalage des jalons — DÉSORMAIS REPRIS ET
+//     COMPLÉTÉ par scripts/jeremyCareerWorld.mjs, qui refait aussi les lignes
+//     néon au sol (oubliées ici) et scinde ALTEN en deux postes. Lancer les
+//     scripts dans l'ordre : jeremyLetters → jeremyWorld → jeremyCareer →
+//     jeremyCareerWorld → jeremyTitleLetters → jeremyBrand.
 //  2. Supprime les statues sociales sans équivalent chez Jérémy.
 //  3. Construit dans le groupe `landing` : bloc d'escalade à prises colorées,
 //     échiquier + pions renversables, coin Suède (sapins enneigés + bonhomme),

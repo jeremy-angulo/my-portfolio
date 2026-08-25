@@ -66,6 +66,7 @@ export class CareerArea extends Area
         this.lines.items = []
         this.lines.activeElevation = 2.5
         this.lines.padding = 0.25
+        this.lines.labelFade = 0.4
         
         const lineGroups = this.references.items.get('line')
 
@@ -92,6 +93,7 @@ export class CareerArea extends Area
             
             line.isIn = false
             line.isUp = false
+            line.labelShown = false
             line.elevationTarget = 0
             line.offsetTarget = 0
             line.labelReveal = uniform(0)
@@ -274,22 +276,25 @@ export class CareerArea extends Area
 
             // Is in
             if(delta > - this.lines.padding && delta < line.size + this.lines.padding * 2)
-            {
-                if(!line.isIn)
-                {
-                    line.isIn = true
-                    gsap.to(line.labelReveal, { value: 1, duration: 1, delay: 0.3, overwrite: true, ease: 'power2.inOut' })
-                }
-            }
-
-            // Is out
+                line.isIn = true
             else
+                line.isIn = false
+
+            // Le libellé s'efface dès que la pierre atteint le bout de sa ligne :
+            // sinon deux segments qui se suivent affichent leurs libellés au
+            // même endroit le temps de la transition
+            const labelShown = line.isIn && !(line.hasEnd && delta > line.size - this.lines.labelFade)
+
+            if(labelShown !== line.labelShown)
             {
-                if(line.isIn)
-                {
-                    line.isIn = false
-                    gsap.to(line.labelReveal, { value: 0, duration: 1, overwrite: true, ease: 'power2.inOut' })
-                }
+                line.labelShown = labelShown
+                gsap.to(line.labelReveal, {
+                    value: labelShown ? 1 : 0,
+                    duration: 1,
+                    delay: labelShown ? 0.3 : 0,
+                    overwrite: true,
+                    ease: 'power2.inOut'
+                })
             }
 
             // Elevation
