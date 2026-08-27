@@ -1,5 +1,35 @@
 export default [
     {
+        title: 'The Openers',
+        titleSmall: [ 'The', 'Openers' ],
+        url: 'https://the-openers-landing.vercel.app',
+        urlLabel: 'discover the project',
+        attributes:
+        {
+            role: [ 'founder', 'product lead' ]
+        },
+        distinctions: [],
+        images:
+        [
+            'the-openers-1.ktx',
+        ]
+    },
+    {
+        title: 'L’Authentique Azuréenne',
+        titleSmall: [ 'L’Authentique', 'Azuréenne' ],
+        url: 'https://aurum-acta.vercel.app',
+        urlLabel: 'open the demo',
+        attributes:
+        {
+            role: [ 'founder', 'architect' ]
+        },
+        distinctions: [],
+        images:
+        [
+            'authentique-azureenne-1.ktx',
+        ]
+    },
+    {
         title: 'Storizzz',
         titleSmall: [ 'Storizzz' ],
         url: 'https://www.storizzz.app',
@@ -18,6 +48,7 @@ export default [
         title: 'AI Ski Coach',
         titleSmall: [ 'AI Ski', 'Coach' ],
         url: 'https://ltu.diva-portal.org/smash/record.jsf?dswid=29&pid=diva2%3A1969152',
+        urlLabel: 'read the thesis',
         attributes:
         {
             role: 'AI researcher',

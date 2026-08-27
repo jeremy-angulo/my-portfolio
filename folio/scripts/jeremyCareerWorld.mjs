@@ -28,26 +28,55 @@ const BACKUP = '/tmp/claude-1000/-home-jeremy-dev-jeremyangulo/7c7fc39c-44b3-4ff
 const careerSizes = JSON.parse(fs.readFileSync('scripts/careerSizes.json', 'utf8'))
 
 // ---------------------------------------------------------------- Parcours
+//
+// 4 colonnes thématiques + le couloir d'échange accolé aux études :
+//   études (bleu) · expérience pro (violet/orange) · BAFA (blanc) · escalade (vert)
+// Échelle étirée : 1.6 unité par an (6 années à mettre en valeur).
+// Les libellés ne s'affichent que sur la colonne où l'on roule
+// (portée latérale dans CareerArea) ; les hauteurs alternent par colonne
+// pour les transitions, et Luleå passe de l'autre côté de sa ligne.
 
-const LANES = { main: 1.22, right: 3.21, left: -0.793 }
+const YEAR_UNIT = 1.6
+const LANES = { studies: -1.4, exchange: -0.75, work: 0.8, bafa: 2.6, climb: 4.2 }
 const GROUND_Y = -3.232          // hauteur du sol dans le groupe career
-const zOfYear = (year) => 7.437 - (year - 2020)
+const zOfYear = (year) => 7.437 - (year - 2020) * YEAR_UNIT
 
-// L'étiquette est un plan incliné à 45° face caméra : sa largeur s'étend selon
-// (0.707, 0, −0.707). Deux couloirs distants de 2 en x ne se séparent donc que
-// de 1.41 à l'écran, moins que la largeur d'une étiquette (3.49) — d'où le
-// libellé de N7 surélevé et celui de Luleå renvoyé de l'autre côté de sa ligne.
 const LABEL_SIDE = [ 0.964, -1.026 ]   // décalage (x, z) le long de la largeur
 const LABEL_Y = 0.679
+const LABEL_Y_HIGH = 2.05
+const LABEL_SCALE = 1.18               // « un poil plus gros »
+
+const year = (n) => n * YEAR_UNIT
 
 const timeline = [
-    { key: 'careerSabatier', lane: 'main',  start: 2020, size: 2,   color: 'blue',   hasEnd: true,  labelY: LABEL_Y,        flip: false },
-    { key: 'careerEnseeiht', lane: 'main',  start: 2022, size: 3,   color: 'blue',   hasEnd: true,  labelY: LABEL_Y,        flip: false },
-    { key: 'careerN7',       lane: 'right', start: 2022, size: 3,   color: 'purple', hasEnd: true,  labelY: LABEL_Y + 1.55, flip: false },
-    { key: 'careerLulea',    lane: 'left',  start: 2024, size: 1,   color: 'green',  hasEnd: true,  labelY: LABEL_Y,        flip: true  },
-    { key: 'careerAnalyst',  lane: 'main',  start: 2025, size: 1,   color: 'orange', hasEnd: true,  labelY: LABEL_Y,        flip: false },
-    { key: 'careerManager',  lane: 'main',  start: 2026, size: 1.2, color: 'orange', hasEnd: false, labelY: LABEL_Y,        flip: false },
+    // Études
+    { key: 'careerSabatier',       lane: 'studies',  start: 2020, size: year(2),   color: 'blue',   hasEnd: true,  labelY: LABEL_Y,      flip: false },
+    { key: 'careerEnseeiht',       lane: 'studies',  start: 2022, size: year(3),   color: 'blue',   hasEnd: true,  labelY: LABEL_Y,      flip: false },
+    { key: 'careerLulea',          lane: 'exchange', start: 2024, size: year(1),   color: 'green',  hasEnd: true,  labelY: LABEL_Y_HIGH, flip: true  },
+    // Expérience pro
+    { key: 'careerN7',             lane: 'work',     start: 2022, size: year(3),   color: 'purple', hasEnd: true,  labelY: LABEL_Y_HIGH, flip: false },
+    { key: 'careerAnalyst',        lane: 'work',     start: 2025, size: year(1),   color: 'orange', hasEnd: true,  labelY: LABEL_Y_HIGH, flip: false },
+    { key: 'careerManager',        lane: 'work',     start: 2026, size: year(1.2), color: 'orange', hasEnd: false, labelY: LABEL_Y_HIGH, flip: false },
+    // BAFA
+    { key: 'careerBafaAnim',       lane: 'bafa',     start: 2020, size: year(2),   color: 'white',  hasEnd: true,  labelY: LABEL_Y,      flip: false },
+    { key: 'careerBafaTrainer',    lane: 'bafa',     start: 2022, size: year(2),   color: 'white',  hasEnd: true,  labelY: LABEL_Y,      flip: false },
+    { key: 'careerBafaDirector',   lane: 'bafa',     start: 2024, size: year(2.2), color: 'white',  hasEnd: false, labelY: LABEL_Y,      flip: false },
+    // Escalade
+    { key: 'careerClimbInit',      lane: 'climb',    start: 2020, size: year(1),   color: 'green',  hasEnd: true,  labelY: LABEL_Y_HIGH, flip: false },
+    { key: 'careerClimbMonitor',   lane: 'climb',    start: 2021, size: year(1),   color: 'green',  hasEnd: true,  labelY: LABEL_Y_HIGH, flip: false },
+    { key: 'careerClimbPresident', lane: 'climb',    start: 2022, size: year(2),   color: 'green',  hasEnd: true,  labelY: LABEL_Y_HIGH, flip: false },
+    { key: 'careerClimbSweden',    lane: 'climb',    start: 2024, size: year(1),   color: 'green',  hasEnd: true,  labelY: LABEL_Y_HIGH, flip: false },
 ]
+
+// En-têtes flottants au départ de chaque colonne
+const headers = [
+    { key: 'careerHeadStudies', lane: 'studies', color: 'blue' },
+    { key: 'careerHeadWork',    lane: 'work',    color: 'orange' },
+    { key: 'careerHeadBafa',    lane: 'bafa',    color: 'white' },
+    { key: 'careerHeadClimb',   lane: 'climb',   color: 'green' },
+]
+const HEADER_Z = zOfYear(2020) + 0.85
+const HEADER_Y = 0.9
 
 const EMISSIVE = {
     blue: 'emissiveBlueRadialGradient',
@@ -186,63 +215,24 @@ const buildLine = (name, size, hasEnd, materialName) =>
     return flatMesh(name, verts, tris, materialByName(materialName))
 }
 
-// ------------------------------------------- Socle : gabarit pris dans le GLB
+// -------------------------------------------------------------- Socle
+// Gabarit figé dans scripts/careerSocket.json (extrait du Plane.049 d'origine,
+// qui n'existe plus dans le GLB depuis la première reconstruction)
 
 const readSocketTemplate = () =>
 {
-    const source = childByName('Plane.049')
-    if(!source) return null
-
-    const prim = source.getMesh().listPrimitives()[0]
-    const pos = prim.getAttribute('POSITION')
-    const uv = prim.getAttribute('TEXCOORD_0')
-    const index = prim.getIndices().getArray()
-
-    // Le socle du premier jalon : centré sur (4.0125, −0.0665) dans ce maillage
-    const CX = 4.0125
-    const CZ = -0.0665
-    const verts = []
-    const tris = []
-    const remap = new Map()
-
-    for(let t = 0; t < index.length; t += 3)
-    {
-        const ids = [ index[t], index[t + 1], index[t + 2] ]
-        const pts = ids.map((i) => pos.getElement(i, []))
-        if(!pts.every((p) => Math.abs(p[0] - CX) < 0.5 && Math.abs(p[2] - CZ) < 0.6)) continue
-
-        const tri = ids.map((id, k) =>
-        {
-            if(!remap.has(id))
-            {
-                const p = pts[k]
-                const t = uv.getElement(id, [])
-                remap.set(id, verts.length)
-                verts.push({ x: p[0] - CX, z: p[2] - CZ, u: t[0], v: t[1] })
-            }
-            return remap.get(id)
-        })
-        tris.push(tri)
-    }
-
-    return verts.length ? { verts, tris, material: prim.getMaterial() } : null
+    const raw = JSON.parse(fs.readFileSync('scripts/careerSocket.json', 'utf8'))
+    return { verts: raw.verts, tris: raw.tris, material: materialByName(raw.material) }
 }
 
 // ------------------------------------------------------------- Nettoyage
 
-for(const name of [ 'Plane.018', 'Plane.022', 'Plane.035', 'Plane.048', 'Plane.049' ])
-{
-    const node = childByName(name)
-    if(node) { console.log(`- ${name} (décor du parcours d'origine)`) }
-}
-
 const socketTemplate = readSocketTemplate()
-if(!socketTemplate) console.log('! gabarit de socle introuvable, les socles seront omis')
 
 for(const node of [ ...career.listChildren() ])
 {
     const name = node.getName()
-    if(/^(Plane\.018|Plane\.022|Plane\.035|Plane\.048|Plane\.049)$/.test(name) || /^career(Neon|Socket|Ruler)/.test(name))
+    if(/^(Plane\.018|Plane\.022|Plane\.035|Plane\.048|Plane\.049)$/.test(name) || /^career(Neon|Socket|Ruler)/.test(name) || /^refHead/.test(name))
         disposeSubtree(node)
 }
 
@@ -280,15 +270,14 @@ if(socketTemplate)
     console.log(`${n} socles posés`)
 }
 
-// Règle des années : de 2020 au dernier jalon, plus une petite marge
+// Règle des années : de 2020 à 2026 et des poussières
 {
-    const last = timeline[timeline.length - 1]
-    const length = (zOfYear(2020) - (zOfYear(last.start) - last.size)) + RULER_TAIL
+    const length = (zOfYear(2020) - zOfYear(2026.4)) + RULER_TAIL
     const verts = []
     const tris = quad(verts, -HALF_SHAFT, HALF_SHAFT, 0.202, -length, 0.45, 0.568, 0.351, 0.003)
     const mesh = flatMesh('careerRuler', verts, tris, materialByName(EMISSIVE.white))
     career.addChild(doc.createNode('careerRuler.300').setTranslation([ -2.792, GROUND_Y - 0.002, 7.504 ]).setMesh(mesh))
-    console.log(`règle des années : ${length.toFixed(2)} unités (2020 → ${last.start + last.size})`)
+    console.log(`règle des années : ${length.toFixed(2)} unités (${YEAR_UNIT} unité/an)`)
 }
 
 // ------------------------------------------------------ Pierres et libellés
@@ -365,8 +354,25 @@ refLines.forEach((node, i) =>
     if(!size) throw new Error(`dimensions manquantes pour ${entry.key} (lancer jeremyCareer.mjs)`)
 
     const sign = entry.flip ? -1 : 1
-    label.setScale([ size.w / 202, 1, size.h / 202 ])
+    label.setScale([ size.w / 202 * LABEL_SCALE, 1, size.h / 202 * LABEL_SCALE ])
     label.setTranslation([ LABEL_SIDE[0] * sign, entry.labelY, LABEL_SIDE[1] * sign ])
+})
+
+// ------------------------------------------------------------- En-têtes
+
+headers.forEach((header, i) =>
+{
+    const size = careerSizes[header.key]
+    if(!size) throw new Error(`dimensions manquantes pour ${header.key} (lancer jeremyCareer.mjs)`)
+
+    const node = doc.createNode(`refHead.${400 + i}`)
+        .setMesh(labelMesh)
+        .setRotation([ ...labelRotation ])
+        .setTranslation([ LANES[header.lane], GROUND_Y + HEADER_Y, HEADER_Z ])
+        .setScale([ size.w / 202 * LABEL_SCALE, 1, size.h / 202 * LABEL_SCALE ])
+        .setExtras({ texture: header.key, color: header.color })
+    career.addChild(node)
+    console.log(`en-tête ${header.key} → colonne ${header.lane}`)
 })
 
 // Dernière trace du monde d'origine dans cette zone : le matériau de

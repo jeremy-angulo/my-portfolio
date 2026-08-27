@@ -22,5 +22,49 @@
   "careerManager": {
     "w": 352,
     "h": 60
+  },
+  "careerBafaAnim": {
+    "w": 352,
+    "h": 60
+  },
+  "careerBafaTrainer": {
+    "w": 352,
+    "h": 60
+  },
+  "careerBafaDirector": {
+    "w": 352,
+    "h": 60
+  },
+  "careerClimbInit": {
+    "w": 352,
+    "h": 60
+  },
+  "careerClimbMonitor": {
+    "w": 352,
+    "h": 60
+  },
+  "careerClimbPresident": {
+    "w": 352,
+    "h": 60
+  },
+  "careerClimbSweden": {
+    "w": 352,
+    "h": 60
+  },
+  "careerHeadStudies": {
+    "w": 220,
+    "h": 40
+  },
+  "careerHeadWork": {
+    "w": 220,
+    "h": 40
+  },
+  "careerHeadBafa": {
+    "w": 220,
+    "h": 40
+  },
+  "careerHeadClimb": {
+    "w": 220,
+    "h": 40
   }
 }

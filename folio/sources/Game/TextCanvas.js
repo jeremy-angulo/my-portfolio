@@ -15,6 +15,9 @@ export class TextCanvas
     )
     {
         this.lines = []
+        this.fontWeight = fontWeight
+        this.fontFamily = fontFamily
+        this.baseFontPx = fontSize * density
         this.font = `${fontWeight} ${fontSize * density}px "${fontFamily}"`
         this.width = Math.ceil(width * density)
         this.height = Math.ceil(height * density)
@@ -88,6 +91,14 @@ export class TextCanvas
         this.context.textAlign = this.horizontalAlign
         this.context.textBaseline = 'middle'
         this.context.fillStyle = '#ffffff'
+
+        // Réduction automatique : un texte plus large que la toile serait
+        // rogné aux bords (les longs titres de projets, par exemple)
+        this.context.font = this.font
+        const widest = this.getMeasure().width
+        const maxWidth = this.width * 0.98
+        if(widest > maxWidth)
+            this.context.font = `${this.fontWeight} ${Math.floor(this.baseFontPx * maxWidth / widest)}px "${this.fontFamily}"`
 
         let i = 0
         for(const line of this.lines)

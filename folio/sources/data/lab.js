@@ -9,12 +9,6 @@ export default [
         imageMini: 'jules-orchestrator-mini.ktx'
     },
     {
-        title: 'Aurum Acta',
-        url: 'https://github.com/jeremy-angulo',
-        image: 'aurum-acta.ktx',
-        imageMini: 'aurum-acta-mini.ktx'
-    },
-    {
         title: 'YouWant',
         url: 'https://github.com/jeremy-angulo',
         image: 'youwant.ktx',

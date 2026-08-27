@@ -56,7 +56,52 @@ const strips = [
         en: { title: 'ALTEN - TOULOUSE', detail: 'BUSINESS MANAGER' },
         fr: { title: 'ALTEN - TOULOUSE', detail: "INGÉNIEUR D'AFFAIRES" },
     },
+    {
+        name: 'careerBafaAnim',
+        en: { title: 'CAMP COUNSELOR', detail: 'BAFA - YOUTH SUMMER CAMPS' },
+        fr: { title: 'ANIMATEUR BAFA', detail: 'COLONIES DE VACANCES' },
+    },
+    {
+        name: 'careerBafaTrainer',
+        en: { title: 'BAFA TRAINER', detail: 'TRAINS NEW COUNSELORS' },
+        fr: { title: 'FORMATEUR BAFA', detail: 'FORME LES NOUVEAUX ANIMATEURS' },
+    },
+    {
+        name: 'careerBafaDirector',
+        en: { title: 'CAMP DIRECTOR', detail: 'LARGE-SCALE YOUTH CAMPS' },
+        fr: { title: 'DIRECTEUR DE SÉJOURS', detail: 'GRANDES COLONIES DE VACANCES' },
+    },
+    {
+        name: 'careerClimbInit',
+        en: { title: 'CLIMBING INITIATOR', detail: 'FEDERAL DIPLOMA' },
+        fr: { title: 'INITIATEUR ESCALADE', detail: 'DIPLÔME FÉDÉRAL' },
+    },
+    {
+        name: 'careerClimbMonitor',
+        en: { title: 'CLIMBING COACH', detail: 'PAUL SABATIER UNIVERSITY' },
+        fr: { title: 'MONITEUR ESCALADE', detail: 'UNIVERSITÉ PAUL SABATIER' },
+    },
+    {
+        name: 'careerClimbPresident',
+        en: { title: 'CLUB PRESIDENT', detail: 'TOULOUSE INP CLIMBING CLUB' },
+        fr: { title: 'PRÉSIDENT DU CLUB', detail: 'ESCALADE TOULOUSE INP' },
+    },
+    {
+        name: 'careerClimbSweden',
+        en: { title: 'CLIMBING COACH', detail: 'KLÄTTERHUSET - SWEDEN' },
+        fr: { title: 'MONITEUR ESCALADE', detail: 'KLÄTTERHUSET - SUÈDE' },
+    },
 ]
+
+// En-têtes de colonnes : une seule plaque, texte centré
+const headers = [
+    { name: 'careerHeadStudies', en: 'STUDIES', fr: 'ÉTUDES' },
+    { name: 'careerHeadWork', en: 'EXPERIENCE', fr: 'EXPÉRIENCE' },
+    { name: 'careerHeadBafa', en: 'BAFA', fr: 'BAFA' },
+    { name: 'careerHeadClimb', en: 'CLIMBING', fr: 'ESCALADE' },
+]
+const HEADER_W = 220
+const HEADER_H = 40
 
 const widthOf = (text, cap) =>
 {
@@ -164,11 +209,39 @@ ${pathOf(text.detail, left + PAD, plate2.y + 4 + inkDetail, capDetail)}
     sizes[strip.name] = { w: W, h: H }
 }
 
+for(const header of headers)
+{
+    for(const [ lang, text ] of [ [ 'en', header.en ], [ 'fr', header.fr ] ])
+    {
+        let cap = 24
+        const maxW = HEADER_W - PAD * 2 - 10
+        const overW = widthOf(text, cap) / maxW
+        if(overW > 1) cap /= overW
+
+        const ink = inkTop(text, cap)
+        const plate = { w: widthOf(text, cap) + PAD * 2, h: ink + 8 }
+        const left = (HEADER_W - plate.w) / 2
+        const top = (HEADER_H - plate.h) / 2
+
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${HEADER_W}" height="${HEADER_H}">
+<rect width="${HEADER_W}" height="${HEADER_H}" fill="#000000"/>
+<rect x="${left.toFixed(1)}" y="${top.toFixed(1)}" width="${plate.w.toFixed(1)}" height="${plate.h.toFixed(1)}" fill="#00ff00"/>
+${pathOf(text, left + PAD, top + 4 + ink, cap)}
+</svg>`
+
+        const file = `static/career/${header.name}${lang === 'fr' ? '-fr' : ''}.png`
+        await sharp(Buffer.from(svg)).ensureAlpha().png().toFile(file)
+        console.log(`+ ${file} (cap ${cap.toFixed(1)})`)
+    }
+
+    sizes[header.name] = { w: HEADER_W, h: HEADER_H }
+}
+
 // Dimensions partagées avec jeremyCareerWorld.mjs (échelle des plans careerText)
 fs.writeFileSync('scripts/careerSizes.json', JSON.stringify(sizes, null, 2))
 
 // Bandeaux qui ne sont plus référencés
-const keep = new Set(strips.flatMap(s => [ `${s.name}.png`, `${s.name}-fr.png` ]))
+const keep = new Set([ ...strips, ...headers ].flatMap(s => [ `${s.name}.png`, `${s.name}-fr.png` ]))
 for(const file of fs.readdirSync('static/career'))
 {
     if(!keep.has(file))

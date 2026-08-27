@@ -22,6 +22,7 @@ export class CareerArea extends Area
 
         this.setSounds()
         this.setLines()
+        this.setHeaders()
         this.setYears()
         this.setAchievement()
     }
@@ -67,6 +68,7 @@ export class CareerArea extends Area
         this.lines.activeElevation = 2.5
         this.lines.padding = 0.25
         this.lines.labelFade = 0.4
+        this.lines.labelLateral = 1.35
         
         const lineGroups = this.references.items.get('line')
 
@@ -74,8 +76,10 @@ export class CareerArea extends Area
             blue: uniform(color('#5390ff')),
             orange: uniform(color('#ff8039')),
             purple: uniform(color('#b65fff')),
-            green: uniform(color('#a2ffab'))
+            green: uniform(color('#a2ffab')),
+            white: uniform(color('#f4efff'))
         }
+        this.lines.colors = colors
 
         for(const group of lineGroups)
         {
@@ -100,33 +104,9 @@ export class CareerArea extends Area
 
             {
                 line.textMesh = line.stone.children.find(child => child.name.startsWith('careerText'))
-
-                const material = new THREE.MeshLambertNodeMaterial({ transparent: true })
-                
-                const baseColor = colors[line.color]
-
-                material.outputNode = Fn(() =>
-                {
-                    const baseUv = uv().toVar()
-
-                    step(baseUv.x, line.labelReveal).lessThan(0.5).discard()
-
-                    const textureColor = texture(line.texture, baseUv)
-
-                    const alpha = step(0.1, max(textureColor.r, textureColor.g))
-
-                    const emissiveColor = baseColor.div(luminance(baseColor)).mul(1.7)
-
-                    const maskColor = color('#251f2b')
-                    const finalColor = mix(maskColor, emissiveColor, textureColor.r)
-                    
-                    return vec4(finalColor, alpha)
-                })()
-
-                // Mesh
                 line.textMesh.castShadow = false
                 line.textMesh.receiveShadow = false
-                line.textMesh.material = material
+                line.textMesh.material = this.createLabelMaterial(line.texture, colors[line.color], line.labelReveal)
             }
 
             this.lines.items.push(line)
@@ -150,12 +130,60 @@ export class CareerArea extends Area
         }
     }
 
+    createLabelMaterial(labelTexture, baseColor, revealUniform)
+    {
+        const material = new THREE.MeshLambertNodeMaterial({ transparent: true })
+
+        material.outputNode = Fn(() =>
+        {
+            const baseUv = uv().toVar()
+
+            step(baseUv.x, revealUniform).lessThan(0.5).discard()
+
+            const textureColor = texture(labelTexture, baseUv)
+
+            const alpha = step(0.1, max(textureColor.r, textureColor.g))
+
+            const emissiveColor = baseColor.div(luminance(baseColor)).mul(1.7)
+
+            const maskColor = color('#251f2b')
+            const finalColor = mix(maskColor, emissiveColor, textureColor.r)
+
+            return vec4(finalColor, alpha)
+        })()
+
+        return material
+    }
+
+    setHeaders()
+    {
+        // Les panneaux d'en-tête de colonne (études / expérience / BAFA /
+        // escalade), toujours révélés
+        const headers = this.references.items.get('head')
+
+        if(!headers)
+            return
+
+        const fullReveal = uniform(1)
+
+        for(const mesh of headers)
+        {
+            const headerTexture = this.game.resources[`${mesh.userData.texture}Texture`]
+            const baseColor = this.lines.colors[mesh.userData.color] ?? this.lines.colors.white
+
+            mesh.castShadow = false
+            mesh.receiveShadow = false
+            mesh.material = this.createLabelMaterial(headerTexture, baseColor, fullReveal)
+        }
+    }
+
     setYears()
     {
         this.year = {}
         this.year.group = this.references.items.get('year')[0]
         this.year.originZ = this.year.group.position.z
-        this.year.size = 6
+        this.year.unitsPerYear = 1.6
+        this.year.size = 6 * this.year.unitsPerYear
         this.year.offsetTarget = 0
         this.year.start = 2020
         this.year.current = this.year.start
@@ -280,10 +308,16 @@ export class CareerArea extends Area
             else
                 line.isIn = false
 
-            // Le libellé s'efface dès que la pierre atteint le bout de sa ligne :
-            // sinon deux segments qui se suivent affichent leurs libellés au
-            // même endroit le temps de la transition
-            const labelShown = line.isIn && !(line.hasEnd && delta > line.size - this.lines.labelFade)
+            // Le libellé ne s'affiche que sur la colonne où l'on roule
+            // (l'étiquette s'étale en diagonale : 4 colonnes affichées en même
+            // temps se recouvriraient), et s'efface quand la pierre atteint le
+            // bout de sa ligne pour ne pas se superposer au segment suivant
+            // line.origin est déjà en coordonnées monde : Area.setObjects fait
+            // child.position.add(model.position) en place au chargement
+            const lateral = Math.abs(line.origin.x - this.game.player.position.x)
+            const labelShown = line.isIn
+                && lateral < this.lines.labelLateral
+                && !(line.hasEnd && delta > line.size - this.lines.labelFade)
 
             if(labelShown !== line.labelShown)
             {
@@ -370,7 +404,7 @@ export class CareerArea extends Area
         const finalPositionZ = this.year.originZ - this.year.offsetTarget
         this.year.group.position.z += (finalPositionZ - this.year.group.position.z) * this.game.ticker.deltaScaled * 10
 
-        const yearCurrent = this.year.start + Math.floor(this.year.offsetTarget)
+        const yearCurrent = this.year.start + Math.floor(this.year.offsetTarget / this.year.unitsPerYear)
 
         if(yearCurrent !== this.year.current)
         {
