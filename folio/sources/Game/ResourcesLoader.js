@@ -34,6 +34,10 @@ export class ResourcesLoader
         {
             loader = new DRACOLoader()
             loader.setDecoderPath('./draco/')
+            // preload() est délibéré : une vingtaine de GLB servis (chênes,
+            // bouleaux, briques, fleurs, lampadaires…) sont compressés en Draco.
+            // Charger le décodeur tout de suite le met en parallèle du reste
+            // plutôt qu'en travers du premier modèle qui en a besoin.
             loader.preload()
         }
         else if(_type === 'gltf')

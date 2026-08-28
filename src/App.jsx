@@ -7,13 +7,14 @@ import { HomePage, ProjectDetail, ResumePage, Navbar, StarsCanvas } from "./comp
 import Gateway from "./components/gateway/Gateway";
 import ProPage from "./pro/ProPage";
 import { LanguageProvider } from "./i18n/LanguageContext";
-import { Analytics } from "@vercel/analytics/react";
+import SiteAnalytics from "./analytics";
 
 // L'expérience 3D embarque three + la physique rapier (WASM) : chargée en
 // lazy pour que son chunk ne pèse pas sur le reste du site.
 const ExperiencePage = lazy(() => import("./experience/ExperiencePage"));
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import useScrollRestorationOnResize from './hooks/useScrollRestorationOnResize'; // Import the hook
+import useDocumentMeta from "./i18n/useDocumentMeta";
 
 // Les routes "nuit" gardent l'univers sombre historique : navbar + ciel étoilé WebGL.
 // La facette jour (/) a son propre univers ; /portfolio (split Jour/Nuit) et /cv
@@ -24,6 +25,7 @@ const App = () => {
   const location = useLocation();
 
   useScrollRestorationOnResize(); // Call the hook
+  useDocumentMeta();
 
   const isNight = NIGHT_PATHS.some((path) => location.pathname.startsWith(path));
   const isPortfolio = location.pathname === "/portfolio";
@@ -95,7 +97,7 @@ const App = () => {
 const AppWrapper = () => (
   <BrowserRouter basename="/">
     <LanguageProvider>
-      <Analytics />
+      <SiteAnalytics />
       <SpeedInsights />
       <App />
     </LanguageProvider>

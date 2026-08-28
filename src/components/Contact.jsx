@@ -10,6 +10,18 @@ import { MdEmail, MdPhone } from "react-icons/md";
 import { useNightContent } from "../i18n/useContent";
 import "./Contact.scss";
 
+// Identifiants EmailJS : Vite les remplace par leur valeur AU MOMENT DU BUILD.
+// Si une variable manque côté Vercel, la constante vaut undefined dans le bundle
+// et emailjs.send() lève une exception synchrone : d'où le garde-fou plus bas.
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+const emailjsConfigured = Boolean(
+  EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY
+);
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const Contact = () => {
   const { nightUi } = useNightContent();
   const ui = nightUi.contactUi;
@@ -36,45 +48,66 @@ const Contact = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Garde-fou anti double-clic : un envoi est déjà en cours.
+    if (loading) return;
+
     // Ajout d'une validation simple
-    if (!form.name || !form.email || !form.message) {
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
       alert(ui.fillAll);
+      return;
+    }
+
+    if (!EMAIL_RE.test(form.email.trim())) {
+      alert(ui.invalidEmail || ui.fillAll);
+      return;
+    }
+
+    // Sans identifiants, inutile d'appeler EmailJS : on prévient l'utilisateur
+    // plutôt que de laisser le bouton bloqué sur « Envoi en cours ».
+    if (!emailjsConfigured) {
+      console.error(
+        "EmailJS non configuré : VITE_EMAILJS_SERVICE_ID / VITE_EMAILJS_TEMPLATE_ID / VITE_EMAILJS_PUBLIC_KEY sont absents du build."
+      );
+      alert(ui.error);
       return;
     }
 
     setLoading(true);
 
-    emailjs
-      .send(
-        import.meta.env.VITE_EMAILJS_SERVICE_ID,
-        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-        {
-          from_name: form.name,
-          to_name: "Jérémy Angulo", // Peut être n'importe quoi, ce n'est pas utilisé dans le template
-          from_email: form.email,
-          to_email: "jeremy.angulo@gmail.com", // Votre email de destination
-          message: form.message,
-          time: new Date().toLocaleString(),
-        },
-        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+    // emailjs.send() peut lever de façon SYNCHRONE (validation des identifiants) :
+    // on passe par une promesse pour que .catch() attrape aussi ce cas-là.
+    Promise.resolve()
+      .then(() =>
+        emailjs.send(
+          EMAILJS_SERVICE_ID,
+          EMAILJS_TEMPLATE_ID,
+          {
+            from_name: form.name,
+            to_name: "Jérémy Angulo", // Peut être n'importe quoi, ce n'est pas utilisé dans le template
+            from_email: form.email,
+            reply_to: form.email, // pour pouvoir répondre directement à l'expéditeur
+            to_email: "jeremy.angulo@gmail.com", // Votre email de destination
+            message: form.message,
+            time: new Date().toLocaleString(),
+          },
+          EMAILJS_PUBLIC_KEY
+        )
       )
-      .then(
-        () => {
-          setLoading(false);
-          alert(ui.success);
+      .then(() => {
+        setLoading(false);
+        alert(ui.success);
 
-          setForm({
-            name: "",
-            email: "",
-            message: "",
-          });
-        },
-        (error) => {
-          setLoading(false);
-          console.error(error);
-          alert(ui.error);
-        }
-      );
+        setForm({
+          name: "",
+          email: "",
+          message: "",
+        });
+      })
+      .catch((error) => {
+        setLoading(false);
+        console.error("Envoi EmailJS échoué :", error);
+        alert(ui.error);
+      });
   };
 
 
@@ -106,6 +139,7 @@ const Contact = () => {
             <input
               type='text'
               name='name'
+              required
               value={form.name}
               onChange={handleChange}
               placeholder={ui.namePlaceholder}
@@ -117,6 +151,7 @@ const Contact = () => {
             <input
               type='email'
               name='email'
+              required
               value={form.email}
               onChange={handleChange}
               placeholder={ui.emailPlaceholder}
@@ -128,6 +163,7 @@ const Contact = () => {
             <textarea
               rows={7}
               name='message'
+              required
               value={form.message}
               onChange={handleChange}
               placeholder={ui.messagePlaceholder}
@@ -138,7 +174,8 @@ const Contact = () => {
 
           <button
             type='submit'
-            className='bg-tertiary py-3 px-5 rounded-xl outline-none w-fit text-white font-bold shadow-md shadow-primary'
+            disabled={loading}
+            className='bg-tertiary py-3 px-5 rounded-xl outline-none w-fit text-white font-bold shadow-md shadow-primary disabled:opacity-60'
           >
             {loading ? ui.sending : ui.send}
           </button>
