@@ -79,6 +79,13 @@ export class Game
         this.resourcesLoader = new ResourcesLoader()
         this.quality = new Quality()
         this.ticker = new Ticker()
+
+        // Quality est construit avant le ticker : on branche la surveillance du
+        // temps par image ici, une fois que le ticker existe.
+        this.ticker.events.on('tick', () =>
+        {
+            this.quality.update()
+        })
         this.time = new Time()
         this.dayCycles = new DayCycles()
         this.yearCycles = new YearCycles()
@@ -207,6 +214,10 @@ export class Game
         // this.monitoring = new Monitoring()
         this.world.step(1)
         this.overlay = new Overlay()
+
+        // Le monde est en place : on applique le palier issu de l'audit à la
+        // liste des objets qui projettent une ombre.
+        this.lighting.updateShadowCasters(true)
 
         // Pre-render if quality high
         if(this.quality.level === 0 && this.rendering.renderer.backend.isWebGPUBackend)

@@ -29,13 +29,27 @@ export class Options
         const text = element.querySelector('span')
         const update = () =>
         {
-            text.textContent = this.game.quality.level === 0 ? t('High', 'Élevée') : t('Low', 'Basse')
+            const name = [ t('High', 'Élevée'), t('Medium', 'Moyenne'), t('Low', 'Basse') ][this.game.quality.level]
+
+            // En automatique on montre le palier retenu entre parenthèses : le
+            // joueur voit ce que sa machine a obtenu, sans avoir à le choisir.
+            text.textContent = this.game.quality.auto ? `${t('Auto', 'Auto')} (${name})` : name
         }
         update()
 
         element.addEventListener('click', () =>
         {
-            this.game.quality.changeLevel(this.game.quality.level === 0 ? 1 : 0)
+            // Auto → Élevée → Moyenne → Basse → Auto
+            if(this.game.quality.auto)
+                this.game.quality.changeLevel(0, true)
+            else if(this.game.quality.level < 2)
+                this.game.quality.changeLevel(this.game.quality.level + 1, true)
+            else
+                this.game.quality.enableAuto()
+
+            // changeLevel n'émet rien quand le palier ne bouge pas (Auto élevé
+            // vers Élevée manuel, par exemple) : on rafraîchit le libellé ici.
+            update()
         })
 
         this.game.quality.events.on('change', update)

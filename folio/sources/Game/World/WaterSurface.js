@@ -333,8 +333,9 @@ export class WaterSurface
             {
                 material.outputNode = blurredOutput
             }
-            else if(level === 1)
+            else
             {
+                // « else » : les paliers moyen et bas partagent cette sortie.
                 material.outputNode = baseOutput
             }
             

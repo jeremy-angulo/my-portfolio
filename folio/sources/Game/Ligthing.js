@@ -20,7 +20,14 @@ export class Lighting
         this.colorUniform = uniform(color('#ffffff'))
         this.intensityUniform = uniform(1)
         this.count = 1
-        this.mapSize = this.game.quality.level === 0 ? 2048 : 512
+        // Un cran par palier de qualité, plutôt qu'un tout-ou-rien 2048/512.
+        this.shadowMapSizes = [ 2048, 1024, 512 ]
+        // Rayon minimal, en unités monde, pour qu'un objet projette une ombre.
+        // Sur une carte de 512, un objet plus petit qu'une unité ne produit
+        // qu'une tache illisible, payée au prix fort dans la passe d'ombres.
+        this.shadowCasterMinRadius = [ 0, 0.6, 1.2 ]
+        this.shadowCastersApplied = null
+        this.mapSize = this.shadowMapSizes[this.game.quality.level]
         this.shadowAmplitude = this.game.view.optimalArea.radius
         this.depth = this.game.view.optimalArea.radius * 2
         this.shadowBias = -0.001
@@ -56,8 +63,9 @@ export class Lighting
         // redimensionnement, ce qui empilait un écouteur de plus à chaque fois.
         this.game.quality.events.on('change', () =>
         {
-            this.mapSize = this.game.quality.level === 0 ? 2048 : 512
+            this.mapSize = this.shadowMapSizes[this.game.quality.level]
             this.light.shadow.mapSize.set(this.mapSize, this.mapSize)
+            this.updateShadowCasters()
         })
 
         // Debug
@@ -172,6 +180,67 @@ export class Lighting
 
         this.light.shadow.camera.updateProjectionMatrix()
         this.light.shadow.mapSize.set(this.mapSize, this.mapSize)
+    }
+
+    /**
+     * Décide quels objets projettent une ombre, selon le palier de qualité.
+     *
+     * La passe d'ombres est le premier poste de rendu du monde : elle redessine
+     * la scène depuis le soleil. Or la très grande majorité des maillages
+     * projettent une ombre simplement parce que c'est le défaut à l'ajout d'un
+     * objet — y compris des cailloux et des fleurs, dont l'ombre tient dans un
+     * pixel ou deux sur une carte de 512.
+     *
+     * On garde donc les volumes qui comptent et on laisse tomber le reste dès
+     * qu'on descend d'un palier. Au palier haut, tout le monde retrouve son
+     * ombre.
+     */
+    updateShadowCasters(force = false)
+    {
+        const minRadius = this.shadowCasterMinRadius[this.game.quality.level] ?? 0
+
+        if(!force && minRadius === this.shadowCastersApplied)
+            return
+
+        this.shadowCastersApplied = minRadius
+
+        const worldScale = new THREE.Vector3()
+
+        this.game.scene.traverse((child) =>
+        {
+            if(!child.isMesh)
+                return
+
+            // État d'origine mémorisé au premier passage : sans lui, remonter
+            // d'un palier allumerait des ombres que personne n'avait demandées.
+            if(child.userData.baseCastShadow === undefined)
+                child.userData.baseCastShadow = child.castShadow
+
+            if(!child.userData.baseCastShadow)
+                return
+
+            if(minRadius === 0)
+            {
+                child.castShadow = true
+                return
+            }
+
+            const geometry = child.geometry
+
+            if(!geometry)
+                return
+
+            if(!geometry.boundingSphere)
+                geometry.computeBoundingSphere()
+
+            if(!geometry.boundingSphere)
+                return
+
+            child.getWorldScale(worldScale)
+            const scale = Math.max(worldScale.x, worldScale.y, worldScale.z)
+
+            child.castShadow = geometry.boundingSphere.radius * scale >= minRadius
+        })
     }
 
     updateCoordinates()

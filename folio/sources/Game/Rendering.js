@@ -93,8 +93,11 @@ export class Rendering
             {
                 this.postProcessing.outputNode = this.cheapDOFPass.add(this.bloomPass)
             }
-            else if(level === 1)
+            else
             {
+                // « else » et non « level === 1 » : les paliers moyen et bas
+                // partagent cette sortie, et un niveau non traité laisserait
+                // outputNode inchangé, donc un rendu figé.
                 this.postProcessing.outputNode = scenePassColor.add(this.bloomPass)
             }
 
