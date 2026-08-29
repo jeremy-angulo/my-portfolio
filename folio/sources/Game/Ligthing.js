@@ -52,6 +52,14 @@ export class Lighting
             this.updateShadow()
         }, 3)
 
+        // Abonnement unique : il vivait dans updateShadow(), rappelée à chaque
+        // redimensionnement, ce qui empilait un écouteur de plus à chaque fois.
+        this.game.quality.events.on('change', () =>
+        {
+            this.mapSize = this.game.quality.level === 0 ? 2048 : 512
+            this.light.shadow.mapSize.set(this.mapSize, this.mapSize)
+        })
+
         // Debug
         if(this.game.debug.active)
         {
@@ -164,12 +172,6 @@ export class Lighting
 
         this.light.shadow.camera.updateProjectionMatrix()
         this.light.shadow.mapSize.set(this.mapSize, this.mapSize)
-
-        this.game.quality.events.on('change', () =>
-        {
-            this.mapSize = this.game.quality.level === 0 ? 2048 : 512
-            this.light.shadow.mapSize.set(this.mapSize, this.mapSize)
-        })
     }
 
     updateCoordinates()

@@ -9,7 +9,10 @@ export class Quality
 
         this.events = new Events()
 
+        // iPadOS se présente comme un Safari de bureau depuis iOS 13 : sans le
+        // second test, les iPad reçoivent le palier de qualité le plus élevé.
         const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+            || (navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent))
         this.level = isMobile ? 1 : 0 // 0 = highest quality
 
         // Debug

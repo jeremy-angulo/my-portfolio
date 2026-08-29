@@ -91354,7 +91354,7 @@ https://github.com/browserify/crypto-browserify`);
       if (this.elevationBinding.update(), this.elevation.value > -0.9) {
         this.mesh.visible = true, !this.achievementAchieved && this.game.reveal.step === 2 && this.elevation.value > 0 && (this.achievementAchieved = true, this.game.achievements.setProgress("weatherSnow", 1)), this.glitterVariation.value += this.game.ticker.deltaScaled * this.glitterTimeMultiplier + this.game.view.delta.length() * this.glitterViewMultiplier, this.roundedPosition.value.x = Math.round(this.game.view.optimalArea.position.x / this.subdivisionSize) * this.subdivisionSize, this.roundedPosition.value.y = Math.round(this.game.view.optimalArea.position.z / this.subdivisionSize) * this.subdivisionSize, this.tracksDelta.value.set(this.roundedPosition.value.x - this.game.tracks.focusPoint.x, this.roundedPosition.value.y - this.game.tracks.focusPoint.y);
         const e = RendererUtils.resetRendererState(this.game.rendering.renderer);
-        this.game.rendering.renderer.setPixelRatio(1), this.game.rendering.renderer.setRenderTarget(this.snowElevation.renderTarget), this.snowElevation.quadMesh.render(this.game.rendering.renderer), this.game.rendering.renderer.setRenderTarget(null), RendererUtils.restoreRendererState(this.game.rendering.renderer, e);
+        this.game.rendering.renderer.setRenderTarget(this.snowElevation.renderTarget), this.snowElevation.quadMesh.render(this.game.rendering.renderer), this.game.rendering.renderer.setRenderTarget(null), RendererUtils.restoreRendererState(this.game.rendering.renderer, e);
       } else this.mesh.visible = false;
     }
   }
@@ -91392,7 +91392,7 @@ https://github.com/browserify/crypto-browserify`);
     update() {
       this.camera.position.x = this.focusPoint.x, this.camera.position.z = this.focusPoint.y;
       const e = RendererUtils.resetRendererState(this.game.rendering.renderer);
-      this.game.rendering.renderer.setPixelRatio(1), this.game.rendering.renderer.setRenderTarget(this.renderTarget), this.game.rendering.renderer.render(this.scene, this.camera), this.game.rendering.renderer.setRenderTarget(null), RendererUtils.restoreRendererState(this.game.rendering.renderer, e);
+      this.game.rendering.renderer.setRenderTarget(this.renderTarget), this.game.rendering.renderer.render(this.scene, this.camera), this.game.rendering.renderer.setRenderTarget(null), RendererUtils.restoreRendererState(this.game.rendering.renderer, e);
     }
   }
   class Track {
@@ -92678,7 +92678,9 @@ https://github.com/browserify/crypto-browserify`);
         this.update();
       }, 9), this.game.viewport.events.on("throttleChange", () => {
         this.spherical.radius = this.game.view.optimalArea.radius, this.shadowAmplitude = this.game.view.optimalArea.radius, this.updateShadow();
-      }, 3), this.game.debug.active && (this.debugPanel.addBinding(this, "useDayCycles"), this.debugPanel.addBinding(this, "phi", {
+      }, 3), this.game.quality.events.on("change", () => {
+        this.mapSize = this.game.quality.level === 0 ? 2048 : 512, this.light.shadow.mapSize.set(this.mapSize, this.mapSize);
+      }), this.game.debug.active && (this.debugPanel.addBinding(this, "useDayCycles"), this.debugPanel.addBinding(this, "phi", {
         min: 0,
         max: Math.PI * 0.5
       }).on("change", () => this.updateCoordinates()), this.debugPanel.addBinding(this, "theta", {
@@ -92772,9 +92774,7 @@ https://github.com/browserify/crypto-browserify`);
       }));
     }
     updateShadow() {
-      this.light.shadow.camera.top = this.shadowAmplitude, this.light.shadow.camera.right = this.shadowAmplitude, this.light.shadow.camera.bottom = -this.shadowAmplitude, this.light.shadow.camera.left = -this.shadowAmplitude, this.light.shadow.camera.near = this.near, this.light.shadow.camera.far = this.near + this.depth, this.light.shadow.bias = this.shadowBias, this.light.shadow.normalBias = this.shadowNormalBias, this.light.shadow.radius = this.shadowRadius, this.light.shadow.camera.updateProjectionMatrix(), this.light.shadow.mapSize.set(this.mapSize, this.mapSize), this.game.quality.events.on("change", () => {
-        this.mapSize = this.game.quality.level === 0 ? 2048 : 512, this.light.shadow.mapSize.set(this.mapSize, this.mapSize);
-      });
+      this.light.shadow.camera.top = this.shadowAmplitude, this.light.shadow.camera.right = this.shadowAmplitude, this.light.shadow.camera.bottom = -this.shadowAmplitude, this.light.shadow.camera.left = -this.shadowAmplitude, this.light.shadow.camera.near = this.near, this.light.shadow.camera.far = this.near + this.depth, this.light.shadow.bias = this.shadowBias, this.light.shadow.normalBias = this.shadowNormalBias, this.light.shadow.radius = this.shadowRadius, this.light.shadow.camera.updateProjectionMatrix(), this.light.shadow.mapSize.set(this.mapSize, this.mapSize);
     }
     updateCoordinates() {
       this.direction.setFromSpherical(this.spherical).normalize();
@@ -96856,7 +96856,7 @@ https://github.com/browserify/crypto-browserify`);
   class Quality {
     constructor() {
       this.game = Game.getInstance(), this.events = new Events();
-      const e = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const e = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || navigator.maxTouchPoints > 1 && /Macintosh/i.test(navigator.userAgent);
       if (this.level = e ? 1 : 0, this.game.debug.active) {
         const r = this.game.debug.panel.addFolder({
           title: "\u2699\uFE0F Quality",
@@ -105221,7 +105221,7 @@ ${e.tab}if ( ${m} ) {
           }
         ]
       ]), this.options = new Options(), this.respawns = new Respawns("landing"), this.view = new View(), this.rendering.setPostprocessing(), this.rendering.start(), this.reveal = new Reveal(), this.noises = new Noises(), this.weather = new Weather(), this.wind = new Wind(), this.tracks = new Tracks(), this.lighting = new Lighting(), this.fog = new Fog(), this.water = new Water(), this.materials = new Materials(), this.objects = new Objects(), this.explosions = new Explosions(), this.world = new World();
-      const h = __vitePreload(() => import("./rapier-C4Q_rHXF.js").then(async (m) => {
+      const h = __vitePreload(() => import("./rapier-BhmWtIhQ.js").then(async (m) => {
         await m.__tla;
         return m;
       }), [], import.meta.url), c = this.resourcesLoader.load([

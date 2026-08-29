@@ -81,7 +81,11 @@ export class Tracks
         // Render
         const rendererState = THREE.RendererUtils.resetRendererState(this.game.rendering.renderer)
 
-        this.game.rendering.renderer.setPixelRatio(1)
+        // Pas de setPixelRatio(1) ici : la cible de rendu a une taille fixe, le
+        // pixelRatio ne l'affecte pas. En revanche il redimensionne le canvas
+        // principal, et restoreRendererState le redimensionne à nouveau juste
+        // après — soit deux réallocations du framebuffer par image dès que le
+        // ratio n'est pas 1, c'est-à-dire sur tous les mobiles.
         this.game.rendering.renderer.setRenderTarget(this.renderTarget)
         this.game.rendering.renderer.render(this.scene, this.camera)
         this.game.rendering.renderer.setRenderTarget(null)

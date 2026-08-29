@@ -461,7 +461,9 @@ export class Snow
             // Render
             const rendererState = THREE.RendererUtils.resetRendererState(this.game.rendering.renderer)
 
-            this.game.rendering.renderer.setPixelRatio(1)
+            // Voir Tracks.js : setPixelRatio(1) ne sert à rien sur une cible de
+            // rendu à taille fixe, mais réalloue le framebuffer principal deux
+            // fois par image dès que le ratio n'est pas 1.
             this.game.rendering.renderer.setRenderTarget(this.snowElevation.renderTarget)
             this.snowElevation.quadMesh.render(this.game.rendering.renderer)
             this.game.rendering.renderer.setRenderTarget(null)
