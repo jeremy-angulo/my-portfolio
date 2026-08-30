@@ -12,10 +12,12 @@ import { motion } from "framer-motion";
 import {
   FiActivity,
   FiBarChart2,
+  FiBookOpen,
   FiCompass,
   FiFileText,
   FiGlobe,
   FiLock,
+  FiMap,
   FiMonitor,
   FiRefreshCw,
   FiTrendingUp,
@@ -24,6 +26,7 @@ import { logo } from "../assets";
 import ProFooter from "../pro/ProFooter";
 import { rise } from "../pro/proMotion";
 import TrendChart from "./TrendChart";
+import HeatmapCard from "./HeatmapCard";
 import "../pro/pro.scss";
 import "./StatsPage.scss";
 
@@ -219,6 +222,26 @@ const UptimeCard = ({ uptime }) => {
     </StatsCard>
   );
 };
+
+// Ce que les gens lisent réellement (sections vues, profondeur de scroll) et
+// les gestes à forte intention déjà suivis en évènements GoatCounter (voir
+// src/analytics.jsx) mais jamais affichés jusqu'ici.
+const MiniList = ({ label, rows }) => (
+  <div className="stats-mini">
+    <h3 className="stats-mini__title">{label}</h3>
+    <BarList rows={rows} />
+  </div>
+);
+
+const ContentCard = ({ content }) => (
+  <StatsCard icon={<FiBookOpen />} title="Contenu" unit="pages vues" className="stats-content">
+    <div className="stats-mini-grid">
+      <MiniList label="Sections lues" rows={content.sections} />
+      <MiniList label="Profondeur de lecture" rows={content.scrollDepth} />
+      <MiniList label="Intentions" rows={content.intents} />
+    </div>
+  </StatsCard>
+);
 
 const pageEnter = {
   initial: { opacity: 0 },
@@ -477,7 +500,13 @@ const StatsPage = () => {
                 <StatsCard icon={<FiMonitor />} title="Appareils" unit="pages vues">
                   <BarList rows={devices} />
                 </StatsCard>
+                <ContentCard content={data.content} />
                 {data.uptime ? <UptimeCard uptime={data.uptime} /> : null}
+                {data.heatmap ? (
+                  <StatsCard icon={<FiMap />} title="Exploration du monde 3D" unit="visites de zone" className="stats-heatmap-card">
+                    <HeatmapCard heatmap={data.heatmap} />
+                  </StatsCard>
+                ) : null}
               </div>
 
               <p className="stats-note">
@@ -487,6 +516,7 @@ const StatsPage = () => {
                 total de chaque carte.
                 {data?.truncated ? " Liste des pages limitée aux 100 premières." : ""}
                 {data.uptime ? " Disponibilité : Better Stack, un contrôle toutes les 3 minutes depuis 4 régions." : ""}
+                {data.heatmap ? " Exploration 3D : compteurs de zone anonymes (aucune position brute, aucun identifiant), rétention Better Stack limitée à 3 jours — la carte ne montre donc que l'activité récente, pas un cumul depuis le lancement." : ""}
               </p>
             </motion.div>
           ) : null}

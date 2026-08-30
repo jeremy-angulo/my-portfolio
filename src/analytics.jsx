@@ -13,9 +13,12 @@
 // react-router. C'est cet effet qui envoie chaque page vue, y compris la
 // première.
 //
-// Les deux gestes à forte intention (téléchargement du CV, départ vers un
-// profil externe) remontent en tant qu'évènements GoatCounter — à la
-// différence de Vercel Analytics, ce n'est pas réservé à un plan payant.
+// Trois familles d'évènements GoatCounter, à la différence de Vercel
+// Analytics ce n'est pas réservé à un plan payant :
+//  - intentions fortes : téléchargement du CV, départ vers un profil externe.
+//  - lecture de contenu : quelles sections d'une page sont vraiment vues,
+//    jusqu'où on descend dans la page.
+// Les deux servent le tableau de bord /statistiques (carte "Contenu").
 
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
@@ -94,10 +97,79 @@ const useIntentTracking = () => {
   }, []);
 };
 
+// Sections identifiables par ancre sur les deux facettes (jour : ProNavbar ;
+// nuit : ancien menu, conservées comme ancres directes). Un id absent de la
+// page courante est simplement ignoré — pas besoin de connaître la route ici.
+const SECTION_IDS = [
+  "expertises",
+  "parcours",
+  "contact",
+  "project",
+  "experience",
+  "education",
+  "achievement",
+];
+const SCROLL_MILESTONES = [25, 50, 75, 100];
+
+// Ce que les gens lisent vraiment : quelles sections passent à l'écran, et
+// jusqu'où on descend dans la page. Un délai avant d'observer laisse le temps
+// aux sections "below the fold" (montées après l'animation d'entrée) d'exister
+// dans le DOM ; sans lui, ProPage et HomePage n'auraient encore rien à observer.
+const useContentTracking = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const seenSections = new Set();
+    const seenMilestones = new Set();
+    let sectionObserver;
+
+    const bootTimer = setTimeout(() => {
+      sectionObserver = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting || seenSections.has(entry.target.id)) continue;
+            seenSections.add(entry.target.id);
+            trackEvent("section_view", entry.target.id);
+          }
+        },
+        { threshold: 0.5 }
+      );
+
+      for (const id of SECTION_IDS) {
+        const element = document.getElementById(id);
+        if (element) sectionObserver.observe(element);
+      }
+    }, 800);
+
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const scrollable = doc.scrollHeight - window.innerHeight;
+      // Page plus courte que l'écran : personne ne "descend", rien à mesurer.
+      if (scrollable <= 0) return;
+
+      const percent = (doc.scrollTop / scrollable) * 100;
+      for (const milestone of SCROLL_MILESTONES) {
+        if (percent >= milestone && !seenMilestones.has(milestone)) {
+          seenMilestones.add(milestone);
+          trackEvent("scroll_depth", String(milestone));
+        }
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      clearTimeout(bootTimer);
+      sectionObserver?.disconnect();
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, [pathname]);
+};
+
 // À monter à l'intérieur du <BrowserRouter> : useLocation en dépend.
 const SiteAnalytics = () => {
   const { pathname } = useLocation();
   useIntentTracking();
+  useContentTracking();
 
   useEffect(() => {
     sendPageview(pathname);

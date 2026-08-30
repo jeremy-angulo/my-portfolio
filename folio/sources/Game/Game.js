@@ -47,6 +47,7 @@ import { PreRenderer } from './PreRenderer.js'
 import { Options } from './Options.js'
 import gsap from 'gsap'
 import { Map } from './Map.js'
+import { Telemetry } from './Telemetry.js'
 
 export class Game
 {
@@ -205,6 +206,7 @@ export class Game
         this.physicalVehicle = new PhysicsVehicle()
         this.zones = new Zones()
         this.player = new Player()
+        this.telemetry = new Telemetry()
         this.closingManager = new ClosingManager()
         this.interactivePoints = new InteractivePoints()
         this.konamiCode = new KonamiCode()

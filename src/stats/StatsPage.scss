@@ -341,10 +341,12 @@
   }
 }
 
-// Carte Disponibilité (Better Stack) : une source différente de l'audience,
-// on la détache visuellement en pleine largeur sous les 4 cartes GoatCounter
-// plutôt que de la caser à moitié dans la grille 2 colonnes.
-.stats-uptime {
+// Cartes qui n'ont pas leur place à moitié dans la grille 2 colonnes :
+// Contenu (GoatCounter, mais un autre angle que les 4 cartes de répartition),
+// Disponibilité (Better Stack, autre source), Exploration 3D (idem).
+.stats-content,
+.stats-uptime,
+.stats-heatmap-card {
   grid-column: 1 / -1;
 }
 
@@ -654,5 +656,61 @@
     color: var(--day-muted);
     border-top: 1px solid var(--day-line);
     padding-top: 12px;
+  }
+}
+
+// ------------------------------------------------------------------ Contenu
+
+.stats-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}
+
+.stats-mini {
+  &__title {
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--day-muted);
+    margin-bottom: 14px;
+  }
+}
+
+// ------------------------------------------------------------- Exploration 3D
+
+// L'image de la mini-carte du jeu (folio) sert de fond ; le canvas dessine la
+// densité par-dessus, aux mêmes coordonnées normalisées (Map.worldToMap).
+.heatmap {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--day-line);
+  background: #0e0b1c;
+
+  &__map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.55;
+  }
+
+  &__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
   }
 }
