@@ -1,39 +1,43 @@
 // api/stats.js — Fonction serveur Vercel qui lit les chiffres d'audience.
 //
-// Pourquoi une fonction serveur plutôt qu'un appel depuis la page : les données
-// de Vercel Web Analytics ne sont pas publiques, elles demandent un jeton d'API.
-// Ce jeton doit rester ici, côté serveur — dans le navigateur il serait lisible
-// par n'importe qui et donnerait accès à tout le compte Vercel.
+// Pourquoi une fonction serveur plutôt qu'un appel depuis la page : le jeton
+// d'API GoatCounter donne accès à tout le compte (lecture ET écriture selon
+// ses permissions). Il doit rester ici, côté serveur — dans le navigateur il
+// serait lisible par n'importe qui.
 //
 // Variables d'environnement attendues (portée Production) :
-//   VERCEL_ANALYTICS_TOKEN  jeton d'API Vercel (secret)
+//   GOATCOUNTER_CODE        code de site GoatCounter, ex. "jeremy-angulo"
+//   GOATCOUNTER_API_TOKEN   jeton d'API GoatCounter (secret)
 //   STATS_PASSPHRASE        phrase attendue pour consulter la page (secret)
+//
+// GoatCounter ne purge jamais l'historique de son propre chef (à la différence
+// de Vercel Web Analytics et ses 31 jours) : la plage demandée n'est donc
+// limitée que par bon sens, pas par une contrainte du service.
+const MAX_DAYS = 1825
 
-const API = 'https://api.vercel.com/v1/query/web-analytics'
-const PROJECT_ID = 'prj_I5wahU045PsaupI24RNeP8lVkDdz'
-const TEAM_ID = 'team_Yj7zasc6fIo19ZilujqUyiXQ'
-
-// Vercel Web Analytics ne conserve que 31 jours en offre gratuite.
-const MAX_DAYS = 31
+// v0 n'expose pas de total site entier : on le calcule en additionnant les
+// pages renvoyées par /stats/hits. Sur un site à quelques dizaines de visites
+// par mois ça tient dans un seul appel (limite 100, largement suffisant).
+const HITS_LIMIT = 100
 
 const iso = (date) => date.toISOString().slice(0, 10)
 
-async function query(path, token, params)
+async function query(base, path, token, params)
 {
-    const url = new URL(`${API}/${path}`)
-    url.searchParams.set('projectId', PROJECT_ID)
-    url.searchParams.set('teamId', TEAM_ID)
-    url.searchParams.set('environment', 'production')
+    const url = new URL(`${base}/${path}`)
 
     for(const [ key, value ] of Object.entries(params))
     {
-        if(Array.isArray(value))
-            value.forEach((one) => url.searchParams.append(key, one))
-        else if(value !== undefined && value !== null)
+        if(value !== undefined && value !== null)
             url.searchParams.set(key, String(value))
     }
 
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    const response = await fetch(url, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+    })
 
     if(!response.ok)
     {
@@ -44,9 +48,19 @@ async function query(path, token, params)
     return response.json()
 }
 
+// {id, name, count} pour browsers/systems/locations/toprefs/sizes/... — un
+// nom lisible peut manquer (ex. sizes ne renvoie que l'id) : on retombe dessus.
+// GoatCounter ne distingue pas les visiteurs uniques sur ces dimensions, à la
+// différence de /stats/hits : c'est un compte de pages vues, pas de visiteurs.
+const toBars = (stats) =>
+    (stats ?? [])
+        .map((row) => ({ label: row.name || row.id || '(non renseigné)', pageviews: row.count ?? 0 }))
+        .sort((a, b) => b.pageviews - a.pageviews)
+
 export default async function handler(request, response)
 {
-    const token = process.env.VERCEL_ANALYTICS_TOKEN
+    const code = process.env.GOATCOUNTER_CODE
+    const token = process.env.GOATCOUNTER_API_TOKEN
     const passphrase = process.env.STATS_PASSPHRASE
 
     // Sans phrase configurée on refuse tout : mieux vaut une page inutilisable
@@ -58,36 +72,42 @@ export default async function handler(request, response)
     if(given !== passphrase)
         return response.status(401).json({ error: 'unauthorized' })
 
-    if(!token)
+    if(!code || !token)
         return response.status(503).json({ error: 'token_missing' })
 
+    const base = `https://${code}.goatcounter.com/api/v0`
+
     const asked = Number.parseInt(request.query?.days ?? '31', 10)
-    const days = Math.min(MAX_DAYS, Math.max(1, Number.isFinite(asked) ? asked : MAX_DAYS))
+    const days = Math.min(MAX_DAYS, Math.max(1, Number.isFinite(asked) ? asked : 31))
 
     const until = new Date()
     const since = new Date(until.getTime() - days * 86400000)
-    const range = { since: iso(since), until: iso(until) }
+    const range = { start: iso(since), end: iso(until) }
 
     try
     {
-        const [ totals, paths, devices, countries, referrers, daily ] = await Promise.all([
-            query('visits/count', token, range),
-            query('visits/aggregate', token, { ...range, by: 'requestPath', limit: 15 }),
-            query('visits/aggregate', token, { ...range, by: 'deviceType', limit: 10 }),
-            query('visits/aggregate', token, { ...range, by: 'country', limit: 10 }),
-            query('visits/aggregate', token, { ...range, by: 'referrerHostname', limit: 10 }),
-            query('visits/aggregate', token, { ...range, by: 'day', limit: 100 }),
+        const [ hits, sizes, locations, toprefs ] = await Promise.all([
+            query(base, 'stats/hits', token, { ...range, limit: HITS_LIMIT }),
+            query(base, 'stats/sizes', token, range),
+            query(base, 'stats/locations', token, { ...range, limit: 12 }),
+            query(base, 'stats/toprefs', token, { ...range, limit: 12 }),
         ])
+
+        const pages = hits?.hits ?? []
+        const visitors = pages.reduce((sum, p) => sum + (p.count_unique ?? 0), 0)
+        const pageviews = pages.reduce((sum, p) => sum + (p.count ?? 0), 0)
 
         response.setHeader('Cache-Control', 'private, max-age=300')
         return response.status(200).json({
             range: { ...range, days },
-            totals: totals?.data ?? null,
-            paths: paths?.data ?? [],
-            devices: devices?.data ?? [],
-            countries: countries?.data ?? [],
-            referrers: referrers?.data ?? [],
-            daily: daily?.data ?? [],
+            truncated: hits?.more === true,
+            totals: { visitors, pageviews },
+            paths: pages
+                .map((p) => ({ label: p.path || '/', visitors: p.count_unique ?? 0, pageviews: p.count ?? 0 }))
+                .sort((a, b) => b.pageviews - a.pageviews),
+            devices: toBars(sizes?.stats),
+            countries: toBars(locations?.stats),
+            referrers: toBars(toprefs?.stats),
         })
     }
     catch(error)

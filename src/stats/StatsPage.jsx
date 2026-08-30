@@ -9,7 +9,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import "./StatsPage.scss";
 
 const STORAGE_KEY = "stats-key";
-const RANGES = [7, 31];
+const RANGES = [7, 31, 90, 365];
+const rangeLabel = (r) => (r === 365 ? "1 an" : `${r} jours`);
 
 const nf = new Intl.NumberFormat("fr-FR");
 
@@ -18,33 +19,32 @@ const messageForError = (payload, status) => {
   if (payload?.error === "not_configured")
     return "La variable STATS_PASSPHRASE n'est pas définie côté Vercel.";
   if (payload?.error === "token_missing")
-    return "La variable VERCEL_ANALYTICS_TOKEN n'est pas définie côté Vercel.";
+    return "GOATCOUNTER_CODE ou GOATCOUNTER_API_TOKEN n'est pas défini côté Vercel.";
   if (payload?.error === "upstream")
-    return `L'API Vercel a refusé la requête — ${payload.detail ?? "sans détail"}`;
+    return `L'API GoatCounter a refusé la requête — ${payload.detail ?? "sans détail"}`;
   return "Erreur inattendue.";
 };
 
-const Bars = ({ rows, labelKey, total }) => {
+const Bars = ({ rows, valueKey = "visitors", total }) => {
   if (!rows?.length) return <p className="stats-empty">Aucune donnée sur la période.</p>;
 
-  const max = Math.max(...rows.map((r) => r.visitors ?? 0), 1);
+  const max = Math.max(...rows.map((r) => r[valueKey] ?? 0), 1);
 
   return (
     <div className="stats-bars">
       {rows.map((row, i) => {
-        const label = row[labelKey];
-        const visitors = row.visitors ?? 0;
+        const value = row[valueKey] ?? 0;
         return (
-          <div className="stats-bar-row" key={`${label}-${i}`}>
-            <span className="stats-bar-label" title={label || "(non renseigné)"}>
-              {label || "(non renseigné)"}
+          <div className="stats-bar-row" key={`${row.label}-${i}`}>
+            <span className="stats-bar-label" title={row.label || "(non renseigné)"}>
+              {row.label || "(non renseigné)"}
             </span>
             <span className="stats-bar-track">
-              <span className="stats-bar-fill" style={{ width: `${(visitors / max) * 100}%` }} />
+              <span className="stats-bar-fill" style={{ width: `${(value / max) * 100}%` }} />
             </span>
             <span className="stats-bar-value">
-              {nf.format(visitors)}
-              {total ? <em> · {Math.round((visitors / total) * 100)} %</em> : null}
+              {nf.format(value)}
+              {total ? <em> · {Math.round((value / total) * 100)} %</em> : null}
             </span>
           </div>
         );
@@ -150,7 +150,7 @@ const StatsPage = () => {
         <div>
           <h1>Statistiques</h1>
           <p className="stats-sub">
-            jeremyangulo.fr · {data?.range ? `${data.range.since} → ${data.range.until}` : "…"}
+            jeremyangulo.fr · {data?.range ? `${data.range.start} → ${data.range.end}` : "…"}
           </p>
         </div>
         <div className="stats-actions">
@@ -161,7 +161,7 @@ const StatsPage = () => {
               className={r === days ? "is-active" : ""}
               onClick={() => setDays(r)}
             >
-              {r} jours
+              {rangeLabel(r)}
             </button>
           ))}
           <button type="button" onClick={() => load(key, days)} disabled={loading}>
@@ -193,28 +193,29 @@ const StatsPage = () => {
 
       <section>
         <h2>Pages</h2>
-        <Bars rows={data?.paths} labelKey="requestPath" total={totals?.visitors} />
+        <Bars rows={data?.paths} valueKey="pageviews" total={totals?.pageviews} />
       </section>
 
       <section>
         <h2>Appareils</h2>
-        <Bars rows={data?.devices} labelKey="deviceType" total={totals?.visitors} />
+        <Bars rows={data?.devices} valueKey="pageviews" total={totals?.pageviews} />
       </section>
 
       <section>
         <h2>Pays</h2>
-        <Bars rows={data?.countries} labelKey="country" total={totals?.visitors} />
+        <Bars rows={data?.countries} valueKey="pageviews" total={totals?.pageviews} />
       </section>
 
       <section>
         <h2>Provenance</h2>
-        <Bars rows={data?.referrers} labelKey="referrerHostname" total={totals?.visitors} />
+        <Bars rows={data?.referrers} valueKey="pageviews" total={totals?.pageviews} />
       </section>
 
       <footer className="stats-foot">
         <p>
-          Vercel Web Analytics ne conserve que 31 jours en offre gratuite, et les évènements
-          personnalisés (durée passée dans le monde 3D, zones atteintes) demandent le plan Pro.
+          Source : GoatCounter, sans purge d'historique. Les répartitions par page, appareil,
+          pays et provenance comptent des pages vues (une même personne peut apparaître
+          plusieurs fois) ; seuls les totaux en haut de page comptent des visiteurs distincts.
         </p>
       </footer>
     </main>

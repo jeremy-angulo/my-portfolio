@@ -1,54 +1,65 @@
 // src/analytics.jsx
 //
-// Point d'entrée unique de la mesure d'audience (Vercel Web Analytics).
+// Point d'entrée unique de la mesure d'audience (GoatCounter).
 //
-// Deux rôles :
+// GoatCounter ne pose ni cookie ni identifiant persistant côté client :
+// l'unicité d'un visiteur est calculée côté serveur à partir de l'IP et du
+// user-agent, avec un sel qui change chaque jour. Rien à consentir, donc rien
+// à faire ici pour ça.
 //
-//  1. <SiteAnalytics /> monte le traceur Vercel en lui passant le *motif* de
-//     route react-router (ex. "/project/:projectId") en plus du chemin réel.
-//     Sans ça la dimension « Route » du tableau de bord reste vide — c'est le
-//     cas aujourd'hui, les 45 pages vues du dernier mois ont toutes une route
-//     nulle — et chaque projet consulté crée sa propre ligne au lieu d'être
-//     agrégé.
+// Le script est chargé avec `no_onload` : le laisser mesurer tout seul ferait
+// une page vue en double au premier chargement — une fois automatiquement,
+// une fois via l'effet ci-dessous qui suit les changements de route de
+// react-router. C'est cet effet qui envoie chaque page vue, y compris la
+// première.
 //
-//  2. Un écouteur de clic délégué remonte les deux gestes à forte intention
-//     (téléchargement du CV, départ vers un profil externe). Il est posé une
-//     seule fois sur le document : aucun composant porteur de lien n'a besoin
-//     d'être modifié, et le suivi survit aux refontes de ces composants.
-//
-// ⚠️ PLAN HOBBY : les évènements personnalisés (`track`) sont réservés aux
-// plans Pro/Enterprise — voir vercel.com/docs/analytics/limits-and-pricing.
-// Sur le plan actuel ces appels ne remonteront pas dans le tableau de bord ;
-// ils sont sans effet de bord et deviendront actifs le jour d'un passage en
-// Pro, sans redéploiement de code. Les *pages vues*, elles, fonctionnent déjà.
+// Les deux gestes à forte intention (téléchargement du CV, départ vers un
+// profil externe) remontent en tant qu'évènements GoatCounter — à la
+// différence de Vercel Analytics, ce n'est pas réservé à un plan payant.
 
 import { useEffect } from "react";
-import { useLocation, matchRoutes } from "react-router-dom";
-import { Analytics, track } from "@vercel/analytics/react";
+import { useLocation } from "react-router-dom";
 
-// Les motifs déclarés dans App.jsx, dans le même ordre. À tenir à jour si une
-// route y est ajoutée : une route absente d'ici retombe sur le catch-all "*".
-const ROUTE_PATTERNS = [
-  { path: "/" },
-  { path: "/pro" },
-  { path: "/portfolio" },
-  { path: "/3d" },
-  { path: "/tech" },
-  { path: "/project/:projectId" },
-  { path: "/cv" },
-  { path: "/statistiques" },
-  { path: "/resume" },
-  { path: "*" },
-];
+const GOATCOUNTER_CODE = import.meta.env.VITE_GOATCOUNTER_CODE;
+const configured = Boolean(GOATCOUNTER_CODE);
 
-// Doit TOUJOURS renvoyer une chaîne non vide : quand la prop `route` est
-// fournie, le paquet Vercel coupe le suivi automatique des changements d'URL
-// et n'émet la page vue que si `route` ET `path` sont non nuls. Une valeur
-// vide ferait donc disparaître toute la mesure.
-const computeRoute = (pathname) => {
-  const matches = matchRoutes(ROUTE_PATTERNS, pathname);
-  const matched = matches?.[matches.length - 1]?.route?.path;
-  return matched || pathname || "/";
+let loadPromise = null;
+
+// Un seul <script> quel que soit le nombre de montages du composant.
+const loadScript = () => {
+  if (!configured) return Promise.resolve(false);
+  if (loadPromise) return loadPromise;
+
+  loadPromise = new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = "//gc.zgo.at/count.js";
+    script.dataset.goatcounter = `https://${GOATCOUNTER_CODE}.goatcounter.com/count`;
+    script.dataset.goatcounterSettings = JSON.stringify({ no_onload: true });
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.head.appendChild(script);
+  });
+
+  return loadPromise;
+};
+
+const sendPageview = async (pathname) => {
+  const ready = await loadScript();
+  if (!ready || typeof window.goatcounter?.count !== "function") return;
+  window.goatcounter.count({ path: pathname, title: document.title });
+};
+
+// `event: true` fait apparaître l'appel dans le tableau de bord comme un
+// évènement nommé plutôt que comme une page — pas de vraie URL à donner.
+const trackEvent = async (name, detail) => {
+  const ready = await loadScript();
+  if (!ready || typeof window.goatcounter?.count !== "function") return;
+  window.goatcounter.count({
+    path: detail ? `${name}: ${detail}` : name,
+    title: name,
+    event: true,
+  });
 };
 
 // Les seuls clics qui disent quelque chose d'une intention : repartir avec le
@@ -62,7 +73,7 @@ const useIntentTracking = () => {
 
       // Le CV est le seul livrable téléchargeable du site.
       if ((anchor.getAttribute("href") || "").endsWith(".pdf")) {
-        track("cv_download");
+        trackEvent("cv_download");
         return;
       }
 
@@ -73,7 +84,7 @@ const useIntentTracking = () => {
         return;
       }
       if (url.hostname && url.hostname !== window.location.hostname) {
-        track("outbound_click", { host: url.hostname });
+        trackEvent("outbound_click", url.hostname);
       }
     };
 
@@ -88,7 +99,11 @@ const SiteAnalytics = () => {
   const { pathname } = useLocation();
   useIntentTracking();
 
-  return <Analytics route={computeRoute(pathname)} path={pathname} />;
+  useEffect(() => {
+    sendPageview(pathname);
+  }, [pathname]);
+
+  return null;
 };
 
 export default SiteAnalytics;
