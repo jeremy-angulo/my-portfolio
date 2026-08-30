@@ -287,11 +287,12 @@
 .stats-kpis {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  background: var(--day-sky-soft);
-  border: 1px solid #dbe6f7;
+  background: var(--day-surface);
+  border: 1px solid var(--day-line);
   border-radius: 20px;
   padding: clamp(24px, 3.5vw, 34px) clamp(8px, 1.5vw, 14px);
   margin-bottom: 22px;
+  box-shadow: 0 8px 30px -18px rgba(22, 35, 58, 0.25);
 
   @media (max-width: 620px) {
     grid-template-columns: 1fr;
@@ -304,11 +305,11 @@
   padding-inline: clamp(16px, 2.5vw, 30px);
 
   & + & {
-    border-left: 1px solid #d3e2f5;
+    border-left: 1px solid var(--day-line);
 
     @media (max-width: 620px) {
       border-left: none;
-      border-top: 1px solid #d3e2f5;
+      border-top: 1px solid var(--day-line);
       padding-top: 18px;
     }
   }
@@ -333,10 +334,18 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
+  margin-top: 22px;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
   }
+}
+
+// Carte Disponibilité (Better Stack) : une source différente de l'audience,
+// on la détache visuellement en pleine largeur sous les 4 cartes GoatCounter
+// plutôt que de la caser à moitié dans la grille 2 colonnes.
+.stats-uptime {
+  grid-column: 1 / -1;
 }
 
 // Cartes de répartition : la carte blanche des expertises, sans le hover —
@@ -508,5 +517,142 @@
   .stats-refresh.is-busy svg,
   .stats-loading svg {
     animation: none;
+  }
+}
+
+// --------------------------------------------------------------- Évolution
+
+// La carte du graphique reprend .stats-card mais laisse l'aire du graphique
+// respirer un peu plus qu'une simple liste de barres.
+.stats-trend-card {
+  margin-top: 0;
+}
+
+.trend-chart {
+  position: relative;
+
+  &__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  &__grid {
+    stroke: var(--day-line);
+    stroke-width: 1;
+  }
+
+  &__area {
+    fill: url(#trendFill);
+    stroke: none;
+  }
+
+  &__line {
+    fill: none;
+    stroke: var(--day-amber-deep);
+    stroke-width: 2.25;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  &__cursor {
+    stroke: var(--day-ink-soft);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    opacity: 0.5;
+  }
+
+  &__dot {
+    fill: var(--day-amber-deep);
+    stroke: var(--day-surface);
+    stroke-width: 2;
+  }
+
+  &__tick {
+    fill: var(--day-muted);
+    font-family: "Poppins", sans-serif;
+    font-size: 11px;
+  }
+
+  &__tooltip {
+    position: absolute;
+    top: 6px;
+    transform: translateX(-50%);
+    background: var(--day-ink);
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 7px 11px;
+    font-size: 12.5px;
+    line-height: 1.4;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 10px 26px -12px rgba(22, 35, 58, 0.55);
+
+    strong {
+      display: block;
+      font-weight: 600;
+    }
+
+    span {
+      color: rgba(255, 255, 255, 0.75);
+    }
+  }
+}
+
+// ------------------------------------------------------------ Disponibilité
+
+.stats-uptime {
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 14px;
+  }
+
+  &__dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &.is-up {
+      background: #2f9e5c;
+      box-shadow: 0 0 0 4px rgba(47, 158, 92, 0.16);
+    }
+
+    &.is-down {
+      background: #d1453b;
+      box-shadow: 0 0 0 4px rgba(209, 69, 59, 0.16);
+    }
+  }
+
+  &__status {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--day-ink);
+  }
+
+  &__value {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: clamp(28px, 3.2vw, 36px);
+    color: var(--day-ink);
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__label {
+    margin-top: 8px;
+    font-size: 13.5px;
+    color: var(--day-muted);
+  }
+
+  &__source {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--day-muted);
+    border-top: 1px solid var(--day-line);
+    padding-top: 12px;
   }
 }

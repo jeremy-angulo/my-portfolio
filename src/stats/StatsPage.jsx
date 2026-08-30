@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
+  FiActivity,
   FiBarChart2,
   FiCompass,
   FiFileText,
@@ -17,10 +18,12 @@ import {
   FiLock,
   FiMonitor,
   FiRefreshCw,
+  FiTrendingUp,
 } from "react-icons/fi";
 import { logo } from "../assets";
 import ProFooter from "../pro/ProFooter";
 import { rise } from "../pro/proMotion";
+import TrendChart from "./TrendChart";
 import "../pro/pro.scss";
 import "./StatsPage.scss";
 
@@ -70,7 +73,7 @@ const countryRow = (row) => {
   } catch {
     /* code hors ISO : nom serveur */
   }
-  return { ...row, label: `${flag} ${name}` };
+  return { ...row, label: `${flag} ${name}` };
 };
 
 const formatRange = (range) => {
@@ -180,16 +183,42 @@ const BarList = ({ rows: allRows }) => {
   );
 };
 
-const StatsCard = ({ icon, title, children }) => (
-  <section className="stats-card">
+const StatsCard = ({ icon, title, unit, className, children }) => (
+  <section className={`stats-card${className ? ` ${className}` : ""}`}>
     <header className="stats-card__head">
       <span className="stats-card__icon">{icon}</span>
       <h2 className="stats-card__title">{title}</h2>
-      <span className="stats-card__unit">pages vues</span>
+      {unit ? <span className="stats-card__unit">{unit}</span> : null}
     </header>
     {children}
   </section>
 );
+
+// Statut Better Stack : section bonus, absente de la réponse si les variables
+// BETTERSTACK_* ne sont pas configurées côté Vercel — on ne l'affiche alors pas.
+const UptimeCard = ({ uptime }) => {
+  const up = uptime.status === "up";
+  return (
+    <StatsCard icon={<FiActivity />} title="Disponibilité" className="stats-uptime">
+      <div className="stats-uptime__row">
+        <span className={`stats-uptime__dot${up ? " is-up" : " is-down"}`} aria-hidden="true" />
+        <span className="stats-uptime__status">
+          {up ? "En ligne" : uptime.status === "unknown" ? "Statut inconnu" : "Interruption en cours"}
+        </span>
+      </div>
+      <p className="stats-uptime__value">
+        {uptime.availability != null ? `${uptime.availability.toFixed(2).replace(".", ",")} %` : "—"}
+      </p>
+      <p className="stats-uptime__label">
+        Disponibilité sur la période
+        {uptime.incidents != null
+          ? ` · ${uptime.incidents === 0 ? "aucune interruption" : `${uptime.incidents} interruption${uptime.incidents > 1 ? "s" : ""}`}`
+          : ""}
+      </p>
+      <p className="stats-uptime__source">Surveillance Better Stack, contrôle toutes les 3 minutes.</p>
+    </StatsCard>
+  );
+};
 
 const pageEnter = {
   initial: { opacity: 0 },
@@ -303,8 +332,8 @@ const StatsPage = () => {
               <p className="pro-section__eyebrow">Page privée</p>
               <h1 className="pro-display stats-gate__title">Statistiques du site</h1>
               <p className="stats-gate__text">
-                Visites, pages consultées, provenance et appareils de jeremyangulo.fr.
-                La consultation demande la phrase d'accès.
+                Fréquentation, pages consultées, provenance et disponibilité de
+                jeremyangulo.fr. La consultation demande la phrase d'accès.
               </p>
               <label className="stats-gate__field">
                 Phrase d'accès
@@ -337,15 +366,8 @@ const StatsPage = () => {
   }
 
   const totals = data?.totals;
-  const perVisit = totals?.visitors
-    ? (totals.pageviews / totals.visitors).toFixed(1).replace(".", ",")
-    : "—";
 
-  const paths = data?.paths?.map((page) => ({
-    label: page.label,
-    pageviews: page.pageviews,
-    title: `${page.label} — ${nf.format(page.pageviews)} vues · ${nf.format(page.visitors)} visiteurs`,
-  }));
+  const paths = data?.paths;
   const referrers = data?.referrers?.map((row) => {
     if (row.label === "(non renseigné)") return { ...row, label: "Accès direct ou inconnu" };
     return { ...row, label: row.label.replace(/^www\./, "") };
@@ -423,39 +445,48 @@ const StatsPage = () => {
             >
               <section className="stats-kpis" aria-label="Totaux de la période">
                 <div className="stats-kpi">
-                  <p className="stats-kpi__value">{totals ? nf.format(totals.visitors) : "—"}</p>
-                  <p className="stats-kpi__label">Visiteurs</p>
-                </div>
-                <div className="stats-kpi">
                   <p className="stats-kpi__value">{totals ? nf.format(totals.pageviews) : "—"}</p>
                   <p className="stats-kpi__label">Pages vues</p>
                 </div>
                 <div className="stats-kpi">
-                  <p className="stats-kpi__value">{perVisit}</p>
-                  <p className="stats-kpi__label">Pages par visite</p>
+                  <p className="stats-kpi__value">
+                    {totals ? nf.format(totals.average) : "—"}
+                  </p>
+                  <p className="stats-kpi__label">Moyenne par jour</p>
+                </div>
+                <div className="stats-kpi">
+                  <p className="stats-kpi__value">{totals ? nf.format(totals.peak) : "—"}</p>
+                  <p className="stats-kpi__label">Meilleur jour</p>
                 </div>
               </section>
 
+              <StatsCard icon={<FiTrendingUp />} title="Évolution" unit="pages vues / jour" className="stats-trend-card">
+                <TrendChart series={data.series ?? []} />
+              </StatsCard>
+
               <div className="stats-grid">
-                <StatsCard icon={<FiFileText />} title="Pages">
+                <StatsCard icon={<FiFileText />} title="Pages" unit="pages vues">
                   <BarList rows={paths} />
                 </StatsCard>
-                <StatsCard icon={<FiCompass />} title="Provenance">
+                <StatsCard icon={<FiCompass />} title="Provenance" unit="pages vues">
                   <BarList rows={referrers} />
                 </StatsCard>
-                <StatsCard icon={<FiGlobe />} title="Pays">
+                <StatsCard icon={<FiGlobe />} title="Pays" unit="pages vues">
                   <BarList rows={countries} />
                 </StatsCard>
-                <StatsCard icon={<FiMonitor />} title="Appareils">
+                <StatsCard icon={<FiMonitor />} title="Appareils" unit="pages vues">
                   <BarList rows={devices} />
                 </StatsCard>
+                {data.uptime ? <UptimeCard uptime={data.uptime} /> : null}
               </div>
 
               <p className="stats-note">
-                Données GoatCounter, historique conservé sans limite de durée. Les totaux
-                comptent des visiteurs distincts ; les cartes comptent des pages vues, et
-                leurs pourcentages se rapportent au total de chaque carte.
+                Audience : GoatCounter, historique conservé sans limite de durée. GoatCounter ne
+                transmet que des pages vues, pas de visiteurs uniques — tous les chiffres
+                ci-dessus, y compris les totaux, en comptent. Les pourcentages se rapportent au
+                total de chaque carte.
                 {data?.truncated ? " Liste des pages limitée aux 100 premières." : ""}
+                {data.uptime ? " Disponibilité : Better Stack, un contrôle toutes les 3 minutes depuis 4 régions." : ""}
               </p>
             </motion.div>
           ) : null}
