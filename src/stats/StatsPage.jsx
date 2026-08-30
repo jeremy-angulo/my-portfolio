@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FiActivity,
+  FiAward,
   FiBarChart2,
   FiBookOpen,
   FiCompass,
@@ -20,7 +21,9 @@ import {
   FiMap,
   FiMonitor,
   FiRefreshCw,
+  FiSliders,
   FiTrendingUp,
+  FiTrendingDown,
 } from "react-icons/fi";
 import { logo } from "../assets";
 import ProFooter from "../pro/ProFooter";
@@ -234,11 +237,37 @@ const MiniList = ({ label, rows }) => (
 );
 
 const ContentCard = ({ content }) => (
-  <StatsCard icon={<FiBookOpen />} title="Contenu" unit="pages vues" className="stats-content">
+  <StatsCard icon={<FiBookOpen />} title="Contenu" unit="évènements" className="stats-content">
     <div className="stats-mini-grid">
       <MiniList label="Sections lues" rows={content.sections} />
       <MiniList label="Profondeur de lecture" rows={content.scrollDepth} />
       <MiniList label="Intentions" rows={content.intents} />
+    </div>
+  </StatsCard>
+);
+
+// Langue d'affichage et bascule jour/nuit : deux gestes qui disent comment on
+// se déplace entre les deux facettes du portfolio, suivis comme évènements
+// GoatCounter (FacetToggle.jsx, useLanguageTracking dans analytics.jsx).
+const LanguageCard = ({ content }) => (
+  <StatsCard icon={<FiSliders />} title="Langue &amp; bascule jour/nuit" unit="évènements" className="stats-content">
+    <div className="stats-mini-grid stats-mini-grid--2">
+      <MiniList label="Langue" rows={content.languages} />
+      <MiniList label="Bascule jour ↔ nuit" rows={content.facetSwitches} />
+    </div>
+  </StatsCard>
+);
+
+// Ce qui se passe dans le monde 3D au-delà d'où l'on va (la heatmap) : quels
+// lieux nommés sont découverts, quels succès sont débloqués — voir
+// folio/sources/Game/Telemetry.js (zone_enter) et Achievements.js
+// (achievement_unlock). Aucune limite de rétention ici : ce sont des
+// évènements GoatCounter, pas la source Better Stack à 3 jours de la heatmap.
+const GameCard = ({ game }) => (
+  <StatsCard icon={<FiAward />} title="Points d'intérêt &amp; succès (monde 3D)" unit="évènements" className="stats-content">
+    <div className="stats-mini-grid stats-mini-grid--2">
+      <MiniList label="Zones découvertes" rows={game.zones} />
+      <MiniList label="Succès débloqués" rows={game.achievements} />
     </div>
   </StatsCard>
 );
@@ -469,7 +498,18 @@ const StatsPage = () => {
               <section className="stats-kpis" aria-label="Totaux de la période">
                 <div className="stats-kpi">
                   <p className="stats-kpi__value">{totals ? nf.format(totals.pageviews) : "—"}</p>
-                  <p className="stats-kpi__label">Pages vues</p>
+                  <p className="stats-kpi__label">
+                    Pages vues
+                    {totals?.changePercent != null ? (
+                      <span
+                        className={`stats-kpi__delta${totals.changePercent < 0 ? " is-down" : " is-up"}`}
+                        title="Par rapport à la période équivalente précédente"
+                      >
+                        {totals.changePercent > 0 ? <FiTrendingUp aria-hidden="true" /> : <FiTrendingDown aria-hidden="true" />}
+                        {Math.abs(totals.changePercent).toFixed(1).replace(".", ",")} %
+                      </span>
+                    ) : null}
+                  </p>
                 </div>
                 <div className="stats-kpi">
                   <p className="stats-kpi__value">
@@ -497,10 +537,16 @@ const StatsPage = () => {
                 <StatsCard icon={<FiGlobe />} title="Pays" unit="pages vues">
                   <BarList rows={countries} />
                 </StatsCard>
-                <StatsCard icon={<FiMonitor />} title="Appareils" unit="pages vues">
-                  <BarList rows={devices} />
+                <StatsCard icon={<FiMonitor />} title="Appareils" unit="pages vues" className="stats-content">
+                  <div className="stats-mini-grid">
+                    <MiniList label="Taille d'écran" rows={devices} />
+                    <MiniList label="Navigateur" rows={data.browsers} />
+                    <MiniList label="Système" rows={data.systems} />
+                  </div>
                 </StatsCard>
                 <ContentCard content={data.content} />
+                <LanguageCard content={data.content} />
+                <GameCard game={data.game} />
                 {data.uptime ? <UptimeCard uptime={data.uptime} /> : null}
                 {data.heatmap ? (
                   <StatsCard icon={<FiMap />} title="Exploration du monde 3D" unit="visites de zone" className="stats-heatmap-card">
@@ -512,11 +558,15 @@ const StatsPage = () => {
               <p className="stats-note">
                 Audience : GoatCounter, historique conservé sans limite de durée. GoatCounter ne
                 transmet que des pages vues, pas de visiteurs uniques — tous les chiffres
-                ci-dessus, y compris les totaux, en comptent. Les pourcentages se rapportent au
-                total de chaque carte.
+                ci-dessus, y compris les totaux, en comptent. Pages, Provenance, Pays et Appareils
+                comptent des pages vues ; Contenu, Langue &amp; bascule et Points d'intérêt &amp;
+                succès comptent des évènements distincts (une lecture de section, un changement de
+                langue, une entrée dans une zone…). Les pourcentages se rapportent au total de
+                chaque carte, et la variation sous « Pages vues » compare à la période équivalente
+                juste avant celle affichée.
                 {data?.truncated ? " Liste des pages limitée aux 100 premières." : ""}
                 {data.uptime ? " Disponibilité : Better Stack, un contrôle toutes les 3 minutes depuis 4 régions." : ""}
-                {data.heatmap ? " Exploration 3D : compteurs de zone anonymes (aucune position brute, aucun identifiant), rétention Better Stack limitée à 3 jours — la carte ne montre donc que l'activité récente, pas un cumul depuis le lancement." : ""}
+                {data.heatmap ? " Exploration 3D (carte) : compteurs de zone anonymes (aucune position brute, aucun identifiant), rétention Better Stack limitée à 3 jours — elle ne montre donc que l'activité récente, contrairement aux zones et succès listés juste au-dessus (des évènements GoatCounter, sans limite de rétention)." : ""}
               </p>
             </motion.div>
           ) : null}

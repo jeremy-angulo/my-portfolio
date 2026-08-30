@@ -20,8 +20,9 @@
 //    jusqu'où on descend dans la page.
 // Les deux servent le tableau de bord /statistiques (carte "Contenu").
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { useLang } from "./i18n/LanguageContext";
 
 const GOATCOUNTER_CODE = import.meta.env.VITE_GOATCOUNTER_CODE;
 const configured = Boolean(GOATCOUNTER_CODE);
@@ -55,7 +56,8 @@ const sendPageview = async (pathname) => {
 
 // `event: true` fait apparaître l'appel dans le tableau de bord comme un
 // évènement nommé plutôt que comme une page — pas de vraie URL à donner.
-const trackEvent = async (name, detail) => {
+// Exporté : réutilisé par FacetToggle.jsx pour le basculement jour/nuit.
+export const trackEvent = async (name, detail) => {
   const ready = await loadScript();
   if (!ready || typeof window.goatcounter?.count !== "function") return;
   window.goatcounter.count({
@@ -63,6 +65,21 @@ const trackEvent = async (name, detail) => {
     title: name,
     event: true,
   });
+};
+
+// Une entrée par page vue, jamais deux fois de suite pour la même langue —
+// répondre à "FR ou EN ?" sans polluer d'un évènement à chaque nouvelle page
+// tant que la langue ne change pas réellement.
+const useLanguageTracking = (pathname) => {
+  const { lang } = useLang();
+  const lastLang = useRef(null);
+
+  useEffect(() => {
+    if (lastLang.current === lang) return;
+    lastLang.current = lang;
+    trackEvent("site_lang", lang);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lang, pathname]);
 };
 
 // Les seuls clics qui disent quelque chose d'une intention : repartir avec le
@@ -170,6 +187,7 @@ const SiteAnalytics = () => {
   const { pathname } = useLocation();
   useIntentTracking();
   useContentTracking();
+  useLanguageTracking(pathname);
 
   useEffect(() => {
     sendPageview(pathname);

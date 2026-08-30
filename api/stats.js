@@ -1,5 +1,6 @@
-// api/stats.js — Fonction serveur Vercel qui lit les chiffres d'audience, de
-// contenu, de disponibilité et d'exploration 3D du site.
+// api/stats.js — Fonction serveur Vercel qui lit tout ce que /statistiques
+// affiche : audience et contenu (GoatCounter), disponibilité et exploration
+// 3D (Better Stack).
 //
 // Pourquoi une fonction serveur plutôt qu'un appel depuis la page : les jetons
 // d'API (GoatCounter, Better Stack) donnent un accès large aux comptes
@@ -100,7 +101,8 @@ const dateKeys = (since, until) =>
     return keys
 }
 
-// path d'un évènement = "nom" ou "nom: détail" (voir src/analytics.jsx).
+// path d'un évènement = "nom" ou "nom: détail" (voir src/analytics.jsx et
+// folio/sources/Game/Telemetry.js — les deux émettent le même format).
 const parseEventPath = (path) =>
 {
     const sep = path.indexOf(': ')
@@ -119,39 +121,62 @@ const SECTION_LABELS = {
     achievement: 'Nuit · Succès',
 }
 
-// À partir des hits marqués `event: true`, reconstruit les trois blocs de la
-// carte "Contenu" — voir src/analytics.jsx pour ce qui émet ces évènements.
-function buildContent(eventHits)
+const LANGUAGE_LABELS = { fr: 'Français', en: 'English' }
+const FACET_LABELS = { day_to_night: 'Jour → Nuit', night_to_day: 'Nuit → Jour' }
+
+// Additionne les occurrences d'un évènement par détail (ou par nom entier
+// quand il n'y a pas de détail), en conservant l'ordre décroissant.
+const tally = (entries, keyer) =>
 {
-    const sums = { section_view: new Map(), scroll_depth: new Map(), intent: new Map() }
+    const sums = new Map()
+    for(const { detail, name, count } of entries)
+    {
+        const key = keyer({ detail, name })
+        sums.set(key, (sums.get(key) ?? 0) + count)
+    }
+    return [ ...sums.entries() ]
+        .map(([ label, pageviews ]) => ({ label, pageviews }))
+        .sort((a, b) => b.pageviews - a.pageviews)
+}
+
+// À partir des hits marqués `event: true`, reconstruit toutes les cartes
+// "comportement" du tableau de bord — voir src/analytics.jsx et
+// folio/sources/Game/Telemetry.js pour ce qui émet ces évènements.
+function buildBehaviour(eventHits)
+{
+    const buckets = {
+        section_view: [], scroll_depth: [], site_lang: [],
+        facet_switch: [], zone_enter: [], achievement_unlock: [], intent: [],
+    }
 
     for(const hit of eventHits)
     {
         const { name, detail } = parseEventPath(hit.path || '')
         const count = hit.count ?? 0
-        const bucket = name === 'section_view' ? 'section_view'
-            : name === 'scroll_depth' ? 'scroll_depth'
-            : 'intent'
-        const key = bucket === 'intent' ? (detail ? `${name}: ${detail}` : name) : (detail ?? name)
-        sums[bucket].set(key, (sums[bucket].get(key) ?? 0) + count)
+        const bucket = buckets[name] ? name : 'intent'
+        buckets[bucket].push({ name, detail, count })
     }
 
-    const sections = [ ...sums.section_view ]
-        .map(([ id, pageviews ]) => ({ label: SECTION_LABELS[id] ?? id, pageviews }))
-        .sort((a, b) => b.pageviews - a.pageviews)
+    const sections = tally(buckets.section_view, ({ detail }) => SECTION_LABELS[detail] ?? detail)
+    const scrollDepth = [ 25, 50, 75, 100 ].map((milestone) => ({
+        label: `${milestone} %`,
+        pageviews: buckets.scroll_depth.filter((e) => e.detail === String(milestone)).reduce((s, e) => s + e.count, 0),
+    }))
+    const languages = tally(buckets.site_lang, ({ detail }) => LANGUAGE_LABELS[detail] ?? detail)
+    const facetSwitches = tally(buckets.facet_switch, ({ detail }) => FACET_LABELS[detail] ?? detail)
+    const zones = tally(buckets.zone_enter, ({ detail }) => detail)
+    const achievements = tally(buckets.achievement_unlock, ({ detail }) => detail)
 
-    const scrollDepth = [ 25, 50, 75, 100 ]
-        .map((milestone) => ({ label: `${milestone} %`, pageviews: sums.scroll_depth.get(String(milestone)) ?? 0 }))
+    const intents = tally(buckets.intent, ({ name, detail }) => {
+        if(name === 'cv_download') return 'Téléchargement du CV'
+        if(name === 'outbound_click') return `Vers ${detail}`
+        return detail ? `${name}: ${detail}` : name
+    })
 
-    const intents = [ ...sums.intent ]
-        .map(([ key, pageviews ]) => {
-            if(key === 'cv_download') return { label: 'Téléchargement du CV', pageviews }
-            if(key.startsWith('outbound_click: ')) return { label: `Vers ${key.slice('outbound_click: '.length)}`, pageviews }
-            return { label: key, pageviews }
-        })
-        .sort((a, b) => b.pageviews - a.pageviews)
-
-    return { sections, scrollDepth, intents }
+    return {
+        content: { sections, scrollDepth, intents, languages, facetSwitches },
+        game: { zones, achievements },
+    }
 }
 
 async function queryZonesSQL(sql)
@@ -240,6 +265,29 @@ async function fetchHeatmap()
     }
 }
 
+// Pages vues de la période équivalente immédiatement précédente (ex. les 31
+// jours avant les 31 jours affichés), pour la flèche de variation sous les
+// totaux. Une requête légère : pas de daily=1, seul le total nous intéresse.
+async function fetchPreviousTotal(base, token, since, days)
+{
+    const prevUntil = since
+    const prevSince = new Date(prevUntil.getTime() - days * 86400000)
+    const prevRange = { start: iso(prevSince), end: iso(addDays(prevUntil, 1)) }
+
+    try
+    {
+        const hits = await query(base, 'stats/hits', token, { ...prevRange, limit: HITS_LIMIT })
+        const pageviews = (hits?.hits ?? [])
+            .filter((hit) => hit.event !== true)
+            .reduce((sum, p) => sum + (p.count ?? 0), 0)
+        return pageviews
+    }
+    catch
+    {
+        return null
+    }
+}
+
 export default async function handler(request, response)
 {
     const code = process.env.GOATCOUNTER_CODE
@@ -277,11 +325,30 @@ export default async function handler(request, response)
 
     try
     {
-        const [ hits, sizes, locations, toprefs ] = await Promise.all([
-            query(base, 'stats/hits', token, { ...upstreamRange, daily: 1, limit: HITS_LIMIT }),
-            query(base, 'stats/sizes', token, upstreamRange),
-            query(base, 'stats/locations', token, { ...upstreamRange, limit: 12 }),
-            query(base, 'stats/toprefs', token, { ...upstreamRange, limit: 12 }),
+        // GoatCounter limite le débit de son API v0 très serré (429 observé
+        // même à 3 requêtes concurrentes, avec un délai de réessai de l'ordre
+        // de quelques dizaines de ms) : les 7 appels partent donc en série,
+        // chacun espacé d'une petite pause plutôt qu'en Promise.all.
+        const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+        const sequential = async (calls) =>
+        {
+            const results = []
+            for(const call of calls)
+            {
+                results.push(await call())
+                await wait(600)
+            }
+            return results
+        }
+
+        const [ hits, sizes, locations, toprefs, browsers, systems, previousPageviews ] = await sequential([
+            () => query(base, 'stats/hits', token, { ...upstreamRange, daily: 1, limit: HITS_LIMIT }),
+            () => query(base, 'stats/sizes', token, upstreamRange),
+            () => query(base, 'stats/locations', token, { ...upstreamRange, limit: 12 }),
+            () => query(base, 'stats/toprefs', token, { ...upstreamRange, limit: 12 }),
+            () => query(base, 'stats/browsers', token, { ...upstreamRange, limit: 10 }),
+            () => query(base, 'stats/systems', token, { ...upstreamRange, limit: 10 }),
+            () => fetchPreviousTotal(base, token, since, days),
         ])
 
         // /stats/hits mélange pages réelles et évènements nommés (cv_download,
@@ -291,6 +358,7 @@ export default async function handler(request, response)
         const eventHits = allHits.filter((hit) => hit.event === true)
 
         const pageviews = pages.reduce((sum, p) => sum + (p.count ?? 0), 0)
+        const change = previousPageviews ? Math.round(((pageviews - previousPageviews) / previousPageviews) * 1000) / 10 : null
 
         // Série journalière (pages vues, toutes pages confondues) pour le
         // graphique d'évolution : GoatCounter ne donne pas de visiteurs
@@ -336,6 +404,7 @@ export default async function handler(request, response)
         }
 
         const heatmap = await fetchHeatmap()
+        const { content, game } = buildBehaviour(eventHits)
 
         response.setHeader('Cache-Control', 'private, max-age=300')
         return response.status(200).json({
@@ -345,15 +414,19 @@ export default async function handler(request, response)
                 pageviews,
                 average: days ? Math.round((pageviews / days) * 10) / 10 : 0,
                 peak: peak.pageviews,
+                changePercent: change,
             },
             series,
             paths: pages
                 .map((p) => ({ label: p.path || '/', pageviews: p.count ?? 0 }))
                 .sort((a, b) => b.pageviews - a.pageviews),
             devices: toBars(sizes?.stats),
+            browsers: toBars(browsers?.stats),
+            systems: toBars(systems?.stats),
             countries: toBars(locations?.stats),
             referrers: toBars(toprefs?.stats),
-            content: buildContent(eventHits),
+            content,
+            game,
             uptime,
             heatmap,
         })

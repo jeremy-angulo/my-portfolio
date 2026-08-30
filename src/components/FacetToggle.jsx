@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiSun, FiMoon } from "react-icons/fi";
+import { trackEvent } from "../analytics";
 import "./FacetToggle.scss";
 
 const SWITCH_DELAY_MS = 260;
@@ -25,6 +26,7 @@ const FacetToggle = ({ mode }) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
     if (switching) return;
+    trackEvent("facet_switch", isNight ? "night_to_day" : "day_to_night");
     setSwitching(true);
     window.scrollTo(0, 0);
     setTimeout(() => navigate(to), SWITCH_DELAY_MS);

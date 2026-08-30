@@ -1,12 +1,58 @@
 import { Game } from './Game.js'
 
-// Échantillonne la position du joueur dans une grille grossière et envoie des
-// compteurs par cellule (jamais de coordonnées brutes ni d'identifiant) vers
-// le serveur du site, pour la carte de chaleur de /statistiques. Purement
-// best-effort : un échec ici ne doit jamais gêner le jeu.
+// Échantillonne la position du joueur dans une grille grossière (pour la
+// carte de chaleur de /statistiques) et suit deux évènements ponctuels — zone
+// visitée, succès débloqué — via GoatCounter. Purement best-effort : un échec
+// ici ne doit jamais gêner le jeu.
 const GRID_SIZE = 48
 const SAMPLE_INTERVAL = 1 // secondes entre deux échantillons de position
 const FLUSH_INTERVAL = 20 // secondes entre deux envois au serveur
+
+// Même code de site que src/analytics.jsx : cette valeur n'est pas un secret
+// (elle est déjà publique côté client dans le bundle React), pas la peine de
+// la faire transiter par une variable d'environnement propre à folio.
+const GOATCOUNTER_CODE = 'jeremy-angulo'
+
+// Noms d'affichage des zones du monde (voir Game/World/Areas/Areas.js pour
+// les clés) — mêmes intitulés que la mini-carte du jeu (Map.js) quand elle en
+// a un ; "toilet" n'y figure pas (zone secrète), on lui donne un nom discret.
+const AREA_LABELS = {
+    achievements: 'Succès',
+    altar: 'Autel',
+    behindTheScene: 'Coulisses',
+    bowling: 'Bowling',
+    career: 'Parcours',
+    circuit: 'Circuit',
+    cookie: 'Cookies',
+    lab: 'Labo',
+    landing: 'Arrivée',
+    projects: 'Projets',
+    social: 'Réseaux sociaux',
+    toilet: 'Zone secrète',
+    timeMachine: 'Machine à remonter le temps',
+}
+
+let loadPromise = null
+
+const loadGoatCounter = () =>
+{
+    if(loadPromise)
+        return loadPromise
+
+    loadPromise = new Promise((resolve) =>
+    {
+        const script = document.createElement('script')
+        script.async = true
+        script.src = '//gc.zgo.at/count.js'
+        script.dataset.goatcounter = `https://${GOATCOUNTER_CODE}.goatcounter.com/count`
+        script.dataset.goatcounterSettings = JSON.stringify({ no_onload: true })
+        script.onload = () => resolve(true)
+        script.onerror = () => resolve(false)
+        document.head.appendChild(script)
+    })
+
+    return loadPromise
+}
 
 export class Telemetry
 {
@@ -17,6 +63,7 @@ export class Telemetry
         this.counts = new Map()
         this.sampleAccum = 0
         this.flushAccum = 0
+        this.seenAreas = new Set()
 
         // Après Player dans l'ordre des ticks (celui-ci met à jour la position
         // à l'ordre par défaut) : on lit toujours une position déjà à jour.
@@ -32,6 +79,48 @@ export class Telemetry
         {
             if(document.visibilityState === 'hidden')
                 this.flush()
+        })
+
+        this.setupAreaTracking()
+    }
+
+    // Une entrée par zone nommée et par session : savoir qui a trouvé quoi
+    // (le labo, l'autel, les coulisses...), complémentaire à la carte de
+    // chaleur qui montre où mais pas ce que le lieu représente.
+    setupAreaTracking()
+    {
+        const areas = this.game.world?.areas
+        if(!areas)
+            return
+
+        for(const [ name, area ] of Object.entries(areas))
+        {
+            if(!area?.events || typeof area.events.on !== 'function')
+                continue
+
+            area.events.on('boundingIn', () =>
+            {
+                if(this.seenAreas.has(name))
+                    return
+                this.seenAreas.add(name)
+                this.trackEvent('zone_enter', AREA_LABELS[name] ?? name)
+            })
+        }
+    }
+
+    // Appelé depuis Achievements.js à chaque succès réellement débloqué en
+    // jeu (jamais lors d'une restauration silencieuse depuis la sauvegarde).
+    trackEvent(name, detail)
+    {
+        loadGoatCounter().then((ready) =>
+        {
+            if(!ready || typeof window.goatcounter?.count !== 'function')
+                return
+            window.goatcounter.count({
+                path: detail ? `${name}: ${detail}` : name,
+                title: name,
+                event: true,
+            })
         })
     }
 
