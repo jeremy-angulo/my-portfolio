@@ -12,6 +12,9 @@ import SiteAnalytics from "./analytics";
 // L'expérience 3D embarque three + la physique rapier (WASM) : chargée en
 // lazy pour que son chunk ne pèse pas sur le reste du site.
 const ExperiencePage = lazy(() => import("./experience/ExperiencePage"));
+// Page privée, non liée depuis le site : chargée à part pour ne rien peser sur
+// le bundle que téléchargent les visiteurs.
+const StatsPage = lazy(() => import("./stats/StatsPage"));
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import useScrollRestorationOnResize from './hooks/useScrollRestorationOnResize'; // Import the hook
 import useDocumentMeta from "./i18n/useDocumentMeta";
@@ -30,17 +33,18 @@ const App = () => {
   const isNight = NIGHT_PATHS.some((path) => location.pathname.startsWith(path));
   const isPortfolio = location.pathname === "/portfolio";
   const is3d = location.pathname === "/3d";
+  const isStats = location.pathname.startsWith("/statistiques");
 
   // Le fond du document — visible en overscroll et sous les pages courtes —
   // suit la facette : ivoire le jour, nuit noire côté nuit, portfolio et 3D.
   // La couleur de la barre de défilement (color-scheme) suit aussi.
   useEffect(() => {
-    const dark = isNight || isPortfolio || is3d;
+    const dark = isNight || isPortfolio || is3d || isStats;
     const color = dark ? "#050816" : "#faf6ee";
     document.documentElement.style.backgroundColor = color;
     document.body.style.backgroundColor = color;
     document.documentElement.style.colorScheme = dark ? "dark" : "light";
-  }, [isNight, isPortfolio]);
+  }, [isNight, isPortfolio, is3d, isStats]);
 
   // Le champ d'étoiles WebGL n'est initialisé qu'une fois la transition
   // jour→nuit terminée (puis il apparaît en fondu) : son démarrage pendant
@@ -77,6 +81,15 @@ const App = () => {
           <Route path="/tech" element={<HomePage />} />
           <Route path="/project/:projectId" element={<ProjectDetail />} />
           <Route path="/cv" element={<ResumePage />} />
+          {/* Privée : aucun lien entrant, noindex, et l'API refuse sans la phrase. */}
+          <Route
+            path="/statistiques"
+            element={
+              <Suspense fallback={<div style={{ position: "fixed", inset: 0, background: "#0e0b1c" }} />}>
+                <StatsPage />
+              </Suspense>
+            }
+          />
           {/* Les anciens liens partagés vers /resume continuent de fonctionner. */}
           <Route path="/resume" element={<Navigate to="/cv" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />

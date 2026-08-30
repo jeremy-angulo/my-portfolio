@@ -69,6 +69,12 @@ const META = {
         "Education, training and professional experience of Jérémy Angulo.",
     },
   },
+  // Page privée : titre neutre et surtout noindex, pour qu'elle ne remonte
+  // jamais dans un moteur de recherche même si l'URL fuite.
+  stats: {
+    fr: { title: "Statistiques", description: "", noindex: true },
+    en: { title: "Statistics", description: "", noindex: true },
+  },
   gateway: {
     fr: {
       title: "Jérémy Angulo — Jour ou nuit",
@@ -87,6 +93,7 @@ const keyForPath = (pathname) => {
   if (pathname.startsWith("/project")) return "project";
   if (pathname.startsWith("/cv") || pathname.startsWith("/resume")) return "cv";
   if (pathname.startsWith("/portfolio")) return "gateway";
+  if (pathname.startsWith("/statistiques")) return "stats";
   return "home";
 };
 
@@ -102,7 +109,19 @@ const useDocumentMeta = () => {
     document.title = meta.title;
 
     const tag = document.querySelector('meta[name="description"]');
-    if (tag) tag.setAttribute("content", meta.description);
+    if (tag && meta.description) tag.setAttribute("content", meta.description);
+
+    // Le robots est ajouté puis retiré à la volée : laisser un noindex derrière
+    // soi en revenant sur une page publique la ferait disparaître de Google.
+    const existing = document.querySelector('meta[name="robots"]');
+    if (meta.noindex) {
+      const robots = existing ?? document.createElement("meta");
+      robots.setAttribute("name", "robots");
+      robots.setAttribute("content", "noindex, nofollow");
+      if (!existing) document.head.appendChild(robots);
+    } else if (existing) {
+      existing.remove();
+    }
   }, [pathname, lang]);
 };
 

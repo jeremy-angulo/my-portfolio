@@ -36,6 +36,7 @@ const ROUTE_PATTERNS = [
   { path: "/tech" },
   { path: "/project/:projectId" },
   { path: "/cv" },
+  { path: "/statistiques" },
   { path: "/resume" },
   { path: "*" },
 ];
