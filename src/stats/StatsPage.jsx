@@ -143,7 +143,10 @@ const StatsNavbar = ({ onLock }) => (
 // Un classement en barres horizontales. Les parts sont calculées sur le total
 // des lignes affichées : chaque carte est cohérente avec elle-même, même quand
 // les pipelines GoatCounter (hits vs breakdowns) ne sont pas synchrones.
-const BarList = ({ rows }) => {
+const BarList = ({ rows: allRows }) => {
+  // GoatCounter renvoie certaines catégories même à zéro (les tailles d'écran
+  // notamment) : des lignes « 0 · 0 % » n'apprennent rien, on les tait.
+  const rows = allRows?.filter((row) => (row.pageviews ?? 0) > 0);
   if (!rows?.length) return <p className="stats-empty">Aucune donnée sur la période.</p>;
 
   const max = Math.max(...rows.map((row) => row.pageviews ?? 0), 1);
