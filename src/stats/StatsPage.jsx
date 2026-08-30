@@ -1,18 +1,87 @@
-// src/stats/StatsPage.jsx — page privée /statistiques.
+// src/stats/StatsPage.jsx — page privée /statistiques, habillée comme la
+// facette jour : même navbar, mêmes tokens ivoire/encre/ambre (pro.scss).
 //
 // Volontairement non liée depuis le site et marquée noindex : elle n'est pas
 // secrète au sens cryptographique, mais elle ne doit ni se trouver par
 // navigation, ni remonter dans un moteur de recherche. La vraie protection est
 // côté serveur, dans api/stats.js : sans la phrase, l'API ne répond rien.
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  FiBarChart2,
+  FiCompass,
+  FiFileText,
+  FiGlobe,
+  FiLock,
+  FiMonitor,
+  FiRefreshCw,
+} from "react-icons/fi";
+import { logo } from "../assets";
+import ProFooter from "../pro/ProFooter";
+import { rise } from "../pro/proMotion";
+import "../pro/pro.scss";
 import "./StatsPage.scss";
 
 const STORAGE_KEY = "stats-key";
-const RANGES = [7, 31, 90, 365];
-const rangeLabel = (r) => (r === 365 ? "1 an" : `${r} jours`);
+
+const RANGES = [
+  { days: 7, label: "7 jours" },
+  { days: 31, label: "31 jours" },
+  { days: 90, label: "90 jours" },
+  { days: 365, label: "1 an" },
+];
 
 const nf = new Intl.NumberFormat("fr-FR");
+const dayMonth = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long" });
+const dayMonthYear = new Intl.DateTimeFormat("fr-FR", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
+// Catégories d'écran GoatCounter (/stats/sizes) : les ids sont stables,
+// les noms anglais non — on francise sur l'id.
+const DEVICE_LABELS = {
+  phone: "Téléphone",
+  tablet: "Tablette",
+  desktop: "Ordinateur",
+  desktophd: "Grand écran",
+  unknown: "Inconnu",
+};
+
+// "FR" → "France" en français. Peut manquer sur de vieux navigateurs : dans ce
+// cas on garde le nom anglais renvoyé par GoatCounter.
+let regionNames = null;
+try {
+  regionNames = new Intl.DisplayNames(["fr"], { type: "region" });
+} catch {
+  /* Intl.DisplayNames absent : repli sur le libellé serveur */
+}
+
+const countryRow = (row) => {
+  const id = typeof row.id === "string" ? row.id.toUpperCase() : "";
+  if (!/^[A-Z]{2}$/.test(id)) return { ...row, label: "Inconnu" };
+  const flag = String.fromCodePoint(...[...id].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+  let name = row.label;
+  try {
+    name = regionNames?.of(id) ?? row.label;
+  } catch {
+    /* code hors ISO : nom serveur */
+  }
+  return { ...row, label: `${flag} ${name}` };
+};
+
+const formatRange = (range) => {
+  if (!range?.start || !range?.end) return null;
+  const start = new Date(`${range.start}T00:00:00`);
+  const end = new Date(`${range.end}T00:00:00`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
+    return `${range.start} → ${range.end}`;
+  const sameYear = start.getFullYear() === end.getFullYear();
+  return `${(sameYear ? dayMonth : dayMonthYear).format(start)} → ${dayMonthYear.format(end)}`;
+};
 
 const messageForError = (payload, status) => {
   if (status === 401) return "Phrase incorrecte.";
@@ -25,32 +94,104 @@ const messageForError = (payload, status) => {
   return "Erreur inattendue.";
 };
 
-const Bars = ({ rows, valueKey = "visitors", total }) => {
+const fetchStats = async (key, days) => {
+  try {
+    const response = await fetch(`/api/stats?days=${days}`, {
+      headers: { "x-stats-key": key },
+    });
+    const payload = await response.json().catch(() => null);
+    if (!response.ok)
+      return { ok: false, status: response.status, message: messageForError(payload, response.status) };
+    return { ok: true, payload };
+  } catch (networkError) {
+    return { ok: false, status: 0, message: `Requête impossible — ${networkError.message}` };
+  }
+};
+
+// Le header du site, à l'identique (mêmes classes que ProNavbar) ; seule la
+// zone de droite change : rappel que la page est privée, et de quoi la
+// re-verrouiller. Les liens centraux ramènent aux sections de l'accueil.
+const StatsNavbar = ({ onLock }) => (
+  <nav className="pro-nav">
+    <div className="pro-container pro-nav__inner">
+      <Link to="/" className="pro-nav__brand">
+        <img src={logo} alt="Logo JA" />
+        <span>jeremy.angulo</span>
+      </Link>
+
+      <div className="pro-nav__links">
+        <Link to="/#expertises">Expertises</Link>
+        <Link to="/#parcours">Parcours</Link>
+        <Link to="/#contact">Contact</Link>
+      </div>
+
+      <div className="pro-nav__right">
+        <span className="stats-nav-badge">
+          <FiLock aria-hidden="true" />
+          Page privée
+        </span>
+        {onLock ? (
+          <button type="button" className="stats-nav-lock" onClick={onLock}>
+            Verrouiller
+          </button>
+        ) : null}
+      </div>
+    </div>
+  </nav>
+);
+
+// Un classement en barres horizontales. Les parts sont calculées sur le total
+// des lignes affichées : chaque carte est cohérente avec elle-même, même quand
+// les pipelines GoatCounter (hits vs breakdowns) ne sont pas synchrones.
+const BarList = ({ rows }) => {
   if (!rows?.length) return <p className="stats-empty">Aucune donnée sur la période.</p>;
 
-  const max = Math.max(...rows.map((r) => r[valueKey] ?? 0), 1);
+  const max = Math.max(...rows.map((row) => row.pageviews ?? 0), 1);
+  const sum = rows.reduce((acc, row) => acc + (row.pageviews ?? 0), 0);
 
   return (
-    <div className="stats-bars">
-      {rows.map((row, i) => {
-        const value = row[valueKey] ?? 0;
+    <ul className="stats-rows">
+      {rows.map((row, index) => {
+        const value = row.pageviews ?? 0;
         return (
-          <div className="stats-bar-row" key={`${row.label}-${i}`}>
-            <span className="stats-bar-label" title={row.label || "(non renseigné)"}>
-              {row.label || "(non renseigné)"}
+          <li className="stats-row" key={`${row.label}-${index}`}>
+            <div className="stats-row__line">
+              <span className="stats-row__label" title={row.title ?? row.label}>
+                {row.label}
+              </span>
+              <span className="stats-row__value">
+                {nf.format(value)}
+                {sum > 0 ? <em>{Math.round((value / sum) * 100)} %</em> : null}
+              </span>
+            </div>
+            <span className="stats-row__track" aria-hidden="true">
+              <span
+                className="stats-row__fill"
+                style={{ width: `${(value / max) * 100}%` }}
+              />
             </span>
-            <span className="stats-bar-track">
-              <span className="stats-bar-fill" style={{ width: `${(value / max) * 100}%` }} />
-            </span>
-            <span className="stats-bar-value">
-              {nf.format(value)}
-              {total ? <em> · {Math.round((value / total) * 100)} %</em> : null}
-            </span>
-          </div>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
+};
+
+const StatsCard = ({ icon, title, children }) => (
+  <section className="stats-card">
+    <header className="stats-card__head">
+      <span className="stats-card__icon">{icon}</span>
+      <h2 className="stats-card__title">{title}</h2>
+      <span className="stats-card__unit">pages vues</span>
+    </header>
+    {children}
+  </section>
+);
+
+const pageEnter = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: 0.45, ease: "easeOut" } },
+  exit: { opacity: 0, transition: { duration: 0.25, ease: "easeIn" } },
 };
 
 const StatsPage = () => {
@@ -65,160 +206,260 @@ const StatsPage = () => {
   const [days, setDays] = useState(31);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const load = useCallback(
-    async (currentKey, currentDays) => {
-      if (!currentKey) return;
-
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/stats?days=${currentDays}`, {
-          headers: { "x-stats-key": currentKey },
-        });
-        const payload = await response.json().catch(() => null);
-
-        if (!response.ok) {
-          setError(messageForError(payload, response.status));
-          setData(null);
-          if (response.status === 401) {
-            try {
-              localStorage.removeItem(STORAGE_KEY);
-            } catch {
-              /* stockage indisponible : sans effet */
-            }
-            setKey("");
-          }
-          return;
-        }
-
-        setData(payload);
-      } catch (networkError) {
-        setError(`Requête impossible — ${networkError.message}`);
-        setData(null);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    load(key, days);
-  }, [key, days, load]);
-
-  const submit = (event) => {
-    event.preventDefault();
-    const value = draft.trim();
-    if (!value) return;
+  const forget = () => {
     try {
-      localStorage.setItem(STORAGE_KEY, value);
+      localStorage.removeItem(STORAGE_KEY);
     } catch {
-      /* mode privé : la phrase ne sera pas retenue, la page marche quand même */
+      /* stockage indisponible : sans effet */
     }
-    setKey(value);
+  };
+
+  const load = async (currentKey, currentDays) => {
+    setBusy(true);
+    setError(null);
+    const result = await fetchStats(currentKey, currentDays);
+    if (result.ok) {
+      setData(result.payload);
+    } else {
+      setError(result.message);
+      // Phrase révoquée entre-temps : retour à la grille d'entrée.
+      if (result.status === 401) {
+        forget();
+        setKey("");
+        setData(null);
+      }
+    }
+    setBusy(false);
+  };
+
+  // Chargement au premier rendu si le navigateur a retenu la phrase.
+  const booted = useRef(false);
+  useEffect(() => {
+    if (booted.current) return;
+    booted.current = true;
+    if (key) load(key, days);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // La grille ne bascule vers le tableau de bord qu'une fois la phrase
+  // acceptée par l'API : pas d'aller-retour visuel sur une phrase fausse.
+  const unlock = async (event) => {
+    event.preventDefault();
+    const candidate = draft.trim();
+    if (!candidate || busy) return;
+    setBusy(true);
+    setError(null);
+    const result = await fetchStats(candidate, days);
+    if (result.ok) {
+      try {
+        localStorage.setItem(STORAGE_KEY, candidate);
+      } catch {
+        /* mode privé : la phrase ne sera pas retenue, la page marche quand même */
+      }
+      setKey(candidate);
+      setData(result.payload);
+      setDraft("");
+    } else {
+      setError(result.message);
+    }
+    setBusy(false);
+  };
+
+  const lock = () => {
+    forget();
+    setKey("");
+    setData(null);
+    setError(null);
     setDraft("");
+  };
+
+  const changeDays = (next) => {
+    if (next === days || busy) return;
+    setDays(next);
+    load(key, next);
   };
 
   if (!key) {
     return (
-      <main className="stats">
-        <form className="stats-gate" onSubmit={submit}>
-          <h1>Statistiques</h1>
-          <p>Page privée. Saisis la phrase d'accès.</p>
-          <input
-            type="password"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            placeholder="Phrase d'accès"
-            autoFocus
-          />
-          <button type="submit">Entrer</button>
-          {error ? <p className="stats-error">{error}</p> : null}
-        </form>
-      </main>
+      <motion.div className="pro-root stats-root" {...pageEnter}>
+        <StatsNavbar />
+        <main className="stats-gate">
+          <div className="pro-container stats-gate__inner">
+            <motion.form
+              className="stats-gate__card"
+              onSubmit={unlock}
+              variants={rise}
+              initial="hidden"
+              animate="show"
+            >
+              <span className="stats-gate__icon" aria-hidden="true">
+                <FiBarChart2 />
+              </span>
+              <p className="pro-section__eyebrow">Page privée</p>
+              <h1 className="pro-display stats-gate__title">Statistiques du site</h1>
+              <p className="stats-gate__text">
+                Visites, pages consultées, provenance et appareils de jeremyangulo.fr.
+                La consultation demande la phrase d'accès.
+              </p>
+              <label className="stats-gate__field">
+                Phrase d'accès
+                <input
+                  type="password"
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  autoComplete="current-password"
+                  autoFocus
+                />
+              </label>
+              <button
+                type="submit"
+                className="pro-btn pro-btn--primary stats-gate__submit"
+                disabled={busy}
+              >
+                {busy ? "Vérification…" : "Consulter"}
+              </button>
+              {error ? (
+                <p className="stats-alert" role="alert">
+                  {error}
+                </p>
+              ) : null}
+            </motion.form>
+          </div>
+        </main>
+        <ProFooter />
+      </motion.div>
     );
   }
 
   const totals = data?.totals;
+  const perVisit = totals?.visitors
+    ? (totals.pageviews / totals.visitors).toFixed(1).replace(".", ",")
+    : "—";
+
+  const paths = data?.paths?.map((page) => ({
+    label: page.label,
+    pageviews: page.pageviews,
+    title: `${page.label} — ${nf.format(page.pageviews)} vues · ${nf.format(page.visitors)} visiteurs`,
+  }));
+  const referrers = data?.referrers?.map((row) => {
+    if (row.label === "(non renseigné)") return { ...row, label: "Accès direct ou inconnu" };
+    return { ...row, label: row.label.replace(/^www\./, "") };
+  });
+  const countries = data?.countries?.map(countryRow);
+  const devices = data?.devices?.map((row) => ({
+    ...row,
+    label: DEVICE_LABELS[row.id] ?? row.label,
+  }));
 
   return (
-    <main className="stats">
-      <header className="stats-head">
-        <div>
-          <h1>Statistiques</h1>
-          <p className="stats-sub">
-            jeremyangulo.fr · {data?.range ? `${data.range.start} → ${data.range.end}` : "…"}
-          </p>
-        </div>
-        <div className="stats-actions">
-          {RANGES.map((r) => (
-            <button
-              key={r}
-              type="button"
-              className={r === days ? "is-active" : ""}
-              onClick={() => setDays(r)}
+    <motion.div className="pro-root stats-root" {...pageEnter}>
+      <StatsNavbar onLock={lock} />
+      <main className="stats-main">
+        <div className="pro-container">
+          <motion.header
+            className="stats-head"
+            variants={rise}
+            initial="hidden"
+            animate="show"
+          >
+            <div>
+              <p className="pro-section__eyebrow">Page privée</p>
+              <h1 className="pro-display stats-head__title">Audience du site</h1>
+              <p className="stats-head__sub">
+                jeremyangulo.fr · {formatRange(data?.range) ?? `${days} derniers jours`}
+              </p>
+            </div>
+            <div className="stats-head__controls">
+              <div className="stats-seg" role="group" aria-label="Période">
+                {RANGES.map((range) => (
+                  <button
+                    key={range.days}
+                    type="button"
+                    className={range.days === days ? "is-active" : ""}
+                    onClick={() => changeDays(range.days)}
+                    disabled={busy}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className={`stats-refresh${busy ? " is-busy" : ""}`}
+                onClick={() => load(key, days)}
+                disabled={busy}
+                aria-label="Rafraîchir"
+                title="Rafraîchir"
+              >
+                <FiRefreshCw aria-hidden="true" />
+              </button>
+            </div>
+          </motion.header>
+
+          {error ? (
+            <p className="stats-alert" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          {!data && busy ? (
+            <p className="stats-loading">
+              <FiRefreshCw aria-hidden="true" /> Chargement des données…
+            </p>
+          ) : null}
+
+          {data ? (
+            <motion.div
+              className={`stats-body${busy ? " is-busy" : ""}`}
+              variants={rise}
+              initial="hidden"
+              animate="show"
+              custom={1}
             >
-              {rangeLabel(r)}
-            </button>
-          ))}
-          <button type="button" onClick={() => load(key, days)} disabled={loading}>
-            {loading ? "…" : "Rafraîchir"}
-          </button>
+              <section className="stats-kpis" aria-label="Totaux de la période">
+                <div className="stats-kpi">
+                  <p className="stats-kpi__value">{totals ? nf.format(totals.visitors) : "—"}</p>
+                  <p className="stats-kpi__label">Visiteurs</p>
+                </div>
+                <div className="stats-kpi">
+                  <p className="stats-kpi__value">{totals ? nf.format(totals.pageviews) : "—"}</p>
+                  <p className="stats-kpi__label">Pages vues</p>
+                </div>
+                <div className="stats-kpi">
+                  <p className="stats-kpi__value">{perVisit}</p>
+                  <p className="stats-kpi__label">Pages par visite</p>
+                </div>
+              </section>
+
+              <div className="stats-grid">
+                <StatsCard icon={<FiFileText />} title="Pages">
+                  <BarList rows={paths} />
+                </StatsCard>
+                <StatsCard icon={<FiCompass />} title="Provenance">
+                  <BarList rows={referrers} />
+                </StatsCard>
+                <StatsCard icon={<FiGlobe />} title="Pays">
+                  <BarList rows={countries} />
+                </StatsCard>
+                <StatsCard icon={<FiMonitor />} title="Appareils">
+                  <BarList rows={devices} />
+                </StatsCard>
+              </div>
+
+              <p className="stats-note">
+                Données GoatCounter, historique conservé sans limite de durée. Les totaux
+                comptent des visiteurs distincts ; les cartes comptent des pages vues, et
+                leurs pourcentages se rapportent au total de chaque carte.
+                {data?.truncated ? " Liste des pages limitée aux 100 premières." : ""}
+              </p>
+            </motion.div>
+          ) : null}
         </div>
-      </header>
-
-      {error ? <p className="stats-error">{error}</p> : null}
-
-      {totals ? (
-        <div className="stats-figures">
-          <div className="stats-figure">
-            <span className="n">{nf.format(totals.visitors ?? 0)}</span>
-            <span className="l">visiteurs</span>
-          </div>
-          <div className="stats-figure">
-            <span className="n">{nf.format(totals.pageviews ?? 0)}</span>
-            <span className="l">pages vues</span>
-          </div>
-          <div className="stats-figure">
-            <span className="n">
-              {totals.visitors ? (totals.pageviews / totals.visitors).toFixed(1) : "—"}
-            </span>
-            <span className="l">pages par visiteur</span>
-          </div>
-        </div>
-      ) : null}
-
-      <section>
-        <h2>Pages</h2>
-        <Bars rows={data?.paths} valueKey="pageviews" total={totals?.pageviews} />
-      </section>
-
-      <section>
-        <h2>Appareils</h2>
-        <Bars rows={data?.devices} valueKey="pageviews" total={totals?.pageviews} />
-      </section>
-
-      <section>
-        <h2>Pays</h2>
-        <Bars rows={data?.countries} valueKey="pageviews" total={totals?.pageviews} />
-      </section>
-
-      <section>
-        <h2>Provenance</h2>
-        <Bars rows={data?.referrers} valueKey="pageviews" total={totals?.pageviews} />
-      </section>
-
-      <footer className="stats-foot">
-        <p>
-          Source : GoatCounter, sans purge d'historique. Les répartitions par page, appareil,
-          pays et provenance comptent des pages vues (une même personne peut apparaître
-          plusieurs fois) ; seuls les totaux en haut de page comptent des visiteurs distincts.
-        </p>
-      </footer>
-    </main>
+      </main>
+      <ProFooter />
+    </motion.div>
   );
 };
 

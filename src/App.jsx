@@ -33,18 +33,18 @@ const App = () => {
   const isNight = NIGHT_PATHS.some((path) => location.pathname.startsWith(path));
   const isPortfolio = location.pathname === "/portfolio";
   const is3d = location.pathname === "/3d";
-  const isStats = location.pathname.startsWith("/statistiques");
 
   // Le fond du document — visible en overscroll et sous les pages courtes —
-  // suit la facette : ivoire le jour, nuit noire côté nuit, portfolio et 3D.
+  // suit la facette : ivoire le jour (dont /statistiques, habillée comme le
+  // jour), nuit noire côté nuit, portfolio et 3D.
   // La couleur de la barre de défilement (color-scheme) suit aussi.
   useEffect(() => {
-    const dark = isNight || isPortfolio || is3d || isStats;
+    const dark = isNight || isPortfolio || is3d;
     const color = dark ? "#050816" : "#faf6ee";
     document.documentElement.style.backgroundColor = color;
     document.body.style.backgroundColor = color;
     document.documentElement.style.colorScheme = dark ? "dark" : "light";
-  }, [isNight, isPortfolio, is3d, isStats]);
+  }, [isNight, isPortfolio, is3d]);
 
   // Le champ d'étoiles WebGL n'est initialisé qu'une fois la transition
   // jour→nuit terminée (puis il apparaît en fondu) : son démarrage pendant
@@ -85,7 +85,7 @@ const App = () => {
           <Route
             path="/statistiques"
             element={
-              <Suspense fallback={<div style={{ position: "fixed", inset: 0, background: "#0e0b1c" }} />}>
+              <Suspense fallback={<div style={{ position: "fixed", inset: 0, background: "#faf6ee" }} />}>
                 <StatsPage />
               </Suspense>
             }

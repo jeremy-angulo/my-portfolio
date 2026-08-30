@@ -50,11 +50,13 @@ async function query(base, path, token, params)
 
 // {id, name, count} pour browsers/systems/locations/toprefs/sizes/... — un
 // nom lisible peut manquer (ex. sizes ne renvoie que l'id) : on retombe dessus.
-// GoatCounter ne distingue pas les visiteurs uniques sur ces dimensions, à la
-// différence de /stats/hits : c'est un compte de pages vues, pas de visiteurs.
+// L'id est transmis tel quel : la page s'en sert pour franciser les catégories
+// d'appareils et afficher le drapeau des pays (codes ISO stables, contrairement
+// aux noms anglais). GoatCounter ne distingue pas les visiteurs uniques sur ces
+// dimensions, à la différence de /stats/hits : c'est un compte de pages vues.
 const toBars = (stats) =>
     (stats ?? [])
-        .map((row) => ({ label: row.name || row.id || '(non renseigné)', pageviews: row.count ?? 0 }))
+        .map((row) => ({ id: row.id ?? null, label: row.name || row.id || '(non renseigné)', pageviews: row.count ?? 0 }))
         .sort((a, b) => b.pageviews - a.pageviews)
 
 export default async function handler(request, response)
