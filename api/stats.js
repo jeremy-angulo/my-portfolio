@@ -145,7 +145,7 @@ const tally = (entries, keyer) =>
 function buildBehaviour(eventHits)
 {
     const buckets = {
-        section_view: [], scroll_depth: [], site_lang: [],
+        section_view: [], scroll_depth: [], site_lang: [], time_on_page: [],
         facet_switch: [], zone_enter: [], achievement_unlock: [], intent: [],
     }
 
@@ -162,6 +162,13 @@ function buildBehaviour(eventHits)
         label: `${milestone} %`,
         pageviews: buckets.scroll_depth.filter((e) => e.detail === String(milestone)).reduce((s, e) => s + e.count, 0),
     }))
+    // Ordre naturel de la durée, pas trié par volume : un histogramme de
+    // temps passé se lit dans l'ordre croissant, pas en classement.
+    const TIME_ORDER = [ '< 10 s', '10-30 s', '30 s - 2 min', '2-5 min', '5 min et +' ]
+    const timeOnPage = TIME_ORDER.map((label) => ({
+        label,
+        pageviews: buckets.time_on_page.filter((e) => e.detail === label).reduce((s, e) => s + e.count, 0),
+    }))
     const languages = tally(buckets.site_lang, ({ detail }) => LANGUAGE_LABELS[detail] ?? detail)
     const facetSwitches = tally(buckets.facet_switch, ({ detail }) => FACET_LABELS[detail] ?? detail)
     const zones = tally(buckets.zone_enter, ({ detail }) => detail)
@@ -174,7 +181,7 @@ function buildBehaviour(eventHits)
     })
 
     return {
-        content: { sections, scrollDepth, intents, languages, facetSwitches },
+        content: { sections, scrollDepth, timeOnPage, intents, languages, facetSwitches },
         game: { zones, achievements },
     }
 }

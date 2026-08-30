@@ -682,14 +682,13 @@
 
 // ------------------------------------------------------------------ Contenu
 
+// auto-fit plutôt qu'un nombre de colonnes figé : le nombre de mini-listes
+// varie d'une carte à l'autre (2 pour Langue, 3 pour Appareils, 4 pour
+// Contenu) sans avoir besoin d'un modificateur par cas.
 .stats-mini-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 24px;
-
-  &--2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
   @media (max-width: 700px) {
     grid-template-columns: 1fr;

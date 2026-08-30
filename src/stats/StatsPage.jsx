@@ -241,6 +241,7 @@ const ContentCard = ({ content }) => (
     <div className="stats-mini-grid">
       <MiniList label="Sections lues" rows={content.sections} />
       <MiniList label="Profondeur de lecture" rows={content.scrollDepth} />
+      <MiniList label="Temps passé par page" rows={content.timeOnPage} />
       <MiniList label="Intentions" rows={content.intents} />
     </div>
   </StatsCard>
@@ -251,7 +252,7 @@ const ContentCard = ({ content }) => (
 // GoatCounter (FacetToggle.jsx, useLanguageTracking dans analytics.jsx).
 const LanguageCard = ({ content }) => (
   <StatsCard icon={<FiSliders />} title="Langue &amp; bascule jour/nuit" unit="évènements" className="stats-content">
-    <div className="stats-mini-grid stats-mini-grid--2">
+    <div className="stats-mini-grid">
       <MiniList label="Langue" rows={content.languages} />
       <MiniList label="Bascule jour ↔ nuit" rows={content.facetSwitches} />
     </div>
@@ -265,7 +266,7 @@ const LanguageCard = ({ content }) => (
 // évènements GoatCounter, pas la source Better Stack à 3 jours de la heatmap.
 const GameCard = ({ game }) => (
   <StatsCard icon={<FiAward />} title="Points d'intérêt &amp; succès (monde 3D)" unit="évènements" className="stats-content">
-    <div className="stats-mini-grid stats-mini-grid--2">
+    <div className="stats-mini-grid">
       <MiniList label="Zones découvertes" rows={game.zones} />
       <MiniList label="Succès débloqués" rows={game.achievements} />
     </div>

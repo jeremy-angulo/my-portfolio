@@ -128,6 +128,35 @@ const SECTION_IDS = [
 ];
 const SCROLL_MILESTONES = [25, 50, 75, 100];
 
+const TIME_BUCKETS = [
+  { max: 10, label: "< 10 s" },
+  { max: 30, label: "10-30 s" },
+  { max: 120, label: "30 s - 2 min" },
+  { max: 300, label: "2-5 min" },
+  { max: Infinity, label: "5 min et +" },
+];
+const timeBucket = (seconds) => TIME_BUCKETS.find((b) => seconds < b.max)?.label ?? TIME_BUCKETS.at(-1).label;
+
+// Une mesure par page vue : démarrée au montage, envoyée au changement de
+// route (cleanup de l'effet) ou à la fermeture de l'onglet (pagehide) — l'un
+// des deux déclenche toujours, jamais les deux (verrou `sent`).
+const useTimeOnPage = (pathname) => {
+  useEffect(() => {
+    const start = Date.now();
+    let sent = false;
+    const send = () => {
+      if (sent) return;
+      sent = true;
+      trackEvent("time_on_page", timeBucket((Date.now() - start) / 1000));
+    };
+    window.addEventListener("pagehide", send);
+    return () => {
+      send();
+      window.removeEventListener("pagehide", send);
+    };
+  }, [pathname]);
+};
+
 // Ce que les gens lisent vraiment : quelles sections passent à l'écran, et
 // jusqu'où on descend dans la page. Un délai avant d'observer laisse le temps
 // aux sections "below the fold" (montées après l'animation d'entrée) d'exister
@@ -188,6 +217,7 @@ const SiteAnalytics = () => {
   useIntentTracking();
   useContentTracking();
   useLanguageTracking(pathname);
+  useTimeOnPage(pathname);
 
   useEffect(() => {
     sendPageview(pathname);
