@@ -189,12 +189,17 @@ const BarList = ({ rows: allRows }) => {
   );
 };
 
-const StatsCard = ({ icon, title, unit, className, children }) => (
+const StatsCard = ({ icon, title, unit, controls, className, children }) => (
   <section className={`stats-card${className ? ` ${className}` : ""}`}>
     <header className="stats-card__head">
       <span className="stats-card__icon">{icon}</span>
       <h2 className="stats-card__title">{title}</h2>
-      {unit ? <span className="stats-card__unit">{unit}</span> : null}
+      {unit || controls ? (
+        <div className="stats-card__meta">
+          {unit ? <span className="stats-card__unit">{unit}</span> : null}
+          {controls}
+        </div>
+      ) : null}
     </header>
     {children}
   </section>
@@ -289,6 +294,7 @@ const StatsPage = () => {
   });
   const [draft, setDraft] = useState("");
   const [days, setDays] = useState(31);
+  const [tab, setTab] = useState("audience");
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -431,6 +437,13 @@ const StatsPage = () => {
     label: DEVICE_LABELS[row.id] ?? row.label,
   }));
 
+  const TABS = [
+    { id: "audience", label: "Audience", icon: <FiCompass /> },
+    { id: "comportement", label: "Comportement", icon: <FiBookOpen /> },
+    { id: "monde3d", label: "Monde 3D", icon: <FiMap /> },
+    ...(data?.uptime ? [{ id: "infra", label: "Infrastructure", icon: <FiActivity /> }] : []),
+  ];
+
   return (
     <motion.div className="pro-root stats-root" {...pageEnter}>
       <StatsNavbar onLock={lock} />
@@ -450,19 +463,6 @@ const StatsPage = () => {
               </p>
             </div>
             <div className="stats-head__controls">
-              <div className="stats-seg" role="group" aria-label="Période">
-                {RANGES.map((range) => (
-                  <button
-                    key={range.days}
-                    type="button"
-                    className={range.days === days ? "is-active" : ""}
-                    onClick={() => changeDays(range.days)}
-                    disabled={busy}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
               <button
                 type="button"
                 className={`stats-refresh${busy ? " is-busy" : ""}`}
@@ -524,36 +524,90 @@ const StatsPage = () => {
                 </div>
               </section>
 
-              <StatsCard icon={<FiTrendingUp />} title="Évolution" unit="pages vues / jour" className="stats-trend-card">
-                <TrendChart series={data.series ?? []} />
+              <StatsCard
+                icon={<FiTrendingUp />}
+                title="Évolution"
+                unit="pages vues / jour"
+                className="stats-trend-card"
+                controls={
+                  <div
+                    className="stats-seg stats-seg--chart"
+                    role="group"
+                    aria-label="Période affichée sur tout le tableau de bord"
+                  >
+                    {RANGES.map((range) => (
+                      <button
+                        key={range.days}
+                        type="button"
+                        className={range.days === days ? "is-active" : ""}
+                        onClick={() => changeDays(range.days)}
+                        disabled={busy}
+                      >
+                        {range.label}
+                      </button>
+                    ))}
+                  </div>
+                }
+              >
+                <TrendChart series={data.series ?? []} key={days} />
               </StatsCard>
 
+              <nav className="stats-tabs" role="tablist" aria-label="Sections des statistiques">
+                {TABS.map((section) => (
+                  <button
+                    key={section.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === section.id}
+                    className={`stats-tabs__item${tab === section.id ? " is-active" : ""}`}
+                    onClick={() => setTab(section.id)}
+                  >
+                    <span className="stats-tabs__icon" aria-hidden="true">
+                      {section.icon}
+                    </span>
+                    {section.label}
+                  </button>
+                ))}
+              </nav>
+
               <div className="stats-grid">
-                <StatsCard icon={<FiFileText />} title="Pages" unit="pages vues">
-                  <BarList rows={paths} />
-                </StatsCard>
-                <StatsCard icon={<FiCompass />} title="Provenance" unit="pages vues">
-                  <BarList rows={referrers} />
-                </StatsCard>
-                <StatsCard icon={<FiGlobe />} title="Pays" unit="pages vues">
-                  <BarList rows={countries} />
-                </StatsCard>
-                <StatsCard icon={<FiMonitor />} title="Appareils" unit="pages vues" className="stats-content">
-                  <div className="stats-mini-grid">
-                    <MiniList label="Taille d'écran" rows={devices} />
-                    <MiniList label="Navigateur" rows={data.browsers} />
-                    <MiniList label="Système" rows={data.systems} />
-                  </div>
-                </StatsCard>
-                <ContentCard content={data.content} />
-                <LanguageCard content={data.content} />
-                <GameCard game={data.game} />
-                {data.uptime ? <UptimeCard uptime={data.uptime} /> : null}
-                {data.heatmap ? (
-                  <StatsCard icon={<FiMap />} title="Exploration du monde 3D" unit="visites de zone" className="stats-heatmap-card">
-                    <HeatmapCard heatmap={data.heatmap} />
-                  </StatsCard>
+                {tab === "audience" ? (
+                  <>
+                    <StatsCard icon={<FiFileText />} title="Pages" unit="pages vues">
+                      <BarList rows={paths} />
+                    </StatsCard>
+                    <StatsCard icon={<FiCompass />} title="Provenance" unit="pages vues">
+                      <BarList rows={referrers} />
+                    </StatsCard>
+                    <StatsCard icon={<FiGlobe />} title="Pays" unit="pages vues">
+                      <BarList rows={countries} />
+                    </StatsCard>
+                    <StatsCard icon={<FiMonitor />} title="Appareils" unit="pages vues" className="stats-content">
+                      <div className="stats-mini-grid">
+                        <MiniList label="Taille d'écran" rows={devices} />
+                        <MiniList label="Navigateur" rows={data.browsers} />
+                        <MiniList label="Système" rows={data.systems} />
+                      </div>
+                    </StatsCard>
+                  </>
                 ) : null}
+                {tab === "comportement" ? (
+                  <>
+                    <ContentCard content={data.content} />
+                    <LanguageCard content={data.content} />
+                  </>
+                ) : null}
+                {tab === "monde3d" ? (
+                  <>
+                    <GameCard game={data.game} />
+                    {data.heatmap ? (
+                      <StatsCard icon={<FiMap />} title="Exploration du monde 3D" unit="visites de zone" className="stats-heatmap-card">
+                        <HeatmapCard heatmap={data.heatmap} />
+                      </StatsCard>
+                    ) : null}
+                  </>
+                ) : null}
+                {tab === "infra" && data.uptime ? <UptimeCard uptime={data.uptime} /> : null}
               </div>
 
               <p className="stats-note">

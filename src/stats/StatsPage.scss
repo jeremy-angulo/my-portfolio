@@ -351,11 +351,57 @@
   }
 }
 
+// Barre d'onglets : regroupe les cartes secondaires par thème plutôt que de
+// les enchaîner verticalement. Audience reste l'onglet par défaut ; la
+// période affichée dans l'entête reste globale, quel que soit l'onglet actif.
+.stats-tabs {
+  display: flex;
+  gap: 4px;
+  margin: 30px 0 22px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--day-line);
+  overflow-x: auto;
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: transparent;
+    color: var(--day-ink-soft);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.25s ease, border-color 0.25s ease;
+
+    svg {
+      font-size: 15px;
+    }
+
+    &:hover {
+      color: var(--day-amber-deep);
+    }
+
+    &.is-active {
+      color: var(--day-ink);
+      border-bottom-color: var(--day-amber-deep);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--day-amber);
+      outline-offset: 2px;
+    }
+  }
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
-  margin-top: 22px;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
@@ -383,6 +429,8 @@
   &__head {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    row-gap: 10px;
     gap: 12px;
     margin-bottom: 20px;
   }
@@ -409,10 +457,17 @@
   }
 
   &__unit {
-    margin-left: auto;
     font-size: 12px;
     color: var(--day-muted);
     white-space: nowrap;
+  }
+
+  &__meta {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
   }
 }
 
@@ -538,7 +593,8 @@
   }
 
   .stats-refresh.is-busy svg,
-  .stats-loading svg {
+  .stats-loading svg,
+  .trend-chart {
     animation: none;
   }
 }
@@ -551,8 +607,20 @@
   margin-top: 0;
 }
 
+@keyframes trend-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .trend-chart {
   position: relative;
+  animation: trend-fade-in 0.4s ease;
 
   &__svg {
     display: block;
