@@ -249,6 +249,13 @@
   }
 }
 
+.stats-seg__spinner {
+  margin-left: 6px;
+  font-size: 11px;
+  vertical-align: -1px;
+  animation: stats-spin 1s linear infinite;
+}
+
 .stats-refresh {
   display: inline-flex;
   align-items: center;
@@ -579,14 +586,6 @@
   margin-bottom: 22px;
 }
 
-.stats-note {
-  margin-top: clamp(24px, 3.5vw, 34px);
-  color: var(--day-muted);
-  font-size: 13px;
-  line-height: 1.65;
-  max-width: 72ch;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .stats-row__fill {
     transition: none;
@@ -594,6 +593,7 @@
 
   .stats-refresh.is-busy svg,
   .stats-loading svg,
+  .stats-seg__spinner,
   .trend-chart {
     animation: none;
   }

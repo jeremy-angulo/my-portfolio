@@ -293,11 +293,26 @@ const StatsPage = () => {
     }
   });
   const [draft, setDraft] = useState("");
-  const [days, setDays] = useState(31);
+  const [days, setDays] = useState(7);
   const [tab, setTab] = useState("audience");
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [switching, setSwitching] = useState(false);
+
+  // Cache mémoire par période (7/31/90/365) : évite de re-solliciter l'API
+  // GoatCounter (7 appels séquentiels, ~9 s) à chaque bascule de bouton une
+  // fois qu'une période a déjà été chargée une fois dans la session.
+  const cacheRef = useRef({});
+  // Période réellement affichée « en ce moment » : une bascule rapide entre
+  // deux périodes non cachées ne doit pas laisser une réponse arrivée en
+  // retard écraser un choix plus récent.
+  const activeDaysRef = useRef(7);
+  // Sérialise les appels à /api/stats : deux requêtes concurrentes (ex. le
+  // préchargement de fond et un clic utilisateur) déclencheraient chacune
+  // leurs 7 appels GoatCounter séquentiels côté serveur, avec un risque de
+  // 429 si elles se chevauchent dans le temps.
+  const queueRef = useRef(Promise.resolve());
 
   const forget = () => {
     try {
@@ -307,30 +322,57 @@ const StatsPage = () => {
     }
   };
 
-  const load = async (currentKey, currentDays) => {
-    setBusy(true);
-    setError(null);
-    const result = await fetchStats(currentKey, currentDays);
+  const enqueue = (task) => {
+    const run = () => Promise.resolve().then(task);
+    const result = queueRef.current.then(run, run);
+    queueRef.current = result;
+    return result;
+  };
+
+  // `background: true` alimente juste le cache, sans jamais toucher l'écran —
+  // utilisé pour le préchargement silencieux de l'année complète.
+  const loadDays = async (currentKey, currentDays, { showBusy = false, background = false } = {}) => {
+    if (showBusy) {
+      setBusy(true);
+      setError(null);
+    }
+    const result = await enqueue(() => fetchStats(currentKey, currentDays));
     if (result.ok) {
-      setData(result.payload);
+      cacheRef.current[currentDays] = result.payload;
+      if (!background && activeDaysRef.current === currentDays) {
+        setData(result.payload);
+        setError(null);
+      }
     } else {
-      setError(result.message);
+      if (!background && activeDaysRef.current === currentDays) {
+        setError(result.message);
+      }
       // Phrase révoquée entre-temps : retour à la grille d'entrée.
       if (result.status === 401) {
         forget();
         setKey("");
         setData(null);
+        cacheRef.current = {};
       }
     }
-    setBusy(false);
+    if (showBusy) setBusy(false);
+    return result;
   };
 
-  // Chargement au premier rendu si le navigateur a retenu la phrase.
+  // Chargement au premier rendu si le navigateur a retenu la phrase : 7 jours
+  // d'abord (rapide à l'écran), puis l'année complète en tâche de fond dès
+  // que ce premier chargement se termine — elle alimente le cache pour que
+  // basculer plus tard sur une période déjà préchargée soit instantané.
   const booted = useRef(false);
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
-    if (key) load(key, days);
+    if (key) {
+      activeDaysRef.current = days;
+      loadDays(key, days, { showBusy: true }).then(() => {
+        if (days !== 365) loadDays(key, 365, { background: true });
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -342,16 +384,19 @@ const StatsPage = () => {
     if (!candidate || busy) return;
     setBusy(true);
     setError(null);
-    const result = await fetchStats(candidate, days);
+    activeDaysRef.current = days;
+    const result = await enqueue(() => fetchStats(candidate, days));
     if (result.ok) {
       try {
         localStorage.setItem(STORAGE_KEY, candidate);
       } catch {
         /* mode privé : la phrase ne sera pas retenue, la page marche quand même */
       }
+      cacheRef.current = { [days]: result.payload };
       setKey(candidate);
       setData(result.payload);
       setDraft("");
+      if (days !== 365) loadDays(candidate, 365, { background: true });
     } else {
       setError(result.message);
     }
@@ -364,12 +409,32 @@ const StatsPage = () => {
     setData(null);
     setError(null);
     setDraft("");
+    cacheRef.current = {};
   };
 
   const changeDays = (next) => {
-    if (next === days || busy) return;
+    if (next === days) return;
     setDays(next);
-    load(key, next);
+    activeDaysRef.current = next;
+    const cached = cacheRef.current[next];
+    if (cached) {
+      setData(cached);
+      setError(null);
+      return;
+    }
+    setSwitching(true);
+    loadDays(key, next).finally(() => {
+      if (activeDaysRef.current === next) setSwitching(false);
+    });
+  };
+
+  // Bouton « Rafraîchir » : invalide le cache de la période affichée et la
+  // recharge — seule action qui redimme volontairement toute la page, à la
+  // différence d'une simple bascule de période.
+  const refresh = () => {
+    delete cacheRef.current[days];
+    activeDaysRef.current = days;
+    loadDays(key, days, { showBusy: true });
   };
 
   if (!key) {
@@ -466,7 +531,7 @@ const StatsPage = () => {
               <button
                 type="button"
                 className={`stats-refresh${busy ? " is-busy" : ""}`}
-                onClick={() => load(key, days)}
+                onClick={refresh}
                 disabled={busy}
                 aria-label="Rafraîchir"
                 title="Rafraîchir"
@@ -541,15 +606,17 @@ const StatsPage = () => {
                         type="button"
                         className={range.days === days ? "is-active" : ""}
                         onClick={() => changeDays(range.days)}
-                        disabled={busy}
                       >
                         {range.label}
+                        {switching && range.days === days ? (
+                          <FiRefreshCw className="stats-seg__spinner" aria-hidden="true" />
+                        ) : null}
                       </button>
                     ))}
                   </div>
                 }
               >
-                <TrendChart series={data.series ?? []} key={days} />
+                <TrendChart series={data.series ?? []} key={`${data?.range?.start}-${data?.range?.end}`} />
               </StatsCard>
 
               <nav className="stats-tabs" role="tablist" aria-label="Sections des statistiques">
@@ -609,20 +676,6 @@ const StatsPage = () => {
                 ) : null}
                 {tab === "infra" && data.uptime ? <UptimeCard uptime={data.uptime} /> : null}
               </div>
-
-              <p className="stats-note">
-                Audience : GoatCounter, historique conservé sans limite de durée. GoatCounter ne
-                transmet que des pages vues, pas de visiteurs uniques — tous les chiffres
-                ci-dessus, y compris les totaux, en comptent. Pages, Provenance, Pays et Appareils
-                comptent des pages vues ; Contenu, Langue &amp; bascule et Points d'intérêt &amp;
-                succès comptent des évènements distincts (une lecture de section, un changement de
-                langue, une entrée dans une zone…). Les pourcentages se rapportent au total de
-                chaque carte, et la variation sous « Pages vues » compare à la période équivalente
-                juste avant celle affichée.
-                {data?.truncated ? " Liste des pages limitée aux 100 premières." : ""}
-                {data.uptime ? " Disponibilité : Better Stack, un contrôle toutes les 3 minutes depuis 4 régions." : ""}
-                {data.heatmap ? " Exploration 3D (carte) : compteurs de zone anonymes (aucune position brute, aucun identifiant), rétention Better Stack limitée à 3 jours — elle ne montre donc que l'activité récente, contrairement aux zones et succès listés juste au-dessus (des évènements GoatCounter, sans limite de rétention)." : ""}
-              </p>
             </motion.div>
           ) : null}
         </div>
