@@ -1,0 +1,60 @@
+// src/poc/nuit-1/styles/_tokens.scss
+// Jetons du POC « Veilleuse ». Tout est porté par la racine `.nuit1` : aucune
+// variable ne fuit vers le reste du site, aucun sélecteur ne croise `.night-*`,
+// `.pro-*` ou une classe Tailwind.
+
+.nuit1 {
+  // Palette nuit, reprise à l'identique de la facette existante.
+  --n-bg: #050816;
+  --n-surface: #100d25;
+  --n-surface-2: #151030;
+  --n-violet: #915eff;
+  --n-violet-fonce: #7a45ea;
+  --n-lavande: #dfd9ff;
+  --n-secondary: #aaa6c3;
+  --n-line: rgba(223, 217, 255, 0.1);
+  --n-line-forte: rgba(223, 217, 255, 0.2);
+  --n-glow: rgba(145, 94, 255, 0.35);
+
+  // Courbes : la douce (entrées) et celle de la plume (balayage du prénom).
+  --n-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --n-ease-plume: cubic-bezier(0.65, 0, 0.35, 1);
+
+  // Respiration verticale entre sections.
+  --n-section: clamp(72px, 10vw, 120px);
+
+  // Position de la lumière au repos (la lune du portrait). Les composants
+  // écrasent ces valeurs par des motion values quand le pointeur entre.
+  --lx: 0.78;
+  --ly: 0.22;
+  --la: 225deg;
+
+  position: relative;
+  min-height: 100vh;
+  background: var(--n-bg);
+  color: var(--n-lavande);
+  // `clip` et non `hidden` : `hidden` ferait de la racine un conteneur de
+  // défilement et casserait tout `position: sticky` descendant.
+  overflow-x: clip;
+
+  // Le dock occupe le bas de l'écran : le badge POC remonte au-dessus de lui
+  // sur les petits écrans (le composant partagé lit cette variable).
+  @media (max-width: 640px) {
+    --poc-badge-bottom: 84px;
+  }
+}
+
+// Conteneur de page : mêmes cotes que `.night-container` (max-width 1120,
+// padding-inline clamp) pour que la bascule jour/nuit ne déplace rien.
+.nuit1-container {
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: clamp(20px, 4vw, 32px);
+}
+
+// Focus clavier : un anneau lavande, visible partout, jamais un déplacement.
+.nuit1 :focus-visible {
+  outline: 2px solid var(--n-lavande);
+  outline-offset: 3px;
+  border-radius: 4px;
+}

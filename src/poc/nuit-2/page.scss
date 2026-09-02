@@ -1,0 +1,241 @@
+// src/poc/nuit-2/page.scss
+// Feuille d'entrée du POC « Clair de lune ».
+//
+// `@use "../shared/kalam"` DOIT rester la toute première instruction : sur une
+// arrivée directe en /poc/nuit-2, `src/components/Hero.scss` — seul fichier du
+// site qui déclare Kalam — n'est jamais chargée, et le prénom perdrait sa
+// signature manuscrite. (Un @import CSS doit précéder toute autre instruction
+// de la feuille émise, et Sass interdit un @use après une règle : les deux
+// contraintes ne se concilient qu'en isolant l'import.)
+@use "../shared/kalam";
+@use "sky";
+@use "hero";
+@use "sections";
+@use "projects";
+@use "timeline";
+@use "contact";
+
+.n2-root {
+  // Palette de la facette nuit, inchangée : c'est la même page, mise en scène.
+  --n2-bg: #050816;
+  --n2-tertiary: #151030;
+  --n2-black100: #100d25;
+  --n2-card: #1d1836;
+  --n2-violet: #915eff;
+  --n2-violet-deep: #7a45ea;
+  --n2-lavender: #dfd9ff;
+  --n2-secondary: #aaa6c3;
+  --n2-line: rgba(223, 217, 255, 0.12);
+  --n2-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  // Replis tant que useCssViewport n'a pas mesuré (première frame seulement).
+  --n2-vh: 100vh;
+  --n2-vw: 100vw;
+
+  position: relative;
+  min-height: 100vh;
+  background: var(--n2-bg);
+  color: var(--n2-lavender);
+  // `clip` et non `hidden` : `hidden` ferait de la racine un conteneur de
+  // défilement et casserait TOUS les position: sticky de la page.
+  overflow-x: clip;
+
+  // Le badge du POC passe au-dessus de la couche ciel (30) et de la navbar (40).
+  .poc-badge {
+    z-index: 60;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--n2-lavender);
+    outline-offset: 3px;
+  }
+}
+
+.n2-container {
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: clamp(20px, 4vw, 32px);
+}
+
+// La navbar du POC : le clone de .night-nav, avec ses propres classes pour
+// n'entrer en collision avec rien.
+.n2-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: rgba(5, 8, 22, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(145, 94, 255, 0.22);
+  transition: border-color 0.3s ease;
+
+  // Passé 4 % de la page : le bord s'accentue, rien ne bouge.
+  &.is-scrolled {
+    border-bottom-color: rgba(145, 94, 255, 0.38);
+  }
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 66px;
+    gap: 16px;
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 17px;
+
+    img {
+      width: 34px;
+      height: 34px;
+      object-fit: contain;
+      border-radius: 50%;
+    }
+  }
+
+  &__links {
+    display: flex;
+    align-items: center;
+    gap: clamp(16px, 3vw, 34px);
+
+    a {
+      text-decoration: none;
+      color: var(--n2-secondary);
+      font-size: 14.5px;
+      font-weight: 500;
+      transition: color 0.25s ease;
+
+      &:hover {
+        color: var(--n2-violet);
+      }
+    }
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  &__cta {
+    display: inline-flex;
+    justify-content: center;
+    min-width: 132px;
+    text-decoration: none;
+    background: var(--n2-violet);
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 9px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      background: var(--n2-violet-deep);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px -8px rgba(145, 94, 255, 0.75);
+    }
+  }
+
+  @media (max-width: 830px) {
+    &__links,
+    &__cta {
+      display: none;
+    }
+  }
+}
+
+// Les sections visées par la navbar et par les ticks de l'orbite : la barre
+// fixe ne doit jamais recouvrir leur en-tête.
+.n2-main [id] {
+  scroll-margin-top: 78px;
+}
+
+// --- arrivée au montage ---------------------------------------------------
+// `translate` (et non `transform`) : la propriété individuelle se compose avec
+// les `transform` statiques (chips inclinées) et ne se dispute pas la main avec
+// les styles inline posés par framer sur des éléments VOISINS.
+@keyframes n2-in {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes n2-in-nom {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+    scale: 0.96;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes n2-in-lune {
+  from {
+    opacity: 0;
+    translate: 0 40px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.n2-in {
+  animation: n2-in 0.6s ease-out both;
+  animation-delay: var(--d, 0ms);
+
+  &--ib {
+    display: inline-block;
+  }
+
+  &--nom {
+    animation-name: n2-in-nom;
+  }
+
+  &--lune {
+    animation-name: n2-in-lune;
+    animation-duration: 1.2s;
+    animation-timing-function: var(--n2-ease);
+  }
+}
+
+// --- mouvement réduit ------------------------------------------------------
+@media (prefers-reduced-motion: reduce) {
+  .n2-in,
+  .n2-in--nom,
+  .n2-in--lune {
+    animation: n2-fade 0.2s ease-out both;
+    animation-delay: 0ms;
+  }
+
+  @keyframes n2-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .n2-root * {
+    // Les halos et couleurs restent, les déplacements disparaissent.
+    transition-property: opacity, color, background-color, border-color, stroke, box-shadow;
+  }
+}

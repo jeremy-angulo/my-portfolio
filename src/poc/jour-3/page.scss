@@ -1,0 +1,478 @@
+// ---------------------------------------------------------------------------
+// POC « Plein soleil » — facette jour, créneau 3.
+//
+// `../../pro/pro.scss` est importée EN JS depuis Page.jsx (feuille globale,
+// idempotente) : cette feuille-ci ne fait que la prolonger. Préfixe `j3-` pour
+// ne jamais entrer en collision avec `.pro-*`, `.night-*` ou Tailwind.
+//
+// Couches : ciel 0 · contenu 1 · navbar 40 · badge 60 (PocBadge).
+// ---------------------------------------------------------------------------
+
+.pro-root.j3-root {
+  // `clip` et non `hidden` : `hidden` ferait de la racine un conteneur de
+  // défilement (les `sticky` casseraient) ; la spécificité doublée est
+  // nécessaire pour battre le `overflow-x: hidden` de `.pro-root`.
+  overflow-x: clip;
+
+  // Tokens du soleil
+  --j3-sun-core: #fff7e0;
+  --j3-sun-glow: #fde68a;
+  --j3-sun-warm: #f59e0b;
+  --j3-dusk: #915eff;
+
+  // Valeurs de repos de la lumière, écrasées à chaque frame utile par le
+  // pilote (SunProvider). Elles décrivent un soleil haut à droite.
+  --sx: 80%;
+  --sy: 20%;
+  --ldx: -0.6; // direction horizontale de la lumière (−1 = à droite)
+  --ldy: 0.6; // direction verticale (+1 = en haut)
+  --pdx: -0.5; // orientation du portrait vers le soleil
+  --pdy: 0.6;
+  --shx: -1.2%; // décalage de l'ombre portée
+  --shy: 2%;
+}
+
+// ------------------------------------------------------------------ le ciel
+
+.j3-sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+// ------------------------------------------------------------------ navbar
+
+.j3-nav {
+  // Le verre de la navbar laisse deviner la couronne du soleil qui passe
+  // derrière : rien à coder, la règle existante suffit.
+  z-index: 40;
+}
+
+// ------------------------------------------------------------------ hero
+
+.pro-hero.j3-hero {
+  // Le fond du hero, c'est le ciel : rien ici.
+  background: transparent;
+  overflow: hidden;
+
+  // Le halo de ProHero n'est pas repris — le soleil est réel.
+  &::before {
+    content: none;
+  }
+
+  .pro-hero__inner {
+    z-index: 1;
+  }
+}
+
+// Filet de sécurité : le ciel d'aube en CSS, aux mêmes couleurs que le shader.
+// Il couvre l'attente du chunk WebGL, s'efface au premier frame rendu et
+// revient si le contexte est perdu.
+.j3-hero__ciel {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, #e3eefb 0%, #f3ecdd 58%, var(--day-bg) 100%);
+  opacity: 1;
+  transition: opacity 0.4s linear;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: -220px;
+    right: -160px;
+    width: 640px;
+    height: 640px;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      rgba(253, 224, 138, 0.85) 0%,
+      rgba(253, 236, 204, 0.55) 38%,
+      rgba(234, 242, 253, 0.4) 68%,
+      rgba(250, 246, 238, 0) 100%
+    );
+  }
+}
+
+.j3-root--gl .j3-hero__ciel {
+  opacity: 0;
+}
+
+// Plancher : le bas du hero rejoint exactement l'ivoire du mur suivant, quelle
+// que soit la hauteur du viewport (le uFloor du shader fait le même travail
+// dans le canvas, vers la même couleur : les deux ne se cumulent pas).
+.j3-hero__sol {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  height: clamp(56px, 9vh, 110px);
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(250, 246, 238, 0) 0%, var(--day-bg) 100%);
+}
+
+// ------------------------------------------------------ titre et dorure
+
+.j3-hero__titre {
+  font-size: clamp(42px, 5.8vw, 70px);
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  margin: 22px 0 18px;
+}
+
+// La dorure de l'italique n'a pas d'animation propre : la position du dégradé
+// suit `--sx`, donc le soleil qui se lève déplace déjà le point de lumière à
+// l'intérieur du mot.
+.j3-hero__titre .j3-em {
+  font-style: italic;
+  color: transparent;
+  background-image: linear-gradient(90deg, #b45309 0%, #f59e0b 50%, #b45309 100%);
+  background-size: 220% 100%;
+  background-position: calc(var(--sx, 80%) * 0.6 + 20%) 0;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background-position 0.2s linear;
+}
+
+// Repli : sans découpe du fond par le texte, l'italique reste ambre plein.
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .j3-hero__titre .j3-em {
+    color: var(--day-amber-deep);
+    -webkit-text-fill-color: var(--day-amber-deep);
+    background: none;
+  }
+}
+
+// ------------------------------------------------------------- portrait 3D
+
+.pro-hero__portrait.j3-portrait {
+  perspective: 1200px;
+  perspective-origin: 62% 38%;
+  justify-self: center;
+
+  // Le faux soleil en pastille de ProHero : inutile, le vrai est derrière.
+  &::before {
+    content: none;
+  }
+
+  // L'ombre et l'orientation viennent des calques : la carte n'a plus ni
+  // ombre portée ni transform propre.
+  .pro-hero__portrait-card {
+    transform: none;
+    box-shadow: none;
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  // Les chips sont portées par un support positionné : la puce elle-même
+  // reste libre pour l'animation d'entrée de framer.
+  .j3-chip {
+    position: absolute;
+    z-index: 3;
+  }
+
+  .j3-chip--haut {
+    top: 18px;
+    left: -46px;
+    transform: rotate(-3deg) translateZ(28px);
+  }
+
+  .j3-chip--bas {
+    bottom: 26px;
+    right: -34px;
+    transform: rotate(2deg) translateZ(44px);
+  }
+
+  .pro-hero__chip {
+    position: static;
+    transform: none;
+    // Ombre directionnelle : petite surface, deux éléments, aucune boucle —
+    // seuls les mouvements du soleil la repeignent.
+    box-shadow: calc(var(--ldx) * -5px) calc(7px - var(--ldy) * 3px) 20px -10px
+      rgba(22, 35, 58, 0.3);
+    transition: box-shadow 0.45s ease, transform 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.14);
+    }
+  }
+}
+
+// ------------------------------------------------- enveloppe d'éclairage
+
+.j3-lit {
+  position: relative;
+  // Le calque d'ombre (z-index −1) doit rester DANS l'enveloppe, et le reflet
+  // en soft-light ne doit pas déborder sur le fond de la section.
+  isolation: isolate;
+}
+
+.j3-lit__ombre {
+  position: absolute;
+  inset: -6% -5% -8%;
+  z-index: -1;
+  border-radius: calc(var(--j3-r, 20px) + 10px);
+  pointer-events: none;
+  // Le flou est DANS le dégradé : aucun `filter`, aucune ombre animée.
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(22, 35, 58, 0.28) 0%,
+    rgba(22, 35, 58, 0.12) 45%,
+    rgba(22, 35, 58, 0) 72%
+  );
+  transform: translate(var(--shx), var(--shy)) scale(1.02);
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.j3-lit__reflet {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: var(--j3-r, 20px);
+  opacity: calc(0.55 + var(--pv-active, 0) * 0.35);
+  transition: opacity 0.25s ease;
+}
+
+.j3-lit__reflet-in {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0) 42%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 58%
+  );
+  mix-blend-mode: soft-light;
+  transform: translate(calc(var(--ldx) * -30%), calc(var(--ldy) * -30%));
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+// Safari ancien : sans soft-light, un reflet plus discret en opacité pure.
+@supports not (mix-blend-mode: soft-light) {
+  .j3-lit__reflet {
+    opacity: 0.35;
+  }
+}
+
+// Le portrait : il se tourne vers le soleil.
+.j3-lit--sun {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transform: translateY(calc(var(--j3-lift, 0) * -4px)) rotate(2.5deg)
+    rotateY(calc(var(--pdx) * var(--j3-tilt, 8) * 1deg))
+    rotateX(calc(var(--pdy) * 5deg));
+  transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  &:hover {
+    --j3-lift: 1;
+  }
+
+  // Sous `preserve-3d`, la profondeur prime sur z-index : on décale
+  // franchement les calques en Z.
+  .j3-lit__ombre {
+    will-change: transform;
+    transform: translate(var(--shx), var(--shy)) scale(1.02) translateZ(-2px);
+  }
+
+  .j3-lit__reflet {
+    will-change: transform;
+    transform: translateZ(2px);
+  }
+}
+
+// Les cartes piliers : elles s'inclinent vers le pointeur, jamais plus de 5°.
+.j3-lit--hover {
+  transform: perspective(900px)
+    rotateY(calc((var(--mx, 0.5) - 0.5) * var(--j3-tilt, 0) * 2deg))
+    rotateX(calc((0.5 - var(--my, 0.5)) * var(--j3-tilt, 0) * 2deg));
+  transition: transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  // La carte doit remplir l'enveloppe pour que la rangée reste d'équerre.
+  > .pro-card {
+    height: 100%;
+  }
+}
+
+// ------------------------------------------------------------- les murs
+
+.j3-mur {
+  position: relative;
+  z-index: 1;
+  background: var(--day-bg);
+}
+
+// Raccord entre le ciel du hero et le premier mur ivoire.
+.j3-mur--raccord::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -56px;
+  height: 56px;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(250, 246, 238, 0) 0%, var(--day-bg) 100%);
+}
+
+// L'ombre des cartes n'est plus une `box-shadow` animée : c'est un calque.
+.j3-root .pro-card {
+  box-shadow: none;
+  transition: transform 0.35s ease;
+
+  &:hover {
+    box-shadow: none;
+  }
+}
+
+.j3-root .pro-contact__form {
+  box-shadow: none;
+}
+
+// ------------------------------------------------------------ les fenêtres
+
+.j3-fenetre {
+  position: relative;
+  z-index: 1;
+
+  // Le bandeau devient une fenêtre : c'est le voile qui porte la teinte,
+  // la section elle-même est transparente.
+  .pro-stats,
+  .pro-ticker,
+  .pro-footer {
+    background: transparent;
+    border-block: 0;
+    border-top: 0;
+  }
+
+  &--sky {
+    background: rgba(234, 242, 253, 0.62);
+    border-block: 1px solid #dbe6f7;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+
+  &--dusk {
+    background: rgba(250, 246, 238, 0.66);
+    border-top: 1px solid var(--day-line);
+
+    .pro-footer__inner {
+      color: var(--day-ink-soft);
+    }
+  }
+}
+
+// ------------------------------------------------- repli sans WebGL
+
+.j3-root--css {
+  .j3-hero__ciel {
+    opacity: 1;
+  }
+
+  // Sans ciel derrière, les fenêtres redeviennent les bandeaux d'origine.
+  .j3-fenetre--sky {
+    background: var(--day-sky-soft);
+  }
+
+  .j3-fenetre--dusk {
+    background: var(--day-bg);
+  }
+}
+
+// ------------------------------------------------- écrans étroits
+
+@media (max-width: 900px) {
+  .pro-hero__portrait.j3-portrait {
+    margin-top: 12px;
+
+    .j3-chip--haut {
+      left: -12px;
+    }
+
+    .j3-chip--bas {
+      right: -8px;
+    }
+  }
+
+  .j3-hero__titre {
+    font-size: clamp(38px, 9vw, 46px);
+  }
+}
+
+@media (max-width: 700px) {
+  .j3-lit__ombre {
+    // Ombres plus resserrées : sur un petit écran, un décalage de 9 % sort
+    // visuellement de la carte.
+    inset: -4% -3% -6%;
+  }
+}
+
+// Tactile : aucun effet de pointeur, aucune inclinaison. Le soleil dérive
+// seul et continue d'orienter ombres et reflets.
+@media (hover: none), (pointer: coarse) {
+  .j3-lit--sun {
+    transform: rotate(2.5deg);
+
+    .j3-lit__ombre {
+      transform: translate(var(--shx), var(--shy)) scale(1.02);
+    }
+
+    .j3-lit__reflet {
+      transform: none;
+    }
+  }
+
+  .j3-lit--hover {
+    transform: none;
+  }
+
+  .j3-portrait .j3-chip--haut {
+    transform: rotate(-3deg);
+  }
+
+  .j3-portrait .j3-chip--bas {
+    transform: rotate(2deg);
+  }
+}
+
+// ------------------------------------------------- mouvement réduit
+
+@media (prefers-reduced-motion: reduce) {
+  .j3-root {
+    .j3-hero__ciel,
+    .j3-lit--sun,
+    .j3-lit--hover,
+    .j3-lit__ombre,
+    .j3-lit__reflet,
+    .j3-lit__reflet-in,
+    .j3-hero__titre .j3-em,
+    .pro-hero__chip {
+      transition: none;
+    }
+
+    .j3-lit--sun {
+      transform: rotate(2.5deg);
+    }
+
+    .j3-lit--hover {
+      transform: none;
+    }
+
+    // Dorure figée : un ambre plein, lisible et sans dégradé mobile.
+    .j3-hero__titre .j3-em {
+      color: var(--day-amber-deep);
+      -webkit-text-fill-color: var(--day-amber-deep);
+      background: none;
+    }
+  }
+}

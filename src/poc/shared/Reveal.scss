@@ -1,0 +1,32 @@
+// src/poc/shared/Reveal.scss
+// Les trois seules classes de Reveal.jsx, importé par lui : jamais oublié.
+
+.poc-reveal {
+  // Rien de plus qu'un crochet de composition : la typographie reste au POC.
+  display: inline;
+}
+
+// Ligne masquée : le padding + la marge négative équivalente évitent de couper
+// les descendantes (« g », « p ») et les débords d'italique, sans modifier
+// l'espace occupé.
+.poc-reveal__mask {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.08em 0.06em 0.2em;
+  margin: -0.08em -0.06em -0.2em;
+  vertical-align: bottom;
+}
+
+.poc-reveal__in {
+  display: inline-block;
+  will-change: transform, opacity;
+
+  // Posé pendant la révélation seulement : retiré une fois l'animation finie.
+  &.is-settled {
+    will-change: auto;
+  }
+}
+
+.poc-reveal__line {
+  display: block;
+}

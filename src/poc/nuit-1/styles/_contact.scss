@@ -1,0 +1,145 @@
+// src/poc/nuit-1/styles/_contact.scss
+// Contact sans globe WebGL : deux colonnes, les canaux existants, et la lune
+// qui revient en écho de fin de page.
+
+.nuit1-contact {
+  position: relative;
+
+  &__grille {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 40px;
+    align-items: start;
+  }
+
+  &__gauche {
+    position: relative;
+  }
+
+  &__canaux {
+    list-style: none;
+    margin: 24px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 14px;
+  }
+
+  &__canal {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    a {
+      font-size: 15px;
+      color: var(--n-lavande);
+      text-decoration: none;
+      transition: color 0.25s ease;
+
+      &:hover {
+        color: var(--n-violet);
+      }
+    }
+  }
+
+  &__pastille {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(145, 94, 255, 0.15);
+    color: var(--n-lavande);
+
+    svg {
+      font-size: 18px;
+    }
+  }
+
+  // La lune revient en fin de page : même astre, plus bas dans la nuit.
+  &__lune {
+    position: relative;
+    margin-top: 56px;
+    width: 180px;
+    height: 180px;
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 40vmin;
+      height: 40vmin;
+      margin: -20vmin 0 0 -20vmin;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(145, 94, 255, 0.18) 0%, rgba(145, 94, 255, 0) 70%);
+      pointer-events: none;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle at 62% 36%, #ffffff 0%, #dfd9ff 55%, #9d95c9 100%);
+      box-shadow: inset -22px -14px 32px rgba(21, 16, 48, 0.55),
+        0 0 70px 22px rgba(223, 217, 255, 0.28);
+    }
+  }
+
+  // ------------------------------------------------------------ formulaire
+  &__form {
+    display: grid;
+    gap: 18px;
+  }
+
+  &__champ {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    span {
+      font-size: 14px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    input,
+    textarea {
+      font-family: inherit;
+      font-size: 15px;
+      color: #ffffff;
+      background: var(--n-surface);
+      border: 1px solid var(--n-line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      transition: border-color 0.2s ease;
+      resize: vertical;
+
+      &::placeholder {
+        color: var(--n-secondary);
+      }
+
+      &:focus {
+        border-color: var(--n-violet);
+      }
+    }
+  }
+
+  &__envoyer {
+    justify-self: start;
+  }
+
+  @media (max-width: 900px) {
+    &__grille {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+
+    // L'écho de fin de page n'a pas de place sur mobile : il disparaît.
+    &__lune {
+      display: none;
+    }
+  }
+}

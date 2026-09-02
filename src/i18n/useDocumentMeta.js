@@ -75,6 +75,12 @@ const META = {
     fr: { title: "Statistiques", description: "", noindex: true },
     en: { title: "Statistics", description: "", noindex: true },
   },
+  // Pages de comparaison privées : titre neutre, aucune description, et surtout
+  // noindex — elles ne doivent jamais remonter dans un moteur de recherche.
+  poc: {
+    fr: { title: "POC — Jérémy Angulo", description: "", noindex: true },
+    en: { title: "POC — Jérémy Angulo", description: "", noindex: true },
+  },
   gateway: {
     fr: {
       title: "Jérémy Angulo — Jour ou nuit",
@@ -94,6 +100,7 @@ const keyForPath = (pathname) => {
   if (pathname.startsWith("/cv") || pathname.startsWith("/resume")) return "cv";
   if (pathname.startsWith("/portfolio")) return "gateway";
   if (pathname.startsWith("/statistiques")) return "stats";
+  if (pathname.startsWith("/poc")) return "poc";
   return "home";
 };
 

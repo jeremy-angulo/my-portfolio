@@ -16,6 +16,9 @@ const ExperiencePage = lazy(() => import("./experience/ExperiencePage"));
 // Page privée, non liée depuis le site : chargée à part pour ne rien peser sur
 // le bundle que téléchargent les visiteurs.
 const StatsPage = lazy(() => import("./stats/StatsPage"));
+// Pages de comparaison (POC), privées et noindex comme /statistiques : chaque
+// POC est son propre chunk, rien ne pèse sur le bundle des visiteurs.
+const PocRouter = lazy(() => import("./poc/PocRouter"));
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import useScrollRestorationOnResize from './hooks/useScrollRestorationOnResize'; // Import the hook
 import useDocumentMeta from "./i18n/useDocumentMeta";
@@ -34,18 +37,21 @@ const App = () => {
   const isNight = NIGHT_PATHS.some((path) => location.pathname.startsWith(path));
   const isPortfolio = location.pathname === "/portfolio";
   const is3d = location.pathname === "/3d";
+  // Les POC nuit rendent leur propre navbar et leur propre ciel, mais le fond
+  // du document doit être sombre comme /tech ; /poc et /poc/jour-* restent ivoire.
+  const isPocNight = location.pathname.startsWith("/poc/nuit");
 
   // Le fond du document — visible en overscroll et sous les pages courtes —
   // suit la facette : ivoire le jour (dont /statistiques, habillée comme le
   // jour), nuit noire côté nuit, portfolio et 3D.
   // La couleur de la barre de défilement (color-scheme) suit aussi.
   useEffect(() => {
-    const dark = isNight || isPortfolio || is3d;
+    const dark = isNight || isPortfolio || is3d || isPocNight;
     const color = dark ? "#050816" : "#faf6ee";
     document.documentElement.style.backgroundColor = color;
     document.body.style.backgroundColor = color;
     document.documentElement.style.colorScheme = dark ? "dark" : "light";
-  }, [isNight, isPortfolio, is3d]);
+  }, [isNight, isPortfolio, is3d, isPocNight]);
 
   // Le champ d'étoiles WebGL n'est initialisé qu'une fois la transition
   // jour→nuit terminée (puis il apparaît en fondu) : son démarrage pendant
@@ -88,6 +94,27 @@ const App = () => {
             element={
               <Suspense fallback={<RouteFallback label="Statistiques" />}>
                 <StatsPage />
+              </Suspense>
+            }
+          />
+          {/* Privées : aucun lien entrant, noindex. Le fond du repli suit la facette
+              pour qu'un chunk lent ne fasse pas clignoter un écran ivoire côté nuit. */}
+          <Route
+            path="/poc/*"
+            element={
+              <Suspense
+                fallback={
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: "fixed",
+                      inset: 0,
+                      background: isPocNight ? "#050816" : "#faf6ee",
+                    }}
+                  />
+                }
+              >
+                <PocRouter />
               </Suspense>
             }
           />

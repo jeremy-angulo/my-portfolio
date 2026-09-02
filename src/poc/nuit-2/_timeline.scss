@@ -1,0 +1,266 @@
+// _timeline.scss — la timeline qui s'allume au passage du remplissage.
+// Rail à deux calques (fond + remplissage en scaleY), entrées alternées,
+// nœuds qui s'allument quand le remplissage les atteint — et s'éteignent en
+// remontant.
+
+.n2-tl {
+  padding: clamp(48px, 7vh, 90px) 0 clamp(40px, 6vh, 80px);
+
+  &__body {
+    position: relative;
+    margin-top: clamp(32px, 5vh, 60px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(28px, 4vh, 48px);
+  }
+
+  // Le rail : deux calques superposés, jamais une bordure animée.
+  &__rail {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    margin-left: -1px;
+    background: rgba(223, 217, 255, 0.12);
+  }
+
+  &__fill {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #dfd9ff, #915eff);
+    transform-origin: top;
+  }
+
+  &__entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 48px minmax(0, 1fr);
+    align-items: center;
+    gap: 32px;
+  }
+
+  &__card {
+    background: var(--n2-card);
+    border-radius: 18px;
+    padding: 24px;
+    opacity: 0.45;
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    position: relative;
+
+    // La flèche qui pointe vers le nœud.
+    &::before {
+      content: "";
+      position: absolute;
+      top: 26px;
+      width: 0;
+      height: 0;
+      border: 7px solid transparent;
+    }
+  }
+
+  &__title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.25;
+  }
+
+  &__company {
+    margin-top: 4px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--n2-secondary);
+  }
+
+  &__points {
+    margin: 16px 0 0 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    list-style: disc;
+
+    li {
+      font-size: 14px;
+      letter-spacing: 0.03em;
+      line-height: 1.55;
+      color: #f3f3f3;
+    }
+  }
+
+  &__link {
+    display: inline-block;
+    margin-top: 14px;
+    font-weight: 600;
+  }
+
+  &__node {
+    position: relative;
+    z-index: 1;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(223, 217, 255, 0.15);
+    justify-self: center;
+    transition: border-color 0.3s ease;
+
+    img {
+      width: 75%;
+      height: 75%;
+      object-fit: contain;
+      opacity: 0.5;
+      transition: opacity 0.3s ease;
+    }
+
+    // Anneau d'allumage : un petit élément, en opacité seulement.
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 6px solid rgba(145, 94, 255, 0.18);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+  }
+
+  &__date {
+    font-size: 13px;
+    color: var(--n2-secondary);
+    transition: color 0.3s ease;
+  }
+
+  // Entrées alternées : carte à gauche puis à droite.
+  &__entry--gauche {
+    .n2-tl__card {
+      grid-column: 1;
+      transform: translateX(-16px);
+
+      &::before {
+        right: -14px;
+        border-left-color: var(--n2-card);
+      }
+    }
+
+    .n2-tl__date {
+      grid-column: 3;
+      text-align: left;
+    }
+  }
+
+  &__entry--droite {
+    .n2-tl__card {
+      grid-column: 3;
+      grid-row: 1;
+      transform: translateX(16px);
+
+      &::before {
+        left: -14px;
+        border-right-color: var(--n2-card);
+      }
+    }
+
+    .n2-tl__date {
+      grid-column: 1;
+      grid-row: 1;
+      text-align: right;
+    }
+  }
+
+  &__node {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  // --- allumage ----------------------------------------------------------
+  &__entry.is-lit {
+    .n2-tl__card {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .n2-tl__node {
+      border-color: var(--n2-violet);
+
+      img {
+        opacity: 1;
+      }
+
+      &::after {
+        opacity: 1;
+      }
+    }
+
+    .n2-tl__date {
+      color: var(--n2-lavender);
+    }
+  }
+}
+
+// --- mobile : rail à gauche, cartes pleine largeur ------------------------
+@media (max-width: 900px) {
+  .n2-tl {
+    &__rail {
+      left: 24px;
+      margin-left: 0;
+    }
+
+    &__entry {
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    &__node {
+      grid-column: 1;
+      grid-row: 1;
+      width: 40px;
+      height: 40px;
+      margin-left: 4px;
+    }
+
+    &__entry--gauche,
+    &__entry--droite {
+      .n2-tl__card {
+        grid-column: 2;
+        grid-row: 2;
+        transform: translateX(0);
+
+        &::before {
+          display: none;
+        }
+      }
+
+      .n2-tl__date {
+        grid-column: 2;
+        grid-row: 1;
+        text-align: left;
+        align-self: center;
+      }
+    }
+  }
+}
+
+// --- mouvement réduit : tout est allumé, rien ne se déplace ---------------
+@media (prefers-reduced-motion: reduce) {
+  .n2-tl__card {
+    opacity: 1;
+    transform: none;
+  }
+
+  .n2-tl__node {
+    border-color: var(--n2-violet);
+
+    img {
+      opacity: 1;
+    }
+  }
+
+  .n2-tl__date {
+    color: var(--n2-lavender);
+  }
+}

@@ -1,0 +1,249 @@
+// src/poc/PocIndex.scss
+// Page /poc — direction artistique jour, sobre. Elle ne dépend PAS de
+// pro.scss : elle doit tenir seule sur une arrivée froide.
+
+.poc-index {
+  // Tokens locaux
+  --pi-bg: #faf6ee;
+  --pi-surface: #ffffff;
+  --pi-ink: #16233a;
+  --pi-ink-soft: #43536e;
+  --pi-muted: #6b7689;
+  --pi-line: #e7dfcf;
+  --pi-amber: #d97706;
+  --pi-amber-deep: #b45309;
+  --pi-shadow: 0 18px 50px -18px rgba(22, 35, 58, 0.18);
+
+  background: var(--pi-bg);
+  color: var(--pi-ink);
+  color-scheme: light;
+  min-height: 100vh;
+  // `clip` et non `hidden` : `hidden` ferait de la racine un conteneur de
+  // défilement et casserait tout `position: sticky` posé plus tard.
+  overflow-x: clip;
+  font-family: "Poppins", sans-serif;
+
+  &,
+  * {
+    color-scheme: light;
+  }
+}
+
+.poc-index__container {
+  max-width: 1000px;
+  margin-inline: auto;
+  padding-inline: clamp(20px, 4vw, 32px);
+}
+
+// ------------------------------------------------------------------ En-tête
+
+.poc-index__head {
+  padding-block: clamp(56px, 9vh, 96px) clamp(28px, 4vw, 44px);
+  border-bottom: 1px solid var(--pi-line);
+}
+
+.poc-index__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: clamp(28px, 5vw, 44px);
+}
+
+.poc-index__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--pi-ink);
+
+  img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    display: block;
+  }
+}
+
+.poc-index__eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--pi-amber-deep);
+  margin-bottom: 14px;
+}
+
+.poc-index__title {
+  font-family: "Fraunces", "Poppins", serif;
+  font-weight: 600;
+  font-variation-settings: "opsz" 96;
+  font-size: clamp(30px, 4.2vw, 46px);
+  line-height: 1.12;
+  color: var(--pi-ink);
+  margin-bottom: 16px;
+}
+
+.poc-index__lede {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--pi-ink-soft);
+  max-width: 62ch;
+}
+
+// ------------------------------------------------------------------ Grille
+
+.poc-index__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(24px, 4vw, 40px);
+  padding-block: clamp(32px, 5vw, 48px);
+
+  @media (max-width: 860px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.poc-index__col-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Fraunces", "Poppins", serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--pi-ink);
+}
+
+.poc-index__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  .poc-index__col--day & {
+    background: var(--pi-amber);
+  }
+
+  // Seul rappel de la DA nuit : la page reste ivoire de bout en bout.
+  .poc-index__col--night & {
+    background: #915eff;
+  }
+}
+
+.poc-index__route {
+  margin-top: 6px;
+  font-size: 13.5px;
+  color: var(--pi-muted);
+}
+
+.poc-index__list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.poc-index__card {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+  min-height: 44px;
+  background: var(--pi-surface);
+  border: 1px solid var(--pi-line);
+  border-radius: 18px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      border-color: var(--pi-amber);
+      box-shadow: var(--pi-shadow);
+      transform: translateY(-2px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--pi-amber-deep);
+    outline-offset: 3px;
+  }
+}
+
+.poc-index__num {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--pi-amber-deep);
+}
+
+.poc-index__name {
+  font-family: "Fraunces", "Poppins", serif;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--pi-ink);
+}
+
+.poc-index__slot {
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--pi-muted);
+}
+
+.poc-index__tagline {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--pi-ink-soft);
+}
+
+.poc-index__open {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--pi-amber-deep);
+}
+
+// ------------------------------------------------------------------ Pied
+
+.poc-index__foot {
+  border-top: 1px solid var(--pi-line);
+  padding-block: 28px 56px;
+}
+
+.poc-index__foot-label {
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--pi-muted);
+  margin-bottom: 12px;
+}
+
+.poc-index__foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-size: 15px;
+    color: var(--pi-ink);
+    text-decoration: none;
+
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        text-decoration: underline;
+        text-underline-offset: 4px;
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--pi-amber-deep);
+      outline-offset: 3px;
+    }
+  }
+}

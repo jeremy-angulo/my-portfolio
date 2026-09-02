@@ -1,0 +1,794 @@
+// ---------------------------------------------------------------------------
+// POC « Le Pont » — facette jour, créneau 2.
+// Préfixe BEM `.j2-*` : aucune collision possible avec .pro-*, .night-* ou
+// Tailwind. `pro.scss` est importée en JS depuis Page.jsx (feuille globale).
+//
+// Le motif de la page est la LIGNE : le tablier du pont dans le hero, le filet
+// de progression sous la navbar, les filets qui bordent les bandeaux bleus, la
+// lueur sous le contact. Aucun astre ne traverse la page (c'est jour-3).
+// ---------------------------------------------------------------------------
+
+// ------------------------------------------------------------------- racine
+
+.pro-root.j2-root {
+  // `clip` et NON `hidden` : `hidden` ferait de la racine un conteneur de
+  // défilement et casserait TOUS les `position: sticky` de ce POC.
+  // (Sélecteur à double classe : à spécificité égale, `.j2-root` seul ne
+  // battrait pas le `overflow-x: hidden` de `.pro-root`.)
+  overflow-x: clip;
+
+  // LA variable de ce POC. `--poc-vh` (sonde partagée) est la hauteur du
+  // viewport dans le repère des RECTS ; `body { zoom: .85 }` fait qu'une
+  // longueur CSS de 900 px s'affiche 765 px. On divise donc par le facteur de
+  // zoom mesuré (--j2-zoom, poussé par useZoomVar) : `var(--j2-vh)` occupe
+  // alors exactement un viewport, vérifiable au getBoundingClientRect().
+  --j2-vh: calc(var(--poc-vh, 900px) / var(--j2-zoom, 0.85));
+}
+
+// ------------------------------------------------- navbar : point de chapitre
+
+.j2-nav {
+  .pro-nav__links a {
+    position: relative;
+  }
+
+  // Le lien ne bouge jamais : seule une opacité change (règle « un survol ne
+  // déplace pas un contrôle », étendue ici à l'état de chapitre).
+  .pro-nav__links a::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -10px;
+    margin-left: -2.5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--day-amber);
+    opacity: 0;
+    transition: opacity 250ms ease;
+  }
+}
+
+.j2-nav[data-chapter="expertises"] .pro-nav__links a[href="#expertises"]::after,
+.j2-nav[data-chapter="parcours"] .pro-nav__links a[href="#parcours"]::after,
+.j2-nav[data-chapter="contact"] .pro-nav__links a[href="#contact"]::after {
+  opacity: 1;
+}
+
+// ------------------------------------------- filet de progression (le tablier)
+
+.j2-deckbar {
+  position: fixed;
+  top: 66px; // exactement sous la navbar
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 39;
+  pointer-events: none;
+
+  &__line {
+    height: 2px;
+    background: linear-gradient(90deg, var(--day-amber) 0%, var(--day-amber-soft) 100%);
+    transform-origin: left center;
+  }
+
+  // Les deux mêmes ticks que le tablier du hero : c'est la même pièce.
+  &__tick {
+    position: absolute;
+    top: -2px;
+    width: 2px;
+    height: 6px;
+    background: var(--day-amber);
+
+    &--left {
+      left: 0;
+    }
+    &--right {
+      right: 0;
+    }
+  }
+}
+
+// --------------------------------------------------------------- scène du pont
+
+.j2-stage {
+  position: relative;
+  height: calc(var(--j2-vh) * 2.6);
+  background: var(--day-bg);
+
+  &__pin {
+    position: sticky;
+    top: 0;
+    height: var(--j2-vh);
+    overflow: hidden;
+  }
+}
+
+// Repère d'ancrage : #expertises atterrit sur le pont FINI (p ≈ 0,99), pas au
+// bas de la piste — sinon le sticky serait déjà relâché.
+.j2-sentinel {
+  position: absolute;
+  top: calc(var(--j2-vh) * 1.58);
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+// Le hero garde EXACTEMENT la géométrie de `.pro-hero` (paddings, dégradé de
+// ciel, grille) : au repos, la page est celle d'aujourd'hui.
+.j2-hero {
+  // Le pin découpe déjà ; les morceaux du titre doivent pouvoir voler dehors.
+  overflow: visible;
+
+  // Le halo n'est plus un ::before mais un vrai élément, pour être animé.
+  &::before {
+    content: none;
+  }
+
+  &--linear {
+    overflow: hidden; // pas de débordement horizontal du soleil sur mobile
+  }
+}
+
+.j2-hero__col {
+  min-width: 0;
+}
+
+.j2-fade {
+  min-width: 0;
+}
+
+.j2-cta {
+  display: inline-flex;
+}
+
+// ------------------------------------------------------------------- soleil
+
+.j2-sun {
+  position: absolute;
+  top: -220px;
+  right: -160px;
+  width: 640px;
+  height: 640px;
+  pointer-events: none;
+  z-index: 0;
+
+  &__scroll,
+  &__in {
+    width: 100%;
+    height: 100%;
+  }
+
+  &__in {
+    border-radius: 50%;
+    // Exactement le halo de `.pro-hero::before`.
+    background: radial-gradient(
+      circle,
+      rgba(253, 224, 138, 0.85) 0%,
+      rgba(253, 236, 204, 0.55) 38%,
+      rgba(234, 242, 253, 0.4) 68%,
+      rgba(250, 246, 238, 0) 100%
+    );
+    // Dérive au pointeur : --mx/--my sont des POURCENTAGES, donc le translate
+    // est relatif à la taille du soleil — aucun pixel absolu, aucun zoom.
+    transform: translate(
+      calc((var(--mx, 50%) - 50%) * 0.06),
+      calc((var(--my, 50%) - 50%) * 0.06)
+    );
+    transition: transform 600ms ease-out;
+  }
+}
+
+// ---------------------------------------------------------- titre en morceaux
+
+.j2-title {
+  // Aucune reprise de la géométrie : tout vient de `.pro-hero__title`.
+  &__w {
+    display: inline-block;
+  }
+
+  &__in {
+    display: inline-block;
+  }
+
+  // Points fixes des mises à l'échelle : le point conservé est celui qu'on
+  // aligne sur le tablier (gauche pour « la technique », droite pour « le
+  // business. »).
+  &__w--head {
+    transform-origin: 0% 0%;
+  }
+  &__w--mid {
+    transform-origin: 0% 50%;
+  }
+  &__w--em {
+    transform-origin: 100% 50%;
+  }
+}
+
+// --------------------------------------------------------------------- chips
+
+// Enveloppe qui porte le placement + la dérive pointeur ; la chip elle-même
+// reste le composant d'origine (framer y pose son rotate d'arrivée).
+.j2-chip {
+  position: absolute;
+  transition: transform 600ms ease-out;
+
+  .pro-hero__chip {
+    position: static;
+  }
+
+  &--top {
+    top: 18px;
+    left: -46px;
+    transform: translate(
+      calc((var(--mx, 50%) - 50%) * -0.04),
+      calc((var(--my, 50%) - 50%) * -0.04)
+    );
+  }
+
+  &--bottom {
+    bottom: 26px;
+    right: -34px;
+    transform: translate(
+      calc((var(--mx, 50%) - 50%) * -0.04),
+      calc((var(--my, 50%) - 50%) * -0.04)
+    );
+  }
+
+  @media (max-width: 900px) {
+    &--top {
+      left: -12px;
+    }
+    &--bottom {
+      right: -8px;
+    }
+  }
+}
+
+// ------------------------------------------------------- couches de la scène
+
+.j2-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+
+  &--head {
+    top: 14%;
+  }
+  &--deck {
+    top: 46%;
+  }
+  &--cards {
+    top: 50%;
+  }
+  &--hint {
+    bottom: 6%;
+  }
+}
+
+// Le pont est construit : les cartes reprennent la main, le hero la rend.
+.j2-stage--built {
+  .j2-layer--cards {
+    pointer-events: auto;
+  }
+  .j2-hero {
+    pointer-events: none;
+  }
+}
+
+// `will-change` uniquement pendant l'épinglage, et sur les seules pièces qui
+// bougent — jamais posé à demeure.
+.j2-stage--live {
+  .j2-title__w,
+  .j2-sun__scroll,
+  .j2-pillars .pro-card {
+    will-change: transform;
+  }
+}
+
+.j2-exphead {
+  margin-bottom: 0;
+}
+
+// ------------------------------------------------------------------ tablier
+
+.j2-deck {
+  position: relative;
+  height: 2px;
+
+  &__line {
+    height: 2px;
+    background: linear-gradient(90deg, var(--day-amber) 0%, var(--day-line) 100%);
+    transform-origin: left center;
+  }
+
+  &__tick {
+    position: absolute;
+    top: -4px;
+    width: 2px;
+    height: 10px;
+    background: var(--day-amber);
+
+    &--left {
+      left: 0;
+    }
+    &--right {
+      right: 0;
+    }
+  }
+}
+
+.j2-pillars .pro-card {
+  padding: 22px;
+}
+
+// ---------------------------------------------------------- indice de scroll
+
+.j2-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--day-muted);
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--day-amber);
+    flex: 0 0 auto;
+  }
+}
+
+// -------------------------------------------------- Expertises, mode linéaire
+
+.j2-expline {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 26px;
+  font-family: "Fraunces", "Poppins", serif;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--day-ink);
+
+  em {
+    font-style: italic;
+    color: var(--day-amber-deep);
+  }
+
+  &__deck {
+    flex: 1 1 auto;
+    min-width: 32px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--day-amber) 0%, var(--day-line) 100%);
+    transform-origin: left center;
+  }
+}
+
+// ------------------------------------------------------------------ horizon
+
+.j2-horizon {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+
+  &__bg {
+    position: absolute;
+    inset: 0;
+    background: var(--day-sky-soft);
+    transform-origin: 50% 50%;
+  }
+
+  &__edge {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #dbe6f7;
+
+    &--top {
+      top: 0;
+    }
+    &--bottom {
+      bottom: 0;
+    }
+  }
+}
+
+// ------------------------------------------------------- chiffres en scène
+
+.j2-stats {
+  position: relative;
+  height: calc(var(--j2-vh) * 2.4);
+
+  &__pin {
+    position: sticky;
+    top: 0;
+    height: var(--j2-vh);
+    overflow: hidden;
+  }
+
+  &__index {
+    position: absolute;
+    top: calc(66px + var(--j2-vh) * 0.06);
+    left: 0;
+    right: 0;
+    z-index: 2;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--day-amber-deep);
+  }
+
+  // Les quatre cartons occupent la MÊME cellule : ils se succèdent au centre.
+  &__scene {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 74%;
+    display: grid;
+    place-items: center;
+    z-index: 1;
+  }
+
+  &__row.pro-stats__row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 6%;
+    z-index: 2;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.j2-carton {
+  grid-area: 1 / 1;
+  text-align: center;
+  max-width: 780px;
+  padding-inline: 24px;
+
+  &__value {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: clamp(72px, 11vw, 160px);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--day-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__fix {
+    color: var(--day-amber-deep);
+  }
+
+  &__label {
+    margin: 18px auto 0;
+    max-width: 22ch;
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--day-ink-soft);
+  }
+}
+
+// -------------------------------------------------- parcours : le travelling
+
+.j2-journey {
+  position: relative;
+
+  &__pin {
+    position: sticky;
+    top: 0;
+    height: var(--j2-vh);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--day-bg);
+  }
+
+  &__head {
+    flex: 0 0 auto;
+    padding-top: calc(66px + var(--j2-vh) * 0.06);
+
+    .pro-section__head {
+      margin-bottom: 0;
+    }
+  }
+
+  &__viewport {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+}
+
+.j2-dolly {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  width: max-content;
+  padding-top: 46px;
+  padding-right: 48px;
+  will-change: transform;
+}
+
+.j2-rail {
+  position: absolute;
+  top: 22px;
+  left: 0;
+  right: 0;
+  height: 2px;
+
+  &__line {
+    height: 2px;
+    background: linear-gradient(90deg, #f59e0b 0%, var(--day-line) 100%);
+    transform-origin: left center;
+  }
+}
+
+.j2-station {
+  position: relative;
+  flex: 0 0 auto;
+
+  &__dot {
+    position: absolute;
+    top: -30px;
+    left: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--day-surface);
+    border: 3px solid var(--day-line);
+    box-sizing: border-box;
+    transition: border-color 300ms ease, box-shadow 300ms ease;
+  }
+
+  &.is-on &__dot {
+    border-color: var(--day-amber);
+    box-shadow: 0 0 0 8px rgba(217, 119, 6, 0.14);
+  }
+
+  &:hover &__dot {
+    box-shadow: 0 0 0 8px rgba(217, 119, 6, 0.2);
+  }
+}
+
+.j2-card {
+  width: clamp(300px, 30vw, 380px);
+  background: var(--day-surface);
+  border: 1px solid var(--day-line);
+  border-radius: 20px;
+  padding: 26px;
+  box-shadow: 0 8px 30px -18px rgba(22, 35, 58, 0.25);
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--day-shadow);
+  }
+
+  &__title {
+    font-family: "Fraunces", "Poppins", serif;
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 1.2;
+    margin-top: 6px;
+    color: var(--day-ink);
+  }
+
+  &__text {
+    margin-top: 8px;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--day-ink-soft);
+  }
+}
+
+.j2-sep {
+  position: relative;
+  width: 44px;
+  min-height: 210px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: var(--day-line);
+  }
+
+  &__label {
+    position: relative;
+    writing-mode: vertical-rl;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--day-amber-deep);
+    background: var(--day-bg);
+    padding: 12px 0;
+  }
+}
+
+.j2-edu.pro-edu__card {
+  width: 320px;
+  margin-top: 4px;
+}
+
+// ------------------------------------------- parcours : mobile / non épinglé
+
+.j2-journey--linear {
+  .j2-journey__edu {
+    margin-top: 26px;
+  }
+}
+
+.j2-swipe-wrap {
+  position: relative;
+  margin-top: 6px;
+
+  .j2-swipe__rail {
+    position: absolute;
+    top: 14px;
+    left: 20px;
+    right: 20px;
+    height: 2px;
+    background: linear-gradient(90deg, #f59e0b 0%, var(--day-line) 100%);
+    pointer-events: none;
+  }
+}
+
+.j2-swipe {
+  display: flex;
+  gap: 16px;
+  padding: 30px 20px 22px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 20px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  &__item {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    width: 82vw;
+    max-width: 360px;
+  }
+
+  .j2-card {
+    width: 100%;
+  }
+}
+
+// --------------------------------------------------- ticker : dérive de scroll
+
+.j2-drift-wrap {
+  position: relative;
+  overflow: hidden;
+
+  .pro-ticker {
+    // Le fond bleu est fourni par l'horizon qui s'ouvre : la section elle-même
+    // devient transparente pour ne pas le doubler.
+    background: transparent;
+    border-block-color: transparent;
+  }
+}
+
+.j2-drift {
+  position: relative;
+  z-index: 1;
+}
+
+// ------------------------------------------------------------------ contact
+
+.j2-lueur {
+  position: relative;
+
+  &__glow {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 60%;
+    background: radial-gradient(ellipse at 50% 100%, rgba(253, 236, 204, 0.7), transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &__in {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+// --------------------------------------------------------------- pied de page
+
+.j2-footer {
+  opacity: 0;
+  transition: opacity 400ms ease;
+
+  &.is-in {
+    opacity: 1;
+  }
+}
+
+// --------------------------------------------------------------- mobile 390
+
+@media (max-width: 900px) {
+  .j2-stats__row.pro-stats__row {
+    position: static;
+  }
+
+  .j2-carton__value {
+    font-size: clamp(56px, 16vw, 96px);
+  }
+
+  .j2-expline {
+    font-size: 17px;
+    gap: 12px;
+  }
+
+  .j2-sun {
+    width: min(420px, 110vw);
+    height: min(420px, 110vw);
+    top: -140px;
+    right: -110px;
+  }
+
+  // L'indice de défilement n'a pas de sens sans scène épinglée.
+  .j2-layer--hint {
+    display: none;
+  }
+}
+
+// ------------------------------------------------------- mouvement réduit
+
+@media (prefers-reduced-motion: reduce) {
+  .j2-root {
+    .j2-sun__in,
+    .j2-chip,
+    .j2-station__dot,
+    .j2-footer {
+      transition: none;
+    }
+
+    // Rien ne suit le pointeur, rien ne dérive.
+    .j2-sun__in,
+    .j2-chip--top,
+    .j2-chip--bottom {
+      transform: none;
+    }
+
+    .j2-footer {
+      opacity: 1;
+    }
+
+    // Le filet de progression reste : c'est de l'information, pas un effet.
+    .j2-dolly {
+      will-change: auto;
+    }
+  }
+}

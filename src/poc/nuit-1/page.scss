@@ -1,0 +1,76 @@
+// src/poc/nuit-1/page.scss — POC « Veilleuse » (facette nuit, créneau 1).
+//
+// `@use "../shared/kalam"` DOIT rester la toute première instruction : la
+// feuille n'émet qu'un `@import url()` (Kalam), et un `@import` CSS doit
+// précéder toute autre règle du fichier produit. Sur une arrivée directe en
+// /poc/nuit-1, `src/components/Hero.scss` — seul endroit où Kalam est déclarée
+// aujourd'hui — n'est jamais chargée.
+@use "../shared/kalam";
+@use "styles/tokens";
+@use "styles/hero";
+@use "styles/cartes";
+@use "styles/sections";
+@use "styles/projets";
+@use "styles/parcours";
+@use "styles/contact";
+
+// ---------------------------------------------------------------------------
+// Mouvement réduit
+// ---------------------------------------------------------------------------
+// Les composants coupent déjà leurs animations JS via `useReducedMotion`.
+// Ce bloc s'occupe de ce qui vit uniquement en CSS : transitions, parallaxe,
+// masque du prénom, halo. Rien n'est masqué : tout est simplement posé.
+@media (prefers-reduced-motion: reduce) {
+  .nuit1 {
+    // Lumière figée sur la lune : plus de suivi, plus d'orientation.
+    --lx: 0.78;
+    --ly: 0.22;
+    --la: 225deg;
+  }
+
+  // Le prénom est écrit d'emblée : aucun masque, aucun point d'encre.
+  .nuit1-nom__texte {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .nuit1-nom__point {
+    display: none;
+  }
+
+  // Aucune parallaxe : la carte, la lune et l'ombre restent à leur place.
+  .nuit1-portrait__parallaxe,
+  .nuit1-portrait__lune-parallaxe,
+  .nuit1-portrait__ombre {
+    transform: none;
+    transition: none;
+  }
+
+  // Les liserés des cartes restent allumés, doucement, sans transition.
+  .nuit1-carte::before,
+  .nuit1-carte::after {
+    opacity: 0.6;
+    transition: none;
+  }
+
+  // Ni soulèvement, ni agrandissement du visuel.
+  .nuit1-carte--levee:hover {
+    transform: none;
+  }
+
+  .nuit1-projet__visuel img {
+    transition: none;
+  }
+
+  .nuit1-carte--levee:hover .nuit1-projet__visuel img {
+    transform: none;
+  }
+
+  // Le reflet du bouton 3D ne joue pas.
+  .nuit1-btn--3d {
+    background-position: 0 0;
+  }
+
+  // Les changements de couleur courts (navbar, dock, liens, focus) restent :
+  // ils n'impliquent aucun déplacement.
+}

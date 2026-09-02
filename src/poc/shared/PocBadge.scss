@@ -1,0 +1,47 @@
+// src/poc/shared/PocBadge.scss
+
+.poc-badge {
+  position: fixed;
+  left: max(16px, env(safe-area-inset-left));
+  // Un POC qui pose un dock en bas d'écran écrit `--poc-badge-bottom: 84px`
+  // dans sa propre media query, sans toucher au composant.
+  bottom: var(--poc-badge-bottom, max(16px, env(safe-area-inset-bottom)));
+  // Au-dessus de toutes les couches des POC (canvas 0, contenu 1,
+  // navbar 40, dock 45).
+  z-index: 60;
+
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-family: "Poppins", sans-serif;
+  font-size: 12.5px;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &--day {
+    background: #ffffff;
+    color: #16233a;
+    border-color: var(--day-line, #e7dfcf);
+    box-shadow: 0 6px 20px -10px rgba(22, 35, 58, 0.35);
+  }
+
+  &--night {
+    background: #151030;
+    color: #dfd9ff;
+    border-color: rgba(145, 94, 255, 0.35);
+    box-shadow: 0 6px 20px -10px rgba(0, 0, 0, 0.6);
+  }
+
+  &:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+
+  @media print {
+    display: none;
+  }
+}

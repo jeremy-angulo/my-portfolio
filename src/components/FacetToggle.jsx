@@ -11,9 +11,11 @@ import "./FacetToggle.scss";
 
 const SWITCH_DELAY_MS = 260;
 
-const FacetToggle = ({ mode }) => {
+const FacetToggle = ({ mode, to: toProp }) => {
   const isNight = mode === "night";
-  const to = isNight ? "/" : "/tech";
+  // Destination par défaut : l'autre facette du site. Les POC passent `to` pour
+  // viser leur propre homologue (ex. /poc/nuit-1) sans rien changer d'autre.
+  const to = toProp ?? (isNight ? "/" : "/tech");
   const navigate = useNavigate();
   const [switching, setSwitching] = useState(false);
 
