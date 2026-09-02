@@ -1,0 +1,107 @@
+// src/stats/_rank.scss — RankList : classement à remplissage derrière le
+// libellé (lignes de 30 px, remplissage ambre pâle, valeur, part).
+@use "./vars" as *;
+
+.rank {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  &__row {
+    position: relative;
+    height: 30px;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 44px;
+    align-items: center;
+    gap: 10px;
+    padding: 0 10px;
+    border-radius: $radius-fill;
+
+    // Tête subtile : la première ligne (le max) en 600.
+    &:first-child .rank__label {
+      font-weight: 600;
+    }
+  }
+
+  // Remplissage relatif au max des lignes affichées, sous le texte. Le
+  // minimum de 10 px (= le retrait du libellé) garde une barre visible à
+  // 1–2 % sans jamais passer sous le premier caractère, et les petites
+  // valeurs restent proportionnelles au-delà de ≈ 3 % du max.
+  &__fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 0;
+    min-width: 10px;
+    background: var(--day-amber-soft);
+    border-radius: $radius-fill;
+    pointer-events: none;
+    transition: width 0.5s $ease-fill;
+  }
+
+  &__label,
+  &__value,
+  &__part {
+    position: relative;
+    z-index: 1;
+    white-space: nowrap;
+  }
+
+  &__label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--day-ink);
+  }
+
+  &__value {
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--day-ink-soft);
+  }
+
+  &__part {
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: var(--day-muted);
+  }
+
+  // « Tout afficher (12) » / « Réduire » : action texte, sans fond.
+  &__more {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--day-amber-deep);
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--day-amber);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rank__fill {
+    transition: none;
+  }
+}

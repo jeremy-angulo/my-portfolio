@@ -7,6 +7,7 @@ import { HomePage, ProjectDetail, ResumePage, Navbar, StarsCanvas } from "./comp
 import Gateway from "./components/gateway/Gateway";
 import ProPage from "./pro/ProPage";
 import { LanguageProvider } from "./i18n/LanguageContext";
+import RouteFallback from "./components/RouteFallback";
 import SiteAnalytics from "./analytics";
 
 // L'expérience 3D embarque three + la physique rapier (WASM) : chargée en
@@ -85,7 +86,7 @@ const App = () => {
           <Route
             path="/statistiques"
             element={
-              <Suspense fallback={<div style={{ position: "fixed", inset: 0, background: "#faf6ee" }} />}>
+              <Suspense fallback={<RouteFallback label="Statistiques" />}>
                 <StatsPage />
               </Suspense>
             }

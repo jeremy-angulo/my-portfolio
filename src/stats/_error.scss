@@ -1,0 +1,165 @@
+// src/stats/_error.scss — les deux visages d'un échec de /api/stats : le
+// bandeau (.stats-alert) quand des chiffres sont déjà à l'écran, l'écran
+// entier (.stats-error) quand il n'y a rien d'autre à montrer.
+// Importé par StatsPage.scss ; les JSX n'importent aucun partiel.
+
+@use "./vars" as *;
+
+// ------------------------------------------------------------------ Bandeau
+// Icône, message, bouton « Réessayer » à droite (pleine largeur sur mobile).
+
+.stats-alert {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin: 16px 0 0;
+  padding: 12px 14px 12px 16px;
+  background: $alert-bg;
+  border: 1px solid $alert-line;
+  border-radius: 16px;
+  color: $alert-ink;
+  font-size: 13.5px;
+  line-height: 1.5;
+  min-width: 0;
+  animation: stats-fade 0.2s ease;
+
+  &__icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    font-size: 18px;
+  }
+
+  &__text {
+    flex: 1 1 200px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  &__retry {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: auto;
+    padding: 8px 14px;
+    border: 1px solid $alert-line;
+    border-radius: 999px;
+    background: var(--day-surface);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: $alert-ink;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+
+    svg {
+      font-size: 14px;
+    }
+
+    &:hover {
+      border-color: $alert-ink;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--day-amber);
+      outline-offset: 2px;
+    }
+  }
+
+  @media (max-width: $bp-mobile) {
+    &__retry {
+      margin-left: 0;
+      width: 100%;
+      justify-content: center;
+      padding: 11px 14px;
+    }
+  }
+}
+
+// ------------------------------------------------------------ Écran entier
+// Carte blanche centrée dans l'espace restant (voir .stats-body--center).
+
+.stats-error {
+  width: min(520px, 100%);
+  margin: 28px auto 0;
+  box-sizing: border-box;
+  padding: clamp(28px, 5vw, 40px);
+  background: var(--day-surface);
+  border: 1px solid var(--day-line);
+  border-radius: $radius-gate;
+  box-shadow: var(--day-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 20px;
+    background: $alert-bg;
+    border: 1px solid $alert-line;
+    color: $alert-ink;
+    font-size: 26px;
+    margin-bottom: 18px;
+  }
+
+  &__title {
+    font-family: "Fraunces", "Poppins", serif;
+    font-weight: 600;
+    font-size: clamp(22px, 3vw, 26px);
+    line-height: 1.2;
+    color: var(--day-ink);
+  }
+
+  &__message {
+    margin-top: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--day-ink-soft);
+    overflow-wrap: anywhere;
+  }
+
+  &__hint {
+    margin-top: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--day-muted);
+  }
+
+  &__retry {
+    margin-top: 22px;
+    justify-content: center;
+    border: none;
+    min-width: 180px;
+
+    &:focus-visible {
+      outline: 2px solid var(--day-amber);
+      outline-offset: 2px;
+    }
+  }
+
+  @media (max-width: $bp-mobile) {
+    margin-top: 20px;
+    padding: 28px 22px 24px;
+
+    &__retry {
+      width: 100%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stats-alert {
+    animation: none;
+  }
+
+  .stats-alert__retry {
+    transition: none;
+  }
+}

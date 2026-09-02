@@ -1,0 +1,104 @@
+// src/stats/_split.scss — SplitBar : barre à deux segments (ambre puis
+// encre, séparés de 2 px de blanc) et légende à compteurs sur deux colonnes.
+@use "./vars" as *;
+
+.split {
+  min-width: 0;
+
+  &__bar {
+    display: flex;
+    gap: 2px; // le blanc de la tuile fait la séparation
+    height: 10px;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  &__seg {
+    flex: 0 1 0%;
+    min-width: 0;
+    transition: flex-grow 0.5s $ease-fill;
+
+    // Deux couleurs franches, jamais une troisième.
+    &:nth-child(1) {
+      background: var(--day-amber);
+    }
+
+    &:nth-child(2) {
+      background: var(--day-ink);
+    }
+  }
+
+  &__legend {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  &__item {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &__dot {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+  }
+
+  &__item:nth-child(1) &__dot {
+    background: var(--day-amber);
+  }
+
+  &__item:nth-child(2) &__dot {
+    background: var(--day-ink);
+  }
+
+  &__label {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 13px;
+    color: var(--day-ink);
+  }
+
+  &__figures {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  &__value {
+    font-size: 20px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    color: var(--day-ink);
+  }
+
+  &__part {
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--day-muted);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .split__seg {
+    transition: none;
+  }
+}

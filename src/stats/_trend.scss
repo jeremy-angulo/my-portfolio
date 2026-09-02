@@ -1,0 +1,166 @@
+// src/stats/_trend.scss — courbe d'évolution (TrendChart.jsx).
+// Le viewBox du SVG reprend la largeur mesurée du conteneur : les tailles
+// ci-dessous (11px, 10.5px, 2.25px…) sont donc des pixels rendus.
+
+@use "./vars" as *;
+
+@keyframes trend-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.trend-chart {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  animation: trend-fade-in 0.4s ease;
+
+  &__svg {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+    touch-action: pan-y; // le doigt suit la courbe, le défilement vertical reste possible
+    cursor: crosshair;
+  }
+
+  &__grid {
+    stroke: var(--day-line);
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+  }
+
+  &__ylabel,
+  &__tick,
+  &__avg-label {
+    fill: var(--day-muted);
+    font-family: "Poppins", sans-serif;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+  }
+
+  &__ylabel {
+    font-size: 11px;
+    dominant-baseline: middle;
+  }
+
+  &__tick {
+    font-size: 11px;
+  }
+
+  &__area {
+    stroke: none;
+  }
+
+  &__line {
+    fill: none;
+    stroke: var(--day-amber-deep);
+    stroke-width: 2.25;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  // 365 points : une ligne plus fine, sinon la courbe devient un aplat.
+  &--dense &__line {
+    stroke-width: 1.5;
+  }
+
+  &__avg {
+    stroke: var(--day-ink-soft);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+    opacity: 0.45;
+  }
+
+  &__avg-label {
+    font-size: 10.5px;
+    dominant-baseline: middle;
+  }
+
+  &__peak {
+    fill: var(--day-surface);
+    stroke: var(--day-amber-deep);
+    stroke-width: 2;
+  }
+
+  &__cursor {
+    stroke: var(--day-ink-soft);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  &__dot {
+    fill: var(--day-amber-deep);
+    stroke: var(--day-surface);
+    stroke-width: 2;
+    pointer-events: none;
+  }
+
+  // Tooltip HTML absolu : `left` / `top` sont posés en px par le composant
+  // (coordonnées SVG = pixels CSS) ; l'ancrage bascule près des bords.
+  &__tooltip {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    background: var(--day-ink);
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 7px 11px;
+    font-size: 12.5px;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: $shadow-tooltip;
+
+    &--left {
+      transform: translate(0, -100%);
+    }
+
+    &--right {
+      transform: translate(-100%, -100%);
+    }
+
+    // Pas la place au-dessus du point : sous le point, mêmes ancrages.
+    &--below {
+      transform: translate(-50%, 0);
+
+      &.trend-chart__tooltip--left {
+        transform: translate(0, 0);
+      }
+
+      &.trend-chart__tooltip--right {
+        transform: translate(-100%, 0);
+      }
+    }
+
+    strong {
+      display: block;
+      font-weight: 600;
+    }
+
+    span {
+      display: block;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    // Seule couleur hors tokens de la page : le mot « meilleur jour » sur l'encre.
+    .trend-chart__tooltip-peak {
+      color: #fcd34d;
+      font-size: 11px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trend-chart {
+    animation: none;
+  }
+}

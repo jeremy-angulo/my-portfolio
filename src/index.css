@@ -13,6 +13,14 @@
   color-scheme: dark;
 }
 
+/* Le défilement natif vers un fragment (#…) ne s'anime pas pour qui a
+   demandé moins de mouvement. */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto;
+  }
+}
+
 .hash-span {
   margin-top: -100px;
   padding-bottom: 50px;

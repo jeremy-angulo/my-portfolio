@@ -1,808 +1,86 @@
-// src/stats/StatsPage.scss — /statistiques dans la direction artistique de la
-// facette jour. La page importe pro.scss : la navbar, les boutons et les
-// tokens --day-* viennent de là ; ici, uniquement ce qui est propre aux stats.
+// src/stats/StatsPage.scss — point d'entrée des styles de /statistiques.
+// La page importe pro.scss : la navbar, les boutons et les tokens --day-*
+// viennent de là. Ici : la racine, l'en-tête, le corps, et l'inclusion des
+// partiels (aucun JSX n'importe un partiel directement).
 
-// ---------------------------------------------------------------- Squelette
+@use "./vars" as *;
+@use "./nav";
+@use "./gate";
+@use "./error";
+@use "./toolbar";
+@use "./tiles";
+@use "./rank";
+@use "./colchart";
+@use "./split";
+@use "./trend";
 
-.stats-root {
+// ---------------------------------------------------------------- Racine
+// `clip` plutôt que le `hidden` de .pro-root : un conteneur de défilement
+// neutraliserait `position: sticky` de la barre d'outils.
+
+.pro-root.stats-root {
+  overflow-x: clip;
   display: flex;
   flex-direction: column;
 
-  main {
+  // `main` est étiré (pas de marge auto) : pleine largeur, pied de page en bas.
+  > main {
     flex: 1;
-  }
-}
-
-// ------------------------------------------------------- Navbar, zone droite
-
-.stats-nav-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--day-surface);
-  border: 1px solid var(--day-line);
-  border-radius: 999px;
-  padding: 8px 15px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--day-ink-soft);
-  white-space: nowrap;
-
-  svg {
-    color: var(--day-amber-deep);
-    font-size: 13px;
-  }
-
-  @media (max-width: 520px) {
-    display: none;
-  }
-}
-
-.stats-nav-lock {
-  border: 1.5px solid var(--day-ink);
-  background: transparent;
-  color: var(--day-ink);
-  border-radius: 999px;
-  padding: 8px 16px;
-  font-size: 12.5px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.3s ease, color 0.3s ease;
-
-  &:hover {
-    background: var(--day-ink);
-    color: #ffffff;
-  }
-}
-
-// ------------------------------------------------------------------- Grille
-// Plein écran sous la nav, le ciel d'aube du hero, une carte blanche centrée.
-
-.stats-gate {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  padding: 108px 0 64px;
-  background: linear-gradient(180deg, #e3eefb 0%, #f3ecdd 58%, var(--day-bg) 100%);
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: -220px;
-    right: -160px;
-    width: 640px;
-    height: 640px;
-    border-radius: 50%;
-    background: radial-gradient(
-      circle,
-      rgba(253, 224, 138, 0.85) 0%,
-      rgba(253, 236, 204, 0.55) 38%,
-      rgba(234, 242, 253, 0.4) 68%,
-      rgba(250, 246, 238, 0) 100%
-    );
-    pointer-events: none;
-  }
-
-  &__inner {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    width: 100%;
-  }
-
-  &__card {
-    width: min(460px, 100%);
-    background: var(--day-surface);
-    border: 1px solid var(--day-line);
-    border-radius: 24px;
-    padding: clamp(28px, 4.5vw, 42px);
-    box-shadow: var(--day-shadow);
-    display: flex;
-    flex-direction: column;
-  }
-
-  &__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 46px;
-    height: 46px;
-    border-radius: 14px;
-    background: var(--day-amber-soft);
-    color: var(--day-amber-deep);
-    font-size: 21px;
-    margin-bottom: 22px;
-    align-self: flex-start;
-  }
-
-  &__title {
-    font-size: clamp(26px, 3vw, 30px);
-    margin-bottom: 10px;
-  }
-
-  &__text {
-    color: var(--day-ink-soft);
-    font-size: 14.5px;
-    line-height: 1.7;
-    margin-bottom: 24px;
-  }
-
-  &__field {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--day-ink);
-    margin-bottom: 18px;
-
-    input {
-      font-family: "Poppins", sans-serif;
-      font-size: 15px;
-      letter-spacing: 0.05em;
-      color: var(--day-ink);
-      background: var(--day-bg);
-      border: 1px solid var(--day-line);
-      border-radius: 12px;
-      padding: 12px 14px;
-      outline: none;
-      transition: border-color 0.25s ease, box-shadow 0.25s ease;
-
-      &:focus {
-        border-color: var(--day-amber);
-        box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
-      }
-    }
-  }
-
-  &__submit {
-    justify-content: center;
-    border: none;
-
-    &:disabled {
-      opacity: 0.55;
-      cursor: default;
-      transform: none;
-      box-shadow: none;
-    }
-  }
-
-  .stats-alert {
-    margin-top: 16px;
+    min-width: 0;
   }
 }
 
 // ----------------------------------------------------------- Tableau de bord
 
+// En bloc, jamais en colonne flex : les `.pro-container` (marges auto) y
+// deviendraient des éléments flex rétrécis à la largeur de leur contenu
+// (en-tête et squelette centrés en colonne étroite avec la phrase mémorisée).
 .stats-main {
-  padding: 108px 0 clamp(52px, 7vw, 84px);
+  display: block;
+  padding: 0 0 clamp(52px, 7vw, 84px);
+}
+
+.stats-body {
+  min-width: 0;
+
+  // Écran d'erreur seul : centré dans l'espace entre la barre d'outils et le
+  // pied de page (viewport − nav − barre − en-tête ≈ 220 px).
+  &--center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100vh - #{$nav-height} - #{$toolbar-height} - 220px);
+    padding-bottom: 24px;
+  }
 }
 
 .stats-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-bottom: clamp(26px, 4vw, 38px);
+  padding-top: 108px;
+  margin-bottom: 18px;
+  min-width: 0;
 
   &__title {
-    font-size: clamp(30px, 3.6vw, 40px);
+    font-size: clamp(30px, 3.4vw, 38px);
   }
 
   &__sub {
-    margin-top: 10px;
-    color: var(--day-muted);
-    font-size: 14.5px;
-  }
-
-  &__controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-}
-
-// Sélecteur de période : un seul groupe en pilule, l'actif passe à l'encre.
-.stats-seg {
-  display: inline-flex;
-  background: var(--day-surface);
-  border: 1px solid var(--day-line);
-  border-radius: 999px;
-  padding: 4px;
-  gap: 2px;
-
-  button {
-    border: none;
-    background: transparent;
-    color: var(--day-ink-soft);
-    font-family: inherit;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 8px 15px;
-    border-radius: 999px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.25s ease, color 0.25s ease;
-
-    &:hover:not(:disabled):not(.is-active) {
-      color: var(--day-amber-deep);
-    }
-
-    &:disabled {
-      cursor: default;
-    }
-
-    &.is-active {
-      background: var(--day-ink);
-      color: #ffffff;
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--day-amber);
-      outline-offset: 2px;
-    }
-  }
-}
-
-.stats-seg__spinner {
-  margin-left: 6px;
-  font-size: 11px;
-  vertical-align: -1px;
-  animation: stats-spin 1s linear infinite;
-}
-
-.stats-refresh {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 41px;
-  height: 41px;
-  border-radius: 999px;
-  border: 1px solid var(--day-line);
-  background: var(--day-surface);
-  color: var(--day-ink-soft);
-  font-size: 16px;
-  cursor: pointer;
-  transition: color 0.25s ease, border-color 0.25s ease;
-
-  &:hover:not(:disabled) {
-    color: var(--day-amber-deep);
-    border-color: var(--day-amber);
-  }
-
-  &:disabled {
-    cursor: default;
-  }
-
-  &.is-busy svg {
-    animation: stats-spin 1s linear infinite;
-  }
-}
-
-@keyframes stats-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-// Totaux : le bandeau bleu ciel des chiffres clés de la page jour, en carte.
-.stats-kpis {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  background: var(--day-surface);
-  border: 1px solid var(--day-line);
-  border-radius: 20px;
-  padding: clamp(24px, 3.5vw, 34px) clamp(8px, 1.5vw, 14px);
-  margin-bottom: 22px;
-  box-shadow: 0 8px 30px -18px rgba(22, 35, 58, 0.25);
-
-  @media (max-width: 620px) {
-    grid-template-columns: 1fr;
-    row-gap: 18px;
-    padding-inline: 24px;
-  }
-}
-
-.stats-kpi {
-  padding-inline: clamp(16px, 2.5vw, 30px);
-
-  & + & {
-    border-left: 1px solid var(--day-line);
-
-    @media (max-width: 620px) {
-      border-left: none;
-      border-top: 1px solid var(--day-line);
-      padding-top: 18px;
-    }
-  }
-
-  &__value {
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-size: clamp(28px, 3.2vw, 40px);
-    color: var(--day-ink);
-    line-height: 1.05;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__label {
     margin-top: 8px;
-    font-size: 13.5px;
-    color: var(--day-muted);
-    display: flex;
-    align-items: center;
-    gap: 7px;
-  }
-
-  &__delta {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 12px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    cursor: help;
-
-    &.is-up {
-      color: #2f9e5c;
-    }
-
-    &.is-down {
-      color: #c0442f;
-    }
-  }
-}
-
-// Barre d'onglets : regroupe les cartes secondaires par thème plutôt que de
-// les enchaîner verticalement. Audience reste l'onglet par défaut ; la
-// période affichée dans l'entête reste globale, quel que soit l'onglet actif.
-.stats-tabs {
-  display: flex;
-  gap: 4px;
-  margin: 30px 0 22px;
-  padding-bottom: 2px;
-  border-bottom: 1px solid var(--day-line);
-  overflow-x: auto;
-
-  &__item {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border: none;
-    background: transparent;
-    color: var(--day-ink-soft);
-    font-family: inherit;
     font-size: 14px;
-    font-weight: 600;
-    padding: 10px 16px;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: color 0.25s ease, border-color 0.25s ease;
-
-    svg {
-      font-size: 15px;
-    }
-
-    &:hover {
-      color: var(--day-amber-deep);
-    }
-
-    &.is-active {
-      color: var(--day-ink);
-      border-bottom-color: var(--day-amber-deep);
-    }
-
-    &:focus-visible {
-      outline: 2px solid var(--day-amber);
-      outline-offset: 2px;
-    }
-  }
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-// Cartes qui n'ont pas leur place à moitié dans la grille 2 colonnes :
-// Contenu (GoatCounter, mais un autre angle que les 4 cartes de répartition),
-// Disponibilité (Better Stack, autre source), Exploration 3D (idem).
-.stats-content,
-.stats-uptime,
-.stats-heatmap-card {
-  grid-column: 1 / -1;
-}
-
-// Cartes de répartition : la carte blanche des expertises, sans le hover —
-// on lit, on ne clique pas.
-.stats-card {
-  background: var(--day-surface);
-  border: 1px solid var(--day-line);
-  border-radius: 20px;
-  padding: 24px 26px 26px;
-  box-shadow: 0 8px 30px -18px rgba(22, 35, 58, 0.25);
-
-  &__head {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    row-gap: 10px;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-
-  &__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
-    background: var(--day-amber-soft);
-    color: var(--day-amber-deep);
-    font-size: 17px;
-    flex-shrink: 0;
-  }
-
-  &__title {
-    font-family: "Fraunces", "Poppins", serif;
-    font-weight: 600;
-    font-size: 20px;
-    color: var(--day-ink);
-    line-height: 1.2;
-  }
-
-  &__unit {
-    font-size: 12px;
     color: var(--day-muted);
-    white-space: nowrap;
-  }
-
-  &__meta {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-  }
-}
-
-.stats-rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.stats-row {
-  &__line {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 14px;
-    margin-bottom: 6px;
-  }
-
-  &__label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--day-ink);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    min-width: 0;
-  }
-
-  &__value {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--day-ink-soft);
     font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-
-    // Colonne de parts alignée à droite : les % se lisent verticalement.
-    em {
-      font-style: normal;
-      font-weight: 500;
-      color: var(--day-muted);
-      display: inline-block;
-      min-width: 44px;
-      text-align: right;
-    }
-  }
-
-  &__track {
-    display: block;
-    height: 6px;
-    border-radius: 999px;
-    background: #f2ecdd;
-    overflow: hidden;
-  }
-
-  &__fill {
-    display: block;
-    height: 100%;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #f59e0b, #d97706);
-    transition: width 0.6s cubic-bezier(0.22, 0.8, 0.32, 1);
   }
 }
 
-// ------------------------------------------------------------------- États
-
-// Rechargement : le contenu déjà affiché reste lisible, juste estompé.
-.stats-body {
-  transition: opacity 0.2s ease;
-
-  &.is-busy {
-    opacity: 0.55;
-    pointer-events: none;
-  }
-}
-
-.stats-loading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--day-muted);
-  font-size: 14.5px;
-  padding: 34px 0;
-
-  svg {
-    animation: stats-spin 1s linear infinite;
-  }
-}
-
-.stats-empty {
-  color: var(--day-muted);
-  font-size: 14px;
-  margin: 2px 0 0;
-}
-
-.stats-alert {
-  background: #fdf0ef;
-  border: 1px solid #f3d5d0;
-  color: #a13b2e;
-  border-radius: 14px;
-  padding: 13px 16px;
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.stats-main .stats-alert {
-  margin-bottom: 22px;
-}
+// ----------------------------------------------------------- Reduced motion
+// Filet de sécurité global : chaque partiel coupe déjà ses propres
+// animations, ceci couvre ce qui pourrait leur échapper.
 
 @media (prefers-reduced-motion: reduce) {
-  .stats-row__fill {
-    transition: none;
-  }
-
-  .stats-refresh.is-busy svg,
-  .stats-loading svg,
-  .stats-seg__spinner,
-  .trend-chart {
-    animation: none;
-  }
-}
-
-// --------------------------------------------------------------- Évolution
-
-// La carte du graphique reprend .stats-card mais laisse l'aire du graphique
-// respirer un peu plus qu'une simple liste de barres.
-.stats-trend-card {
-  margin-top: 0;
-}
-
-@keyframes trend-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.trend-chart {
-  position: relative;
-  animation: trend-fade-in 0.4s ease;
-
-  &__svg {
-    display: block;
-    width: 100%;
-    height: auto;
-    overflow: visible;
-  }
-
-  &__grid {
-    stroke: var(--day-line);
-    stroke-width: 1;
-  }
-
-  &__area {
-    fill: url(#trendFill);
-    stroke: none;
-  }
-
-  &__line {
-    fill: none;
-    stroke: var(--day-amber-deep);
-    stroke-width: 2.25;
-    stroke-linejoin: round;
-    stroke-linecap: round;
-  }
-
-  &__cursor {
-    stroke: var(--day-ink-soft);
-    stroke-width: 1;
-    stroke-dasharray: 3 3;
-    opacity: 0.5;
-  }
-
-  &__dot {
-    fill: var(--day-amber-deep);
-    stroke: var(--day-surface);
-    stroke-width: 2;
-  }
-
-  &__tick {
-    fill: var(--day-muted);
-    font-family: "Poppins", sans-serif;
-    font-size: 11px;
-  }
-
-  &__tooltip {
-    position: absolute;
-    top: 6px;
-    transform: translateX(-50%);
-    background: var(--day-ink);
-    color: #ffffff;
-    border-radius: 10px;
-    padding: 7px 11px;
-    font-size: 12.5px;
-    line-height: 1.4;
-    white-space: nowrap;
-    pointer-events: none;
-    box-shadow: 0 10px 26px -12px rgba(22, 35, 58, 0.55);
-
-    strong {
-      display: block;
-      font-weight: 600;
-    }
-
-    span {
-      color: rgba(255, 255, 255, 0.75);
-    }
-  }
-}
-
-// ------------------------------------------------------------ Disponibilité
-
-.stats-uptime {
-  &__row {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin-bottom: 14px;
-  }
-
-  &__dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    flex-shrink: 0;
-
-    &.is-up {
-      background: #2f9e5c;
-      box-shadow: 0 0 0 4px rgba(47, 158, 92, 0.16);
-    }
-
-    &.is-down {
-      background: #d1453b;
-      box-shadow: 0 0 0 4px rgba(209, 69, 59, 0.16);
-    }
-  }
-
-  &__status {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--day-ink);
-  }
-
-  &__value {
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-size: clamp(28px, 3.2vw, 36px);
-    color: var(--day-ink);
-    line-height: 1.05;
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__label {
-    margin-top: 8px;
-    font-size: 13.5px;
-    color: var(--day-muted);
-  }
-
-  &__source {
-    margin-top: 14px;
-    font-size: 12px;
-    color: var(--day-muted);
-    border-top: 1px solid var(--day-line);
-    padding-top: 12px;
-  }
-}
-
-// ------------------------------------------------------------------ Contenu
-
-// auto-fit plutôt qu'un nombre de colonnes figé : le nombre de mini-listes
-// varie d'une carte à l'autre (2 pour Langue, 3 pour Appareils, 4 pour
-// Contenu) sans avoir besoin d'un modificateur par cas.
-.stats-mini-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 24px;
-
-  @media (max-width: 700px) {
-    grid-template-columns: 1fr;
-    gap: 22px;
-  }
-}
-
-.stats-mini {
-  &__title {
-    font-size: 12.5px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--day-muted);
-    margin-bottom: 14px;
-  }
-}
-
-// ------------------------------------------------------------- Exploration 3D
-
-// L'image de la mini-carte du jeu (folio) sert de fond ; le canvas dessine la
-// densité par-dessus, aux mêmes coordonnées normalisées (Map.worldToMap).
-.heatmap {
-  position: relative;
-  width: 100%;
-  max-width: 480px;
-  aspect-ratio: 1 / 1;
-  margin-inline: auto;
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid var(--day-line);
-  background: #0e0b1c;
-
-  &__map {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.55;
-  }
-
-  &__canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+  .stats-root,
+  .stats-root *,
+  .stats-root *::before,
+  .stats-root *::after {
+    animation: none !important;
+    transition: none !important;
   }
 }

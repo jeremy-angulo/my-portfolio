@@ -1,0 +1,825 @@
+// src/stats/_tiles.scss — la mosaïque de /statistiques : grille 12 colonnes
+// et classes de span par largeur, libellés de groupe, tuile de base et ses
+// variantes (hero, paire, courbe, squelette), KPI, bandeau de disponibilité,
+// squelette (lignes, blocs, silhouette de courbe), légende et cadre de la
+// heatmap, état vide encadré, texte masqué.
+// Importé par StatsPage.scss ; les JSX n'importent aucun partiel.
+
+@use "./vars" as *;
+
+// ------------------------------------------------------------------ Grille
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: $gap-lg;
+  align-items: stretch;
+  margin-top: 20px;
+  min-width: 0;
+}
+
+.span-3 {
+  grid-column: span 3;
+}
+
+.span-4 {
+  grid-column: span 4;
+}
+
+.span-5 {
+  grid-column: span 5;
+}
+
+.span-6 {
+  grid-column: span 6;
+}
+
+.span-8 {
+  grid-column: span 8;
+}
+
+.span-12 {
+  grid-column: 1 / -1;
+}
+
+// La tuile courbe occupe les deux rangées du bloc de tête (desktop seulement).
+.row-2 {
+  grid-row: span 2;
+}
+
+// Tablette : 6 colonnes. Sans classe `.md-*`, une tuile prend toute la
+// largeur (courbe, bandeau, libellés) ; `.md-3` / `.md-6` précisent le reste.
+@media (max-width: $bp-tablet) {
+  .bento {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: $gap-md;
+  }
+
+  .span-3,
+  .span-4,
+  .span-5,
+  .span-6,
+  .span-8,
+  .span-12,
+  .md-6 {
+    grid-column: 1 / -1;
+  }
+
+  .md-3 {
+    grid-column: span 3;
+  }
+
+  .row-2 {
+    grid-row: auto;
+  }
+}
+
+// Mobile : une colonne, tout empilé dans l'ordre du DOM.
+@media (max-width: $bp-mobile) {
+  .bento {
+    grid-template-columns: minmax(0, 1fr);
+    gap: $gap-sm;
+  }
+
+  .span-3,
+  .span-4,
+  .span-5,
+  .span-6,
+  .span-8,
+  .span-12,
+  .md-3,
+  .md-6 {
+    grid-column: 1 / -1;
+  }
+}
+
+// -------------------------------------------------------- Libellé de groupe
+// « AUDIENCE · pages vues » : l'unité n'est dite qu'ici. Cible des ancres de
+// la barre collante, d'où la marge de défilement (nav + barre + 10).
+
+.group-label {
+  margin-top: 8px;
+  font-family: "Poppins", sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--day-amber-deep);
+  line-height: 1.4;
+  min-width: 0;
+  scroll-margin-top: $anchor-offset;
+
+  &__unit {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--day-muted);
+  }
+}
+
+// ------------------------------------------------------------------- Tuile
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--day-surface);
+  border: 1px solid var(--day-line);
+  border-radius: $radius-tile;
+  padding: 18px 20px;
+  box-shadow: $shadow-tile;
+
+  // Titre, puce et méta sur une ligne ; `wrap` reste en garde-fou pour une
+  // méta longue sur une tuile étroite (elle passe alors à droite, en dessous).
+  &__head {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    margin-bottom: 14px;
+    min-width: 0;
+  }
+
+  &__title {
+    font-family: "Fraunces", "Poppins", serif;
+    font-weight: 600;
+    font-size: 18px;
+    line-height: 1.2;
+    color: var(--day-ink);
+    min-width: 0;
+    flex-shrink: 0;
+  }
+
+  &__chip {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: $track;
+    color: var(--day-ink-soft);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__meta {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--day-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__subtitle {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--day-muted);
+    margin-bottom: 10px;
+  }
+
+  // Seul élément rekeyé par période : fondu court au remontage.
+  &__body {
+    flex: 1;
+    min-width: 0;
+    min-height: 96px;
+    animation: stats-fade 0.18s ease;
+  }
+
+  &__foot {
+    margin: 12px 0 0;
+    font-size: 12px;
+    color: var(--day-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Exploration : total, légende et pied — colonne à droite de la carte sur
+  // desktop et tablette (voir plus bas), sous la carte sur mobile.
+  &__aside {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .heat-legend,
+    .tile__foot {
+      margin-top: 0;
+    }
+
+    // La réglette cède la place plutôt que de déborder d'une colonne étroite.
+    .heat-legend__ramp {
+      flex: 1 1 24px;
+      width: auto;
+      max-width: 80px;
+    }
+  }
+
+  // « 1 240 / visites de zone » : le total de la heatmap, à la manière d'une
+  // cellule KPI (l'unité reste hors des libellés de groupe : ce sont des
+  // visites, pas des évènements).
+  &__stat {
+    margin: 0;
+    min-width: 0;
+  }
+
+  &__stat-value {
+    display: block;
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 26px;
+    line-height: 1.05;
+    color: var(--day-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__stat-label {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--day-muted);
+  }
+
+  // Appareils : trois listes côte à côte (Écran / Navigateur / Système).
+  &__cols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+
+    > * {
+      min-width: 0;
+    }
+  }
+
+  // Langue & bascule : deux SplitBar empilées, séparées par un filet ; sur
+  // tablette, côte à côte avec un filet vertical (voir plus bas).
+  &__halves {
+    min-width: 0;
+  }
+
+  &__half {
+    min-width: 0;
+  }
+
+  &__rule {
+    height: 0;
+    margin: 16px 0;
+    border: 0;
+    border-top: 1px solid var(--day-line);
+  }
+
+  // Courbe : le corps centre verticalement la phrase vide ; en colonne pour
+  // que le graphique garde toute la largeur.
+  &--chart .tile__body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  // Colonnes (profondeur, temps passé) : le corps en colonne pour que la
+  // zone de tracé (.colchart, flex: 1) prenne la hauteur laissée par la
+  // rangée, le pied restant en bas.
+  &--columns .tile__body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  // Exploration : carte et colonne d'explication côte à côte, alignées en
+  // haut du corps comme les premières lignes des classements voisins. Sur
+  // desktop la carte est réduite à 172 px pour que la tuile ne dépasse pas
+  // ses voisines (Zones / Succès) de 200 px de blanc ; le canvas de 640 px
+  // reste lisible à cette taille.
+  &--explore .tile__body {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+
+    > * {
+      min-width: 0;
+    }
+
+    .heatmap {
+      flex: 0 0 172px;
+      margin-inline: 0;
+    }
+
+    .tile__aside {
+      flex: 1 1 0;
+    }
+  }
+
+  @media (max-width: $bp-mobile) {
+    padding: 16px;
+
+    &__cols {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    // Mobile : carte pleine largeur, le reste en dessous.
+    &--explore .tile__body {
+      display: block;
+
+      .heatmap {
+        margin-inline: auto;
+      }
+
+      .tile__aside {
+        margin-top: 12px;
+      }
+    }
+  }
+}
+
+// Dès 601 px (Langue & bascule est large : `span-8` sur desktop, pleine
+// largeur `md-6` sur tablette) : les deux SplitBar côte à côte, séparées par
+// un filet vertical.
+@media (min-width: #{$bp-mobile + 1px}) {
+  .tile__halves {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+    gap: 0 20px;
+    align-items: start;
+  }
+
+  .tile__rule {
+    height: 100%;
+    margin: 0;
+    border-top: 0;
+    border-left: 1px solid var(--day-line);
+  }
+}
+
+// Tablette (601–1023, Exploration est pleine largeur `md-6`) : carte 360 px
+// à gauche ; total, légende et pied composés verticalement dans la colonne
+// de droite, centrés sur la hauteur de la carte.
+@media (max-width: $bp-tablet) and (min-width: #{$bp-mobile + 1px}) {
+  .tile--explore .tile__body {
+    align-items: center;
+    gap: 24px;
+
+    .heatmap {
+      flex-basis: 360px;
+    }
+
+    .tile__aside {
+      gap: 12px;
+    }
+
+    .tile__foot {
+      font-size: 13px;
+      line-height: 1.6;
+    }
+  }
+}
+
+// --------------------------------------------------------------------- KPI
+// Deux tuiles à hauteur fixée : la tuile courbe (deux rangées) ne s'étire pas.
+
+.tile--hero,
+.tile--pair {
+  min-height: 150px;
+
+  .tile__body {
+    min-height: 0;
+  }
+}
+
+.tile--hero {
+  .tile__head {
+    margin-bottom: 8px;
+  }
+
+  .tile__title {
+    font-family: "Poppins", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--day-muted);
+  }
+
+  .tile__body {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+.kpi {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+
+  &__label {
+    font-family: "Poppins", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--day-muted);
+  }
+
+  &__row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    min-width: 0;
+  }
+
+  &__value {
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: clamp(36px, 3.4vw, 44px);
+    line-height: 1;
+    color: var(--day-ink);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  &__delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    cursor: help;
+
+    svg {
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    &.is-up {
+      color: $up;
+      background: $up-bg;
+    }
+
+    &.is-down {
+      color: $down;
+      background: $down-bg;
+    }
+
+    &.is-flat {
+      color: var(--day-muted);
+      background: $track;
+    }
+  }
+
+  &__note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--day-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (max-width: $bp-mobile) {
+    &__value {
+      font-size: 36px;
+    }
+  }
+}
+
+// Mobile : la hauteur fixe des KPI ne sert qu'à côté de la courbe (desktop) ;
+// en pleine largeur, libellé, valeur et note à leur espacement naturel.
+@media (max-width: $bp-mobile) {
+  .tile--hero,
+  .tile--pair {
+    min-height: auto;
+  }
+}
+
+.tile--pair .tile__body {
+  display: flex;
+  align-items: center;
+}
+
+.kpi-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  margin: 0;
+
+  &__cell {
+    min-width: 0;
+    padding: 4px 0 4px 18px;
+
+    & + & {
+      border-left: 1px solid var(--day-line);
+    }
+
+    &:first-child {
+      padding-left: 0;
+      padding-right: 14px;
+    }
+  }
+
+  &__label {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--day-muted);
+    line-height: 1.3;
+  }
+
+  &__value {
+    margin: 8px 0 0;
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    font-size: 26px;
+    line-height: 1.05;
+    color: var(--day-ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Hauteur réservée : la sous-ligne peut être vide (pic sans jour exact).
+  &__sub {
+    margin: 6px 0 0;
+    min-height: 16px;
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--day-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// ----------------------------------------------------------- Disponibilité
+// Bandeau bas sur sa propre rangée : point de statut, disponibilité,
+// interruptions, source à droite (reprise en `title`, masquée sur mobile).
+
+.uptime-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-height: 44px;
+  min-width: 0;
+  padding: 10px 20px;
+  background: var(--day-surface);
+  border: 1px solid var(--day-line);
+  border-radius: $radius-tile;
+  box-shadow: $shadow-tile;
+  font-size: 13px;
+  color: var(--day-ink);
+
+  &__state {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &.is-up {
+      background: $up;
+      box-shadow: 0 0 0 4px rgba(47, 158, 92, 0.16);
+    }
+
+    &.is-down {
+      background: $down-dot;
+      box-shadow: 0 0 0 4px rgba(209, 69, 59, 0.16);
+    }
+
+    &.is-unknown {
+      background: $unknown;
+      box-shadow: 0 0 0 4px rgba(201, 194, 180, 0.3);
+    }
+  }
+
+  &__status {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  &__sep {
+    color: var(--day-muted);
+  }
+
+  // Séparateur soudé à l'élément qu'il introduit : ils passent à la ligne
+  // ensemble sur mobile.
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  &__value {
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__incidents {
+    color: var(--day-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__source {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--day-muted);
+    white-space: nowrap;
+  }
+
+  @media (max-width: $bp-mobile) {
+    padding: 10px 16px;
+
+    // Deux lignes : « En ligne · 99,98 % de disponibilité », puis les
+    // interruptions seules, alignées sur le texte du statut (point 8 + 9 de
+    // gouttière), sans séparateur en tête de ligne.
+    &__item--incidents {
+      flex-basis: 100%;
+      padding-left: 17px;
+
+      .uptime-strip__sep {
+        display: none;
+      }
+    }
+
+    &__source {
+      display: none;
+    }
+  }
+}
+
+// --------------------------------------------------------------- Squelette
+// Même cadre que la tuile finale ; lignes balayées par un reflet ivoire.
+
+.tile--skeleton {
+  .tile__head {
+    margin-bottom: 14px;
+  }
+
+  // Gouttière de 34 px : 6 lignes de 12 px ≈ 7 lignes de classement (30 + 6),
+  // pour que la hauteur ne saute pas à l'arrivée des données.
+  .tile__body {
+    display: flex;
+    flex-direction: column;
+    gap: 34px;
+  }
+
+  &.tile--pair .tile__body {
+    flex-direction: row;
+    align-items: center;
+    gap: 34px;
+  }
+
+  &.tile--chart .tile__body,
+  &.tile--hero .tile__body {
+    justify-content: center;
+  }
+
+  .tile__cols > * {
+    display: flex;
+    flex-direction: column;
+    gap: 34px;
+  }
+}
+
+.skeleton__line,
+.skeleton__block {
+  display: block;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: $track linear-gradient(90deg, $track 0%, var(--day-bg) 50%, $track 100%);
+  background-size: 200% 100%;
+  animation: stats-shimmer 1.4s linear infinite;
+}
+
+.skeleton__line {
+  height: 12px;
+  max-width: 100%;
+
+  &--title {
+    width: 110px;
+    height: 14px;
+  }
+}
+
+.skeleton__block {
+  border-radius: $radius-fill;
+  max-width: 100%;
+}
+
+
+// -------------------------------------------------------------- Heatmap
+// L'image de la mini-carte du jeu (folio) sert de fond ; le canvas dessine la
+// densité par-dessus, aux mêmes coordonnées normalisées (Map.worldToMap).
+// Pleine largeur de sa tuile : 640 px de canvas réduits à ≈ 300 px.
+
+.heatmap {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+  border-radius: $radius-inner;
+  overflow: hidden;
+  border: 1px solid var(--day-line);
+  background: #0e0b1c;
+
+  &__map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.55;
+  }
+
+  &__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.heat-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--day-muted);
+
+  &__ramp {
+    width: 80px;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(180, 83, 9, 0), var(--day-amber-deep));
+    flex-shrink: 0;
+  }
+}
+
+// ------------------------------------------------------------------ États
+
+// La phrase seule, à la place du corps ; la tuile garde sa tête et les 96 px
+// minimum du corps pour ne pas casser la rangée (courbe : centrée par le corps).
+.stats-empty {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--day-muted);
+}
+
+.tile--chart .stats-empty {
+  text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ------------------------------------------------------------- Mouvement
+
+@keyframes stats-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes stats-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile__body,
+  .skeleton__line,
+  .skeleton__block {
+    animation: none;
+  }
+}

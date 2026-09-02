@@ -1,0 +1,39 @@
+// src/stats/_vars.scss — constantes locales de la page /statistiques.
+// Les couleurs de marque restent des custom properties --day-* (pro.scss) ;
+// ici, uniquement ce qui n'a pas de token : pistes, états, rayons, gouttières.
+// À importer dans chaque partiel : `@use "./vars" as *;`
+
+$track: #f2ecdd; // piste des listes, squelette, puces, delta nul
+$up: #2f9e5c; // delta positif
+$up-bg: rgba(47, 158, 92, 0.12);
+$down: #c0442f; // delta négatif
+$down-bg: rgba(192, 68, 47, 0.1);
+$down-dot: #d1453b; // statut « interruption »
+$unknown: #c9c2b4; // statut inconnu
+$alert-bg: #fdf0ef;
+$alert-line: #f3d5d0;
+$alert-ink: #a13b2e;
+
+$radius-tile: 18px;
+$radius-gate: 24px;
+$radius-inner: 12px;
+$radius-fill: 8px;
+
+$gap-lg: 16px; // desktop
+$gap-md: 14px; // tablette
+$gap-sm: 12px; // mobile
+
+$nav-height: 66px; // .pro-nav fixe (pro.scss)
+$toolbar-height: 56px;
+$toolbar-height-mobile: 52px;
+$anchor-offset: 132px; // nav + barre + 10
+
+$shadow-tile: 0 6px 24px -20px rgba(22, 35, 58, 0.22);
+$shadow-stuck: 0 8px 24px -20px rgba(22, 35, 58, 0.25);
+$shadow-tooltip: 0 10px 26px -12px rgba(22, 35, 58, 0.55);
+
+$bp-tablet: 1023px;
+$bp-range: 899px;
+$bp-mobile: 600px;
+
+$ease-fill: cubic-bezier(0.22, 0.8, 0.32, 1);

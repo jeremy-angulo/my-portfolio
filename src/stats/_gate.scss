@@ -1,0 +1,347 @@
+// src/stats/_gate.scss — grille d'entrée de /statistiques : ivoire uni, un
+// soleil qui se lève derrière la carte blanche (le motif du jour, hérité du
+// split /portfolio) et deux anneaux discrets ; la carte porte tout le reste.
+// Le ciel d'aube en dégradé reste réservé à l'accueil.
+
+@use "./vars" as *;
+
+$sun: 220px;
+$field-radius: 14px;
+$invalid: #d1453b;
+
+.stats-gate {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 100vh;
+  min-height: 100dvh;
+  // nav (66) + demi-soleil au-dessus de la carte + respiration.
+  padding: calc(#{$nav-height} + #{$sun * 0.5} + 28px) 0 72px;
+  background: var(--day-bg);
+
+  &__inner {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  // ---- Le soleil : centré sur le bord haut de la carte, moitié cachée derrière.
+
+  &__sky {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: $sun;
+    height: $sun;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 0;
+    animation: gate-dawn 1.1s cubic-bezier(0.22, 0.8, 0.32, 1) both;
+  }
+
+  &__sun {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 34%, #fff7e0 0%, #fde68a 46%, #f5a524 100%);
+    box-shadow: 0 0 60px 22px rgba(253, 224, 138, 0.55), 0 0 150px 70px rgba(253, 230, 170, 0.28);
+    animation: gate-sun 9s ease-in-out infinite;
+  }
+
+  &__ring {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 1px solid rgba(217, 119, 6, 0.18);
+    transform: translate(-50%, -50%);
+
+    &--inner {
+      width: $sun * 1.6;
+      height: $sun * 1.6;
+    }
+
+    &--outer {
+      width: $sun * 2.3;
+      height: $sun * 2.3;
+      border-color: rgba(217, 119, 6, 0.1);
+    }
+  }
+
+  // ---- La carte
+
+  &__card {
+    position: relative;
+    z-index: 1;
+    width: min(440px, 100%);
+    min-width: 0;
+    box-sizing: border-box;
+    background: var(--day-surface);
+    border: 1px solid var(--day-line);
+    border-radius: $radius-gate;
+    padding: clamp(26px, 5vw, 40px);
+    box-shadow: 0 24px 60px -24px rgba(22, 35, 58, 0.28);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+  }
+
+  // Seul aplat teinté de la page, cohérent avec .pro-card__icon.
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+    background: linear-gradient(140deg, #fdeccc 0%, #fbd991 100%);
+    color: var(--day-amber-deep);
+    font-size: 22px;
+    margin-bottom: 20px;
+    align-self: flex-start;
+    box-shadow: 0 8px 18px -10px rgba(217, 119, 6, 0.5);
+  }
+
+  &__title {
+    font-size: clamp(28px, 3vw, 32px);
+    margin-bottom: 10px;
+  }
+
+  &__text {
+    color: var(--day-ink-soft);
+    font-size: 14.5px;
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+
+  &__label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--day-ink);
+    margin-bottom: 8px;
+  }
+
+  &__input {
+    position: relative;
+    min-width: 0;
+
+    input {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+      font-size: 16px;
+      letter-spacing: 0.06em;
+      color: var(--day-ink);
+      background: var(--day-bg);
+      border: 1px solid var(--day-line);
+      border-radius: $field-radius;
+      padding: 14px 52px 14px 16px;
+      outline: none;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+
+      &:focus {
+        border-color: var(--day-amber);
+        background: var(--day-surface);
+        box-shadow: 0 0 0 4px rgba(217, 119, 6, 0.14);
+      }
+    }
+  }
+
+  &__eye {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--day-muted);
+    font-size: 17px;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease;
+
+    &:hover,
+    &[aria-pressed="true"] {
+      color: var(--day-ink-soft);
+      background: var(--day-amber-soft);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--day-amber);
+      outline-offset: 2px;
+    }
+  }
+
+  // Phrase refusée : le bandeau `.stats-alert` (_error.scss : fond, filet,
+  // rayon, marge 16 px) sous le champ, champ bordé de rouge ; ici seulement
+  // l'icône et le poids du texte.
+  &__error {
+    font-weight: 500;
+
+    svg {
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+
+    span {
+      flex: 1 1 200px;
+      min-width: 0;
+    }
+  }
+
+  &__submit {
+    justify-content: center;
+    width: 100%;
+    margin-top: 18px;
+    padding: 15px 24px;
+    font-size: 15.5px;
+    border: none;
+
+    // Le pointeur reste sur le bouton pendant « Vérification… » : le survol
+    // de .pro-btn--primary ne doit pas changer sa teinte une fois inactif.
+    &:disabled,
+    &:disabled:hover,
+    &:disabled:focus-visible {
+      opacity: 0.6;
+      cursor: default;
+      transform: none;
+      box-shadow: none;
+      background: var(--day-ink);
+      color: #ffffff;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--day-amber);
+      outline-offset: 2px;
+    }
+  }
+
+  &__spinner {
+    animation: gate-spin 1s linear infinite;
+  }
+
+  &__note {
+    margin-top: 18px;
+    font-size: 12.5px;
+    color: var(--day-muted);
+    line-height: 1.6;
+  }
+}
+
+// Le champ tremble et se borde de rouge à chaque refus ; la classe tombe
+// pendant la vérification suivante, l'animation se rejoue donc au refus d'après.
+.stats-gate__card.is-invalid .stats-gate__input input {
+  border-color: $invalid;
+  box-shadow: 0 0 0 4px rgba(209, 69, 59, 0.12);
+  animation: gate-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+// ------------------------------------------------------------- Animations
+
+@keyframes gate-dawn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -28%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes gate-sun {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.025);
+  }
+}
+
+@keyframes gate-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes gate-shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-4px);
+  }
+  40%,
+  60% {
+    transform: translateX(4px);
+  }
+}
+
+// ---------------------------------------------------------------- Mobile
+
+@media (max-width: $bp-mobile) {
+  .stats-gate {
+    padding: calc(#{$nav-height} + #{$sun * 0.5} + 22px) 0 48px;
+
+    &__card {
+      padding: 26px 22px 24px;
+      border-radius: 22px;
+    }
+
+    &__title {
+      font-size: 30px;
+    }
+
+    &__text {
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    // 19 px × le zoom global de 0,85 ≈ 16 px rendus : iOS ne zoome pas le champ.
+    &__input input {
+      font-size: 19px;
+      padding: 14px 52px 14px 16px;
+    }
+
+    &__submit {
+      padding: 16px 24px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stats-gate__sky,
+  .stats-gate__sun,
+  .stats-gate__spinner,
+  .stats-gate__error,
+  .stats-gate__card.is-invalid .stats-gate__input input {
+    animation: none;
+  }
+
+  .stats-gate__input input,
+  .stats-gate__eye {
+    transition: none;
+  }
+}

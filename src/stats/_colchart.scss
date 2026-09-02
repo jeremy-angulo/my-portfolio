@@ -1,0 +1,80 @@
+// src/stats/_colchart.scss — ColumnChart : mini-colonnes ordonnées, compte
+// au-dessus, libellé sur deux lignes au plus, colonne max en ambre profond.
+@use "./vars" as *;
+
+.colchart {
+  // --colchart-n est posé en ligne par le composant (nombre de tranches) ;
+  // --colchart-height ne l'est que si l'appelant force une hauteur.
+  --colchart-height: 120px;
+  display: grid;
+  grid-template-columns: repeat(var(--colchart-n, 4), minmax(0, 1fr));
+  gap: 10px;
+  align-items: stretch;
+  min-width: 0;
+  // Dans un corps de tuile en colonne (.tile--columns), le graphique prend la
+  // hauteur laissée par la rangée : la zone de tracé grandit avec lui.
+  flex: 1 1 auto;
+
+  &__col {
+    display: grid;
+    // compte · zone de tracé (au moins --colchart-height, le reste de la
+    // hauteur disponible ensuite ; le % de la colonne s'y rapporte) ·
+    // libellé (30 px réservés, deux lignes)
+    grid-template-rows: auto minmax(var(--colchart-height), 1fr) auto;
+    align-items: end;
+    justify-items: center;
+    min-width: 0;
+  }
+
+  &__count {
+    margin-bottom: 4px;
+    font-size: 12.5px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    color: var(--day-ink);
+    white-space: nowrap;
+  }
+
+  // La hauteur minimale (3 px si > 0, 0 sinon) est posée en ligne par le
+  // composant : une tranche à 0 ne montre aucune colonne.
+  &__bar {
+    align-self: end;
+    width: 100%;
+    background: var(--day-amber);
+    border-radius: 6px 6px 0 0;
+    transition: height 0.5s $ease-fill;
+
+    &.is-max {
+      background: var(--day-amber-deep);
+    }
+  }
+
+  &__label {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 30px;
+    margin-top: 6px;
+    font-size: 11.5px;
+    line-height: 1.25;
+    text-align: center;
+    color: var(--day-muted);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: $bp-mobile) {
+  .colchart {
+    --colchart-height: 100px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .colchart__bar {
+    transition: none;
+  }
+}

@@ -1,0 +1,115 @@
+// src/components/RouteFallback.scss — écran d'attente de la route lazy.
+// Autonome : aucun token de pro.scss, il s'affiche avant le chunk de la page.
+
+.route-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #faf6ee;
+  // Invisible les 150 premières ms : un chunk déjà en cache ne le montre jamais.
+  opacity: 0;
+  animation: rf-appear 0.35s ease-out 0.15s forwards;
+
+  &__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+  }
+
+  &__mark {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    animation: rf-breathe 2.2s ease-in-out infinite;
+  }
+
+  &__label {
+    margin: 4px 0 0;
+    font-family: "Fraunces", "Poppins", serif;
+    font-weight: 600;
+    font-size: 21px;
+    line-height: 1.2;
+    color: #16233a;
+  }
+
+  &__track {
+    position: relative;
+    display: block;
+    width: 148px;
+    height: 3px;
+    border-radius: 999px;
+    background: #ece4d3;
+    overflow: hidden;
+  }
+
+  &__bar {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 42%;
+    border-radius: 999px;
+    background: #d97706;
+    animation: rf-slide 1.15s cubic-bezier(0.45, 0, 0.35, 1) infinite;
+  }
+
+  &__hint {
+    margin: 0;
+    font-family: "Poppins", sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: #6b7689;
+  }
+}
+
+@keyframes rf-appear {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rf-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.88;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+// La barre fait 42 % de la piste : de -100 % à 340 % de sa propre largeur,
+// elle entre par la gauche et ressort entièrement à droite.
+@keyframes rf-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(340%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-fallback {
+    animation: none;
+    opacity: 1;
+  }
+
+  .route-fallback__mark,
+  .route-fallback__bar {
+    animation: none;
+  }
+
+  .route-fallback__bar {
+    width: 100%;
+    opacity: 0.5;
+  }
+}

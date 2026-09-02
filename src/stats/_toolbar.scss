@@ -1,0 +1,307 @@
+// src/stats/_toolbar.scss — barre d'outils collante de /statistiques :
+// .stats-toolbar (+ __inner __anchors __anchor __controls __range __slot
+// __spinner __progress, état .is-stuck), .stats-seg et .stats-refresh.
+// Importé par StatsPage.scss ; les JSX n'importent aucun partiel.
+
+@use "./vars" as *;
+
+// ------------------------------------------------------------ Barre collante
+
+.stats-toolbar {
+  position: sticky;
+  top: $nav-height;
+  z-index: 30;
+  box-sizing: border-box;
+  width: 100%;
+  height: $toolbar-height;
+  background: rgba(250, 246, 238, 0.86);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  // Sans flou d'arrière-plan, l'ivoire opaque suffit à couvrir le contenu.
+  @supports not (backdrop-filter: blur(1px)) {
+    background: var(--day-bg);
+  }
+
+  &.is-stuck {
+    border-bottom-color: var(--day-line);
+    box-shadow: $shadow-stuck;
+  }
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: 100%;
+    min-width: 0;
+  }
+
+  // ---- Ancres de groupe (gauche)
+
+  // Marge négative = padding de la première pilule : le texte « Audience »
+  // s'aligne sur le H1 et le bord gauche de la mosaïque.
+  &__anchors {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    margin-left: -10px;
+  }
+
+  &__anchor {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    padding: 6px 10px;
+    border-radius: 999px;
+    color: var(--day-ink-soft);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease;
+
+    &:hover {
+      color: var(--day-amber-deep);
+    }
+
+    &.is-active {
+      background: var(--day-amber-soft);
+      color: var(--day-amber-deep);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--day-amber);
+      outline-offset: 2px;
+    }
+  }
+
+  // ---- Plage, période, spinner, Rafraîchir (droite)
+
+  &__controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    min-width: 0;
+  }
+
+  &__range {
+    font-size: 13px;
+    color: var(--day-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  // Emplacement réservé : la barre ne bouge pas quand le spinner apparaît.
+  &__slot {
+    flex: 0 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    color: var(--day-amber-deep);
+  }
+
+  &__spinner {
+    display: block;
+    width: 12px;
+    height: 12px;
+    animation: stats-spin 1s linear infinite;
+  }
+
+  // Filet de progression 2 px sous la barre, rendu seulement pendant un appel.
+  &__progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    overflow: hidden;
+    pointer-events: none;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        rgba(217, 119, 6, 0) 0%,
+        var(--day-amber) 50%,
+        rgba(217, 119, 6, 0) 100%
+      );
+      animation: stats-progress 1.2s linear infinite;
+    }
+  }
+}
+
+// ------------------------------------------------------ Sélecteur de période
+
+// Pilule blanche : l'actif passe à l'encre. Jamais `disabled`.
+.stats-seg {
+  // Rigide : c'est la plage (ellipsis) qui cède la place, jamais les boutons.
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  box-sizing: border-box;
+  background: var(--day-surface);
+  border: 1px solid var(--day-line);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+
+  button {
+    border: none;
+    background: transparent;
+    color: var(--day-ink-soft);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+    padding: 7px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    min-width: 0;
+    transition: background 0.25s ease, color 0.25s ease;
+
+    &:hover:not(.is-active) {
+      color: var(--day-amber-deep);
+    }
+
+    &.is-active {
+      background: var(--day-ink);
+      color: var(--day-surface);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--day-amber);
+      outline-offset: 2px;
+    }
+  }
+}
+
+// ------------------------------------------------------------------ Rafraîchir
+
+.stats-refresh {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--day-line);
+  background: var(--day-surface);
+  color: var(--day-ink-soft);
+  font-size: 15px;
+  cursor: pointer;
+  transition: color 0.25s ease, border-color 0.25s ease;
+
+  svg {
+    display: block;
+  }
+
+  &:hover:not(:disabled) {
+    color: var(--day-amber-deep);
+    border-color: var(--day-amber);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  &.is-busy svg {
+    animation: stats-spin 1s linear infinite;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--day-amber);
+    outline-offset: 2px;
+  }
+}
+
+// ------------------------------------------------------------------ Keyframes
+
+@keyframes stats-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes stats-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+// ---------------------------------------------------------------- Responsive
+
+// < 900 : la plage quitte la barre (reprise sous le H1 par StatsPage).
+@media (max-width: $bp-range) {
+  .stats-toolbar__range {
+    display: none;
+  }
+}
+
+// ≤ 600 : barre 52 px, ancres masquées, sélecteur pleine largeur.
+@media (max-width: $bp-mobile) {
+  .stats-toolbar {
+    height: $toolbar-height-mobile;
+
+    &__anchors {
+      display: none;
+    }
+
+    &__controls {
+      flex: 1;
+      margin-left: 0;
+      gap: 8px;
+    }
+  }
+
+  .stats-seg {
+    flex: 1 1 0;
+
+    button {
+      flex: 1 1 0;
+      font-size: 12.5px;
+      padding: 7px 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .stats-refresh {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+// ------------------------------------------------------------- Reduced motion
+
+@media (prefers-reduced-motion: reduce) {
+  .stats-toolbar,
+  .stats-toolbar__anchor,
+  .stats-seg button,
+  .stats-refresh {
+    transition: none;
+  }
+
+  .stats-toolbar__spinner,
+  .stats-toolbar__progress::before,
+  .stats-refresh.is-busy svg {
+    animation: none;
+  }
+}
