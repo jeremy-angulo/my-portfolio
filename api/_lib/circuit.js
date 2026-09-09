@@ -20,7 +20,7 @@
 //                             base Redis (API REST). Les trois paires sont
 //                             acceptées : l'intégration Vercel injecte l'une
 //                             ou l'autre selon le fournisseur.
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 
 // —— Règles du circuit ————————————————————————————————————————————————
 // Le meilleur tour connu tourne autour de 30 s (le succès « rapide » du jeu
@@ -233,10 +233,14 @@ export function normalizeName(firstNameRaw, lastNameRaw)
     const display = `${titleCase(firstName)} ${lastName.toLocaleUpperCase('fr')}`
 
     // Clé d'unicité : une personne n'occupe qu'une ligne, son meilleur temps.
-    const person = folded.replace(/[^a-z0-9]/g, '').slice(0, 40)
+    // Un nom écrit hors alphabet latin (cyrillique, grec, chinois…) ne laisse
+    // rien après le pliage : on lui donne alors une empreinte du nom, stable
+    // et sans caractère exotique dans les clés Redis.
+    const latin = folded.replace(/[^a-z0-9]/g, '').slice(0, 40)
 
-    if(person.length < 3)
-        return { error: 'name_characters' }
+    const person = latin.length >= 3
+        ? latin
+        : `x${createHash('sha256').update(folded).digest('hex').slice(0, 16)}`
 
     return { display, person }
 }

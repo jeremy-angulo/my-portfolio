@@ -97,9 +97,13 @@ async function handlePost(request, response)
     if(submits > MAX_SUBMITS_PER_HOUR)
         return response.status(429).json({ error: 'too_many_submits' })
 
-    const logReject = (error) => redis([ 'LPUSH', KEY_REJECTS, JSON.stringify({
-        at: Date.now(), error, ipHash, runId: payload.rid, timeMs: body.timeMs,
-    }) ]).catch(() => {})
+    // Journal borné : un script qui s'acharne ne doit pas remplir la base.
+    const logReject = (error) => redisPipeline([
+        [ 'LPUSH', KEY_REJECTS, JSON.stringify({
+            at: Date.now(), error, ipHash, runId: payload.rid, timeMs: body.timeMs,
+        }) ],
+        [ 'LTRIM', KEY_REJECTS, 0, 199 ],
+    ]).catch(() => {})
 
     const checked = verifySubmission({ payload, body, ipHash })
     if(checked.error)
