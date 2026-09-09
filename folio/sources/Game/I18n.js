@@ -95,14 +95,19 @@ const domFr = {
     'ach.reset': 'Réinitialiser les succès',
 
     'circuit.title': 'Circuit',
-    'circuit.local': 'Tes meilleurs temps, gardés sur cet appareil.',
+    'circuit.public': 'Tableau public : le meilleur tour de chaque visiteur. Termine une course pour y inscrire ton nom.',
     'circuit.noScore': 'Aucun temps enregistré',
+    'circuit.rank': '#',
+    'circuit.name': 'Nom',
+    'circuit.time': 'Temps',
     'circuit.restart': 'Rejouer',
     'circuit.end': 'Abandonner',
     'circuit.controls': 'Commandes',
 
     'ce.yourTime': 'Ton temps',
-    'ce.notTop10': 'Dommage, pas de top 10 cette fois.',
+    'ce.firstName': 'Prénom',
+    'ce.lastName': 'Nom',
+    'ce.privacy': 'Ton nom et ton temps s’affichent sur le tableau public du circuit.',
     'ce.submit': 'Valider',
     'ce.or': 'ou',
 
@@ -130,5 +135,14 @@ export const applyDom = () =>
 
         if(value !== undefined)
             element.innerHTML = value
+    }
+
+    // Champs de saisie : c'est l'attribut placeholder qu'il faut traduire.
+    for(const element of document.querySelectorAll('[data-i18n-placeholder]'))
+    {
+        const value = domFr[element.dataset.i18nPlaceholder]
+
+        if(value !== undefined)
+            element.placeholder = value
     }
 }

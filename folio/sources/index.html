@@ -553,13 +553,20 @@
                             <div class="content-inner">
                                 <div class="title" data-i18n="circuit.title">Circuit</div>
 
-                                <p class="text text-small text-faded" data-i18n="circuit.local">
-                                    Your best times, saved on this device.
+                                <p class="js-leaderboard-note text text-small text-faded" data-i18n="circuit.public">
+                                    Public board: the best lap of every visitor. Finish a race to add your name.
                                 </p>
 
                                 <div class="js-leaderboard-container leaderboard-container has-no-score">
-                                    <div class="no-score" data-i18n="circuit.noScore">No score yet</div>
+                                    <div class="no-score" data-i18n="circuit.noScore">No time yet</div>
                                     <table class="js-leaderboard leaderboard">
+                                        <thead>
+                                            <tr>
+                                                <th class="rank" data-i18n="circuit.rank">#</th>
+                                                <th class="name" data-i18n="circuit.name">Name</th>
+                                                <th class="time" data-i18n="circuit.time">Time</th>
+                                            </tr>
+                                        </thead>
                                         <tbody>
                                         </tbody>
 
@@ -658,18 +665,21 @@
                             <br /><span class="js-time value">00:00:000</span>
                         </div>
 
-                        <p class="not-top-10 text" data-i18n="ce.notTop10">
-                            Sorry, you didn't make it to the top 10.
+                        <form class="js-input-group input-group is-full-name" action="#">
+                            <input class="js-input-first-name js-main-focus input-text" type="text" placeholder="First name" data-i18n-placeholder="ce.firstName" maxlength="24" autocomplete="given-name" spellcheck="false" />
+                            <input class="js-input-last-name input-text" type="text" placeholder="Last name" data-i18n-placeholder="ce.lastName" maxlength="24" autocomplete="family-name" spellcheck="false" />
+                            <button class="js-submit submit has-text" data-i18n="ce.submit">
+                                Submit
+                            </button>
+                        </form>
+
+                        <p class="js-feedback feedback"></p>
+
+                        <p class="privacy text text-small text-faded" data-i18n="ce.privacy">
+                            Your name and time go on the public board of the circuit.
                         </p>
 
                         <div class="horizontal-group">
-
-                            <form class="js-input-group input-group is-name-tag" action="#">
-                                <input class="js-input js-main-focus input-text" type="text" placeholder="---" maxlength="3" />
-                                <button class="submit has-text" data-i18n="ce.submit">
-                                    Submit
-                                </button>
-                            </form>
 
                             <div class="or" data-i18n="ce.or">
                                 or

@@ -10,6 +10,13 @@ import { alea } from 'seedrandom'
 import { Area } from './Area.js'
 import { t } from '../../I18n.js'
 import { timeToRaceString, timeToReadableString } from '../../utilities/time.js'
+import { CircuitScores } from '../../CircuitScores.js'
+
+// Les noms viennent du serveur, qui n'accepte que des lettres — l'échappement
+// est une ceinture de plus avant de les injecter dans le menu.
+const escapeHtml = (text) => String(text).replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+}[character]))
 
 export class CircuitArea extends Area
 {
@@ -32,6 +39,9 @@ export class CircuitArea extends Area
         }
 
         this.state = CircuitArea.STATE_PENDING
+
+        // Tableau public des meilleurs temps (repli local si injoignable)
+        this.scores = new CircuitScores()
 
         this.setSounds()
         this.setStartPosition()
@@ -789,22 +799,15 @@ export class CircuitArea extends Area
     setLeaderboard()
     {
         this.leaderboard = {}
-        this.leaderboard.maxTime = 0
-        this.leaderboard.scores = null
-        const resolution = 512
+        this.leaderboard.scores = []
 
-        // Canvas
-        const font = `700 ${resolution / 14}px "Nunito"`
+        // 1024 plutôt que 512 : le panneau se lit depuis la voiture, et des
+        // noms complets demandent des lettres plus fines que les anciens
+        // pseudos de trois caractères.
+        const resolution = 1024
 
         const canvas = document.createElement('canvas')
-        canvas.style.position = 'fixed'
-        canvas.style.zIndex = 999
-        canvas.style.top = 0
-        canvas.style.left = 0
-        // document.body.append(canvas)
-
         const context = canvas.getContext('2d')
-        context.font = font
 
         canvas.width = resolution
         canvas.height = resolution
@@ -815,9 +818,6 @@ export class CircuitArea extends Area
         textTexture.magFilter = THREE.LinearFilter
         textTexture.colorSpace = THREE.SRGBColorSpace
         textTexture.generateMipmaps = false
-
-        // Digits
-        // const geometry = new THREE.PlaneGeometry(this.timer.digits.ratio, 1)
 
         const material = new MeshDefaultMaterial({
             colorNode: color('#463F35'),
@@ -840,83 +840,102 @@ export class CircuitArea extends Area
             )
         })()
 
+        this.leaderboard.texture = textTexture
+
         const mesh = this.references.items.get('leaderboard')[0]
+        this.leaderboard.mesh = mesh
         mesh.material = material
 
-        const columsSettings = [
-            { align: 'right', x: resolution * 0.125 },
-            { x: resolution * 0.19},
-            { align: 'center', x: resolution * 0.43},
-            { align: 'left', x: resolution * 0.725 },
-        ]
-        const interline = resolution / 12
+        // Le tableau occupe maintenant presque toute la surface du panneau :
+        // colonne des noms large (un « Jean-Baptiste DE LA TOUR » doit tenir),
+        // rang à gauche, temps calé à droite.
+        const rows = 10
+        const left = resolution * 0.075
+        const right = resolution * 0.925
+        const nameLeft = resolution * 0.155
+        const timeLeft = resolution * 0.66
+        const interline = resolution / (rows + 1.6)
+        const baseSize = interline * 0.62
 
-        this.leaderboard.update = (scores = null) =>
+        const font = (size, weight = 700) => `${weight} ${Math.round(size)}px "Nunito"`
+
+        // Réduit la police juste ce qu'il faut pour que le nom tienne dans sa
+        // colonne ; au-delà d'une certaine réduction il deviendrait illisible,
+        // alors on coupe.
+        const fitText = (text, maxWidth, size) =>
         {
-            const draw = () =>
+            let current = size
+
+            context.font = font(current)
+
+            while(context.measureText(text).width > maxWidth && current > size * 0.6)
             {
-                // Clear
-                context.clearRect(0, 0, canvas.width, canvas.height)
-
-                if(scores === null || scores.length === 0)
-                {
-                    context.font = font
-                    context.fillStyle = '#ffffff'
-                    context.textBaseline = 'middle'
-                    context.textAlign = 'center'
-                    context.fillText(t('NO SCORE YET', 'AUCUN TEMPS'), resolution * 0.5, resolution * 0.5)
-                }
-                else
-                {
-                    context.font = font
-                    context.fillStyle = '#ffffff'
-                    context.textBaseline = 'middle'
-
-                    let rank = 1
-                    for(const score of scores)
-                    {
-                        context.textAlign = columsSettings[0].align
-                        context.fillText(rank, columsSettings[0].x, (rank + 0.5) * interline)
-
-                        context.textAlign = columsSettings[2].align
-                        context.fillText(score[0], columsSettings[2].x, (rank + 0.5) * interline)
-
-                        context.textAlign = columsSettings[2].align
-                        context.fillText(timeToRaceString(score[2] / 1000), columsSettings[3].x, (rank + 0.5) * interline)
-
-                        rank++
-                    }
-                }
-                textTexture.needsUpdate = true
-            }
-            this.leaderboard.maxTime = 0
-            this.leaderboard.scores = scores
-
-            if(scores)
-            {
-                for(const score of scores)
-                {
-                    if(score[2] > this.leaderboard.maxTime)
-                        this.leaderboard.maxTime = score[2]
-                }
+                current -= 1
+                context.font = font(current)
             }
 
-            draw()
+            if(context.measureText(text).width <= maxWidth)
+                return text
+
+            let cut = text
+
+            while(cut.length > 1 && context.measureText(`${cut}…`).width > maxWidth)
+                cut = cut.slice(0, -1)
+
+            return `${cut.trim()}…`
+        }
+
+        this.leaderboard.update = (scores = []) =>
+        {
+            this.leaderboard.scores = Array.isArray(scores) ? scores : []
+
+            context.clearRect(0, 0, canvas.width, canvas.height)
+            context.textBaseline = 'middle'
+
+            if(this.leaderboard.scores.length === 0)
+            {
+                context.font = font(baseSize)
+                context.fillStyle = '#ffffff'
+                context.textAlign = 'center'
+                context.fillText(t('NO TIME YET', 'AUCUN TEMPS'), resolution * 0.5, resolution * 0.5)
+            }
+            else
+            {
+                let index = 0
+
+                for(const score of this.leaderboard.scores.slice(0, rows))
+                {
+                    const y = (index + 1.3) * interline
+
+                    // Rang
+                    context.fillStyle = '#ffffff'
+                    context.globalAlpha = 0.5
+                    context.font = font(baseSize * 0.9)
+                    context.textAlign = 'left'
+                    context.fillText(`${index + 1}`, left, y)
+                    context.globalAlpha = 1
+
+                    // Nom
+                    context.textAlign = 'left'
+                    context.fillText(
+                        fitText(score.name, timeLeft - nameLeft - resolution * 0.02, baseSize),
+                        nameLeft,
+                        y
+                    )
+
+                    // Temps
+                    context.font = font(baseSize)
+                    context.textAlign = 'right'
+                    context.fillText(timeToRaceString(score.timeMs / 1000), right, y)
+
+                    index++
+                }
+            }
+
+            textTexture.needsUpdate = true
         }
 
         this.leaderboard.update([])
-        // this.leaderboard.update([
-        //     [ 'BRU', '00:25:150' ],
-        //     [ 'TTU', '00:27:153' ],
-        //     [ 'ORS', '00:27:002' ],
-        //     [ 'BAB', '00:29:193' ],
-        //     [ 'YOH', '00:30:159' ],
-        //     [ 'PUH', '00:37:103' ],
-        //     [ 'WWW', '00:40:253' ],
-        //     [ 'PWT', '00:41:315' ],
-        //     [ 'PRT', '00:45:035' ],
-        //     [ 'BOO', '00:49:531' ],
-        // ])
     }
 
     setResetTime()
@@ -1035,6 +1054,7 @@ export class CircuitArea extends Area
         this.menu.instance = this.game.menu.items.get('circuit')
         this.menu.leaderboardContainerElement = this.menu.instance.contentElement.querySelector('.js-leaderboard-container')
         this.menu.leaderboardElement = this.menu.leaderboardContainerElement.querySelector('.js-leaderboard tbody')
+        this.menu.noteElement = this.menu.instance.contentElement.querySelector('.js-leaderboard-note')
         this.menu.racingButtons = this.menu.instance.contentElement.querySelector('.js-racing-buttons')
         this.menu.leaderboardNeedsUpdate = false
 
@@ -1049,25 +1069,24 @@ export class CircuitArea extends Area
             // Menu not open => Set flag
             if(!this.menu.instance.isOpen)
             {
-                this.menu.leaderboardNeedsUpdate = scores
+                this.menu.leaderboardNeedsUpdate = scores ?? []
             }
 
             // Menu open => Update content
             else
             {
-                if(!scores)
-                    scores = []
+                const list = Array.isArray(scores) ? scores : []
 
                 let html = ''
                 let rank = 1
                 
-                for(const score of scores)
+                for(const score of list)
                 {
                     html += /* html */`
                         <tr>
                             <td>${rank}</td>
-                            <td>${score[0]}</td>
-                            <td>${timeToRaceString(score[2] / 1000)}</td>
+                            <td class="name">${escapeHtml(score.name)}</td>
+                            <td class="time">${timeToRaceString(score.timeMs / 1000)}</td>
                         </tr>
                     `
 
@@ -1076,15 +1095,30 @@ export class CircuitArea extends Area
 
                 this.menu.leaderboardElement.innerHTML = html
 
-                if(scores.length)
+                if(list.length)
                     this.menu.leaderboardContainerElement.classList.remove('has-no-score')
                 else
                     this.menu.leaderboardContainerElement.classList.add('has-no-score')
 
+                // D'où viennent ces temps : le tableau public de tous les
+                // visiteurs, ou l'appareil quand le serveur ne répond pas.
+                if(this.menu.noteElement)
+                {
+                    this.menu.noteElement.innerHTML = this.scores.source === 'server'
+                        ? t(
+                            'Public board: the best lap of every visitor. Finish a race to add your name.',
+                            'Tableau public : le meilleur tour de chaque visiteur. Termine une course pour y inscrire ton nom.'
+                        )
+                        : t(
+                            'Board unreachable — showing the times saved on this device.',
+                            'Tableau injoignable — voici les temps gardés sur cet appareil.'
+                        )
+                }
+
                 this.menu.leaderboardNeedsUpdate = false
             }
         }
-        
+
         // Restart button
         const restartElement = this.menu.instance.contentElement.querySelector('.js-button-restart')
         restartElement.addEventListener('click', (event) =>
@@ -1123,6 +1157,9 @@ export class CircuitArea extends Area
         this.endModal = {}
         this.endModal.instance = this.game.modals.items.get('circuit-end')
         this.endModal.timeElement = this.endModal.instance.element.querySelector('.js-time')
+        this.endModal.feedbackElement = this.endModal.instance.element.querySelector('.js-feedback')
+        this.endModal.pending = null
+        this.endModal.busy = false
         
         // Restart button
         const restartElement = this.endModal.instance.element.querySelector('.js-button-restart')
@@ -1135,59 +1172,132 @@ export class CircuitArea extends Area
         })
 
         this.menu.inputGroup = this.endModal.instance.element.querySelector('.js-input-group')
-        this.menu.input = this.menu.inputGroup.querySelector('.js-input')
+        this.menu.firstNameInput = this.menu.inputGroup.querySelector('.js-input-first-name')
+        this.menu.lastNameInput = this.menu.inputGroup.querySelector('.js-input-last-name')
+        this.menu.submitButton = this.menu.inputGroup.querySelector('.js-submit')
 
-        const sanatize = (text = '', trim = false, limit = false, stripNonLetter = false, toUpper = false) =>
-        {
-            let sanatized = text
-            if(trim)
-                sanatized = sanatized.trim()
+        // Les lettres, l'espace, le trait d'union et l'apostrophe suffisent à
+        // écrire un nom ; le serveur applique la même règle de son côté.
+        const sanatize = (text = '') => text
+            .replace(/[^\p{L}\p{M}' -]/gu, '')
+            .replace(/\s{2,}/g, ' ')
+            .slice(0, 24)
 
-            if(stripNonLetter)
-                sanatized = sanatized.replace(/[^a-z]/gi, '')
-            
-            if(limit)
-                sanatized = sanatized.substring(0, 3)
-
-            if(toUpper)
-                sanatized = sanatized.toUpperCase()
-
-            return sanatized
-        }
-
-        const submit = () =>
-        {
-            const sanatized = sanatize(this.menu.input.value, true, true, true, true)
-            
-            if(sanatized.length === 3)
-            {
-                // Enregistrement local
-                const scores = this.data.insert(sanatized, Math.round(this.timer.elapsedTime * 1000))
-                this.leaderboard.update(scores)
-                this.menu.updateLeaderboard(scores)
-
-                // Achievement
-                this.game.achievements.setProgress('circuitLeaderboard', 1)
-
-                // Close modal
-                this.game.modals.close()
-            }
-        }
+        const isComplete = () =>
+            sanatize(this.menu.firstNameInput.value).trim().length >= 2
+            && sanatize(this.menu.lastNameInput.value).trim().length >= 1
 
         const updateGroup = () =>
         {
-            if(this.menu.input.value.length === 3)
+            if(isComplete())
                 this.menu.inputGroup.classList.add('is-valide')
             else
                 this.menu.inputGroup.classList.remove('is-valide')
         }
 
-        this.menu.input.addEventListener('input', () =>
+        const feedback = (message, state = '') =>
         {
-            const sanatized = sanatize(this.menu.input.value, false, true, true, true)
-            this.menu.input.value = sanatized
-            updateGroup()
-        })
+            this.endModal.feedbackElement.textContent = message
+            this.endModal.feedbackElement.className = `js-feedback feedback${state ? ` ${state}` : ''}`
+        }
+
+        // Messages d'erreur du serveur, traduits (voir api/_lib/circuit.js).
+        const errorMessage = (error) =>
+        {
+            switch(error)
+            {
+                case 'first_name_length':
+                case 'last_name_length':
+                case 'name_characters':
+                    return t('Please enter a real first and last name.', 'Indique un vrai prénom et un vrai nom.')
+                case 'name_rejected':
+                    return t('This name will not go on a public board.', 'Ce nom n’ira pas sur un tableau public.')
+                case 'already_submitted':
+                    return t('This race has already been saved.', 'Cette course a déjà été enregistrée.')
+                case 'too_many_submits':
+                    return t('Too many attempts, try again later.', 'Trop de tentatives, réessaie plus tard.')
+                case 'implausible_time':
+                case 'clock_mismatch':
+                case 'splits_mismatch':
+                case 'invalid_splits':
+                case 'bad_signature':
+                case 'invalid_token':
+                case 'run_expired':
+                case 'run_mismatch':
+                    return t('This time could not be verified.', 'Ce temps n’a pas pu être vérifié.')
+                default:
+                    return t('Time saved on this device only.', 'Temps gardé sur cet appareil seulement.')
+            }
+        }
+
+        const submit = async () =>
+        {
+            if(this.endModal.busy || !this.endModal.pending || !isComplete())
+                return
+
+            const firstName = sanatize(this.menu.firstNameInput.value).trim()
+            const lastName = sanatize(this.menu.lastNameInput.value).trim()
+
+            this.endModal.busy = true
+            this.menu.inputGroup.classList.add('is-busy')
+            feedback(t('Saving…', 'Enregistrement…'))
+
+            const result = await this.scores.submit({
+                firstName,
+                lastName,
+                timeMs: this.endModal.pending.timeMs,
+                splits: this.endModal.pending.splits,
+            })
+
+            this.endModal.busy = false
+            this.menu.inputGroup.classList.remove('is-busy')
+
+            this.leaderboard.update(result.scores)
+            this.menu.updateLeaderboard(result.scores)
+
+            if(result.ok)
+            {
+                this.endModal.pending = null
+                this.menu.inputGroup.classList.add('is-done')
+
+                const rank = result.rank
+
+                if(result.improved && rank)
+                    feedback(t(`Saved — ${rank}${rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th'} on the public board.`, `Enregistré — ${rank}${rank === 1 ? 'er' : 'e'} du tableau public.`), 'is-success')
+                else if(result.improved)
+                    feedback(t('Saved on the public board.', 'Enregistré sur le tableau public.'), 'is-success')
+                else
+                    feedback(t('Your best lap stays on the board.', 'Ton meilleur tour reste au tableau.'), 'is-success')
+
+                // Achievement
+                this.game.achievements.setProgress('circuitLeaderboard', 1)
+            }
+            else
+            {
+                feedback(errorMessage(result.error), 'is-error')
+
+                // Un temps hors ligne reste sauvegardé sur l'appareil : pas la
+                // peine de laisser le joueur réessayer indéfiniment.
+                if(result.offline)
+                {
+                    this.endModal.pending = null
+                    this.game.achievements.setProgress('circuitLeaderboard', 1)
+                }
+            }
+        }
+
+        for(const input of [ this.menu.firstNameInput, this.menu.lastNameInput ])
+        {
+            input.addEventListener('input', () =>
+            {
+                const cleaned = sanatize(input.value)
+
+                if(cleaned !== input.value)
+                    input.value = cleaned
+
+                updateGroup()
+            })
+        }
 
         this.menu.inputGroup.addEventListener('submit', (event) =>
         {
@@ -1196,17 +1306,39 @@ export class CircuitArea extends Area
             submit()
         })
 
-        this.menu.instance.events.on('closed', () =>
+        // Prépare la modale pour la course qui vient de finir : le temps, les
+        // intermédiaires qui l'accompagnent, et le nom déjà donné ici.
+        this.endModal.prepare = (timeMs, splits) =>
         {
-            this.menu.input.value = ''
+            this.endModal.pending = { timeMs, splits }
+
+            // Le chrono a déjà écrit ce temps à l'arrêt ; on le réaffirme ici
+            // pour que l'affichage et ce qui part au serveur soient la même
+            // valeur, à la milliseconde.
+            this.endModal.timeElement.textContent = timeToRaceString(timeMs / 1000)
+            this.endModal.busy = false
+            this.menu.inputGroup.classList.remove('is-done', 'is-busy')
+
+            const saved = this.scores.savedName()
+            this.menu.firstNameInput.value = saved.firstName
+            this.menu.lastNameInput.value = saved.lastName
+
             updateGroup()
-        })
+
+            feedback(this.scores.online === false
+                ? t('Board unreachable — your time stays on this device.', 'Tableau injoignable — ton temps reste sur cet appareil.')
+                : '')
+        }
     }
 
     restart()
     {
         if(this.state === CircuitArea.STATE_STARTING)
             return
+
+        // Jeton de course : demandé au départ, il est la seule façon de
+        // publier le temps à l'arrivée (voir CircuitScores).
+        this.scores.start()
 
         // Area frustum
         this.frustum.alwaysVisible = true
@@ -1320,44 +1452,18 @@ export class CircuitArea extends Area
 
     setData()
     {
-        // Meilleurs temps locaux et persistants (format [tag, '', durée en ms],
-        // le deuxième champ est l'ancien code pays, gardé vide par compatibilité)
-        this.data = {}
-        this.data.storageKey = 'circuitScores'
-        this.data.maxCount = 10
-
-        this.data.get = () =>
+        // Les temps de l'appareil s'affichent tout de suite (le panneau ne
+        // reste jamais vide), puis le tableau public les remplace dès qu'il
+        // répond.
+        const render = (scores) =>
         {
-            try
-            {
-                const scores = JSON.parse(localStorage.getItem(this.data.storageKey))
-
-                if(Array.isArray(scores))
-                    return scores
-                        .filter((score) => Array.isArray(score) && typeof score[0] === 'string' && typeof score[2] === 'number')
-                        .sort((a, b) => a[2] - b[2])
-                        .slice(0, this.data.maxCount)
-            }
-            catch(error) {}
-
-            return []
+            this.leaderboard.update(scores)
+            this.menu.updateLeaderboard(scores)
         }
 
-        this.data.insert = (tag, duration) =>
-        {
-            const scores = this.data.get()
-            scores.push([ tag, '', duration ])
-            scores.sort((a, b) => a[2] - b[2])
+        render(this.scores.localScores())
 
-            const bestScores = scores.slice(0, this.data.maxCount)
-            localStorage.setItem(this.data.storageKey, JSON.stringify(bestScores))
-
-            return bestScores
-        }
-
-        const scores = this.data.get()
-        this.leaderboard.update(scores)
-        this.menu.updateLeaderboard(scores)
+        this.scores.fetchBoard().then(render).catch(() => {})
     }
 
     setAchievement()
@@ -1468,12 +1574,14 @@ export class CircuitArea extends Area
                 {
                     gsap.delayedCall(1, () =>
                     {
-                        // In top 10
-                        if(this.leaderboard.scores === null || this.leaderboard.scores.length < 10 || this.timer.elapsedTime * 1000 < this.leaderboard.maxTime)
-                            this.endModal.instance.element.classList.add('is-top-10')
-                        else
-                            this.endModal.instance.element.classList.remove('is-top-10')
-                        
+                        // Tout le monde peut inscrire son nom : le tableau
+                        // garde un meilleur temps par personne, pas seulement
+                        // les dix premiers.
+                        this.endModal.prepare(
+                            Math.round(this.timer.elapsedTime * 1000),
+                            [ ...this.checkpoints.timings ]
+                        )
+
                         this.game.modals.open('circuit-end')
                     })
                 }

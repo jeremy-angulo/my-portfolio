@@ -5,29 +5,65 @@
         align-items center
         flex-direction column
         margin-bottom 1.5em
+        width 100%
 
         &.has-no-score
             .no-score
                 display block
 
+            .leaderboard
+                display none
+
         .leaderboard
             font-weight 700
             margin-top 20px
             margin-bottom 20px
+            width 100%
+            max-width 440px
+            border-collapse collapse
+            table-layout fixed
 
-            tr
-                td
-                    &:nth-child(1)
-                        opacity 0.5
-                        padding-right 30px
+            thead
+                th
+                    font-size 13px
+                    font-weight 700
+                    text-transform uppercase
+                    letter-spacing 1px
+                    opacity 0.4
+                    text-align left
+                    padding-bottom 8px
+
+                    &.rank
+                        width 44px
                         text-align center
 
-                    &:nth-child(2)
-                        padding-right 30px
-                        
-                    &:nth-child(3)
-                        padding-right 30px
-                        
+                    &.time
+                        width 110px
+                        text-align right
+
+            tbody
+                tr
+                    td
+                        padding 3px 0
+
+                        &:nth-child(1)
+                            opacity 0.5
+                            width 44px
+                            text-align center
+
+                        &.name
+                            // Un nom trop long est coupé plutôt que de pousser
+                            // la colonne des temps hors du cadre.
+                            overflow hidden
+                            text-overflow ellipsis
+                            white-space nowrap
+                            padding-right 20px
+
+                        &.time
+                            width 110px
+                            text-align right
+                            font-variant-numeric tabular-nums
+
         .no-score
             margin-top 30px
             display none
