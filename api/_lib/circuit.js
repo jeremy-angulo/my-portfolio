@@ -19,7 +19,8 @@
 //     ou CIRCUIT_REDIS_REST_URL / CIRCUIT_REDIS_REST_TOKEN
 //                             base Redis (API REST). Les trois paires sont
 //                             acceptées : l'intégration Vercel injecte l'une
-//                             ou l'autre selon le fournisseur.
+//                             ou l'autre selon le fournisseur. À défaut, une
+//                             chaîne REDIS_URL / KV_URL Upstash suffit.
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 
 // —— Règles du circuit ————————————————————————————————————————————————
@@ -55,15 +56,39 @@ export const BOARD_SIZE = 10
 export const MAX_BOARD_SIZE = 50
 
 // —— Redis (API REST) —————————————————————————————————————————————————
+// Selon le fournisseur branché, Vercel injecte CIRCUIT_*, KV_* ou UPSTASH_* ;
+// certaines intégrations ne posent qu'une chaîne de connexion REDIS_URL. Chez
+// Upstash, l'API REST vit sur le même hôte que le port Redis, avec le mot de
+// passe comme jeton : on sait donc retomber sur nos pieds dans ce cas aussi.
+const fromConnectionString = (value) =>
+{
+    if(!value)
+        return null
+
+    try
+    {
+        const parsed = new URL(value)
+
+        if(!parsed.hostname.endsWith('upstash.io') || !parsed.password)
+            return null
+
+        return { url: `https://${parsed.hostname}`, token: decodeURIComponent(parsed.password) }
+    }
+    catch
+    {
+        return null
+    }
+}
+
 const redisConfig = () =>
 {
     const url = process.env.CIRCUIT_REDIS_REST_URL ?? process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL
     const token = process.env.CIRCUIT_REDIS_REST_TOKEN ?? process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN
 
-    if(!url || !token)
-        return null
+    if(url && token)
+        return { url: url.replace(/\/$/, ''), token }
 
-    return { url: url.replace(/\/$/, ''), token }
+    return fromConnectionString(process.env.CIRCUIT_REDIS_URL ?? process.env.KV_URL ?? process.env.REDIS_URL)
 }
 
 export const isConfigured = () => redisConfig() !== null && !!process.env.CIRCUIT_SECRET
