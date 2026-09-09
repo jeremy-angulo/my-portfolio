@@ -461,7 +461,6 @@ const experiences = [
       intro: "Je suis ingénieur en informatique, spécialisé dans le lien entre projets techniques complexes et objectifs business.<br/><br/>Ma passion : mener des équipes et transformer des idées innovantes en solutions numériques concrètes, à fort impact.",
       ctaProjects: "Voir mes projets",
       cta3d: "Découvre-moi en 3D",
-      chipTop: "Du code après le bureau",
       chipBottom: "IA · Full-stack · Mobile",
       alt: "Jérémy Angulo, ingénieur la nuit",
     },

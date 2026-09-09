@@ -1,12 +1,14 @@
-// Navbar nuit : géométrie identique à .pro-nav (facette jour), palette sombre.
+// Navbar des pages nuit annexes (/project/:id, /cv) : géométrie identique à
+// .pro-nav (facette jour), palette sombre. La navbar de /tech vit à part,
+// dans src/night/styles/_sections.scss (`.night-nav`).
 
-.night-container {
+.night-pagenav-container {
   max-width: 1120px;
   margin-inline: auto;
   padding-inline: clamp(20px, 4vw, 32px);
 }
 
-.night-nav {
+.night-pagenav {
   position: fixed;
   top: 0;
   left: 0;

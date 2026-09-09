@@ -160,7 +160,7 @@ const useTimeOnPage = (pathname) => {
 // Ce que les gens lisent vraiment : quelles sections passent à l'écran, et
 // jusqu'où on descend dans la page. Un délai avant d'observer laisse le temps
 // aux sections "below the fold" (montées après l'animation d'entrée) d'exister
-// dans le DOM ; sans lui, ProPage et HomePage n'auraient encore rien à observer.
+// dans le DOM ; sans lui, ProPage et NightPage n'auraient encore rien à observer.
 const useContentTracking = () => {
   const { pathname } = useLocation();
 

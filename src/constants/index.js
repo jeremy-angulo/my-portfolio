@@ -457,7 +457,6 @@ const experiences = [
       intro: "I am an IT Engineer specializing in bridging the gap between complex technical projects and strategic business goals.<br/><br/>My passion is to lead teams and transform innovative ideas into concrete, high-impact digital solutions.",
       ctaProjects: "Explore my projects",
       cta3d: "Discover me in 3D",
-      chipTop: "Code after hours",
       chipBottom: "AI · Full-stack · Mobile",
       alt: "Jérémy Angulo, engineer by night",
     },

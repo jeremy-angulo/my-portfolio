@@ -1,6 +1,11 @@
 // src/components/Navbar.jsx
-// Navbar de la facette nuit : même squelette que la navbar du jour (ProNavbar),
-// pour que la bascule jour/nuit se fasse sans que rien ne bouge.
+// Navbar des pages nuit annexes — /project/:id, /cv — accessibles par URL
+// directe. La page /tech, elle, embarque la sienne (src/night/NightNavbar.jsx),
+// qui se ferme au défilement.
+//
+// Même squelette que la navbar du jour (ProNavbar), pour que la bascule
+// jour/nuit se fasse sans que rien ne bouge. Ses classes portent le préfixe
+// `night-pagenav` : `night-nav` appartient à la navbar de /tech.
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -17,34 +22,34 @@ const Navbar = () => {
   const nav = nightUi.nav;
 
   return (
-    <nav className="night-nav">
-      <div className="night-container night-nav__inner">
+    <nav className="night-pagenav">
+      <div className="night-pagenav-container night-pagenav__inner">
         <Link
           to="/tech"
-          className="night-nav__brand"
+          className="night-pagenav__brand"
           onClick={() => { window.scrollTo(0, 0); }}
         >
           <img src={logo} alt="Logo JA" />
           <span>jeremy.angulo</span>
         </Link>
 
-        <div className="night-nav__links">
+        <div className="night-pagenav__links">
           <Link to="/tech#project">{nav.projects}</Link>
           <Link to="/tech#experience">{nav.experience}</Link>
           <Link to="/tech#contact">{nav.contact}</Link>
         </div>
 
-        <div className="night-nav__right">
+        <div className="night-pagenav__right">
           <LangSwitch mode="night" />
           <FacetToggle mode="night" />
           {/* Le CTA occupe la même place que "Me contacter" côté jour :
               le toggle ne bouge pas d'un pixel en basculant de facette. */}
           {isResumePage ? (
-            <Link to="/tech" className="night-nav__back">
+            <Link to="/tech" className="night-pagenav__back">
               {nav.back}
             </Link>
           ) : (
-            <Link to="/tech#contact" className="night-nav__cta">
+            <Link to="/tech#contact" className="night-pagenav__cta">
               {nav.cta}
             </Link>
           )}

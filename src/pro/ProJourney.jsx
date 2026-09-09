@@ -1,63 +1,46 @@
 // src/pro/ProJourney.jsx
-// Parcours business : la timeline à gauche, la formation à droite.
+// Section « Parcours ». La timeline se dessine (ProDrawnTimeline) et la colonne
+// Formation reprend le filet d'ambre des eyebrows puis le spotlight des cartes.
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useRef } from "react";
+import { useInView } from "framer-motion";
 import { useProContent } from "../i18n/useContent";
-import { rise, viewportOnce } from "./proMotion";
+import ProSectionHead from "./ProSectionHead";
+import ProDrawnTimeline from "./ProDrawnTimeline";
+import useSpotlight from "../hooks/useSpotlight";
 
-const ProJourney = () => {
+const ProJourney = ({ statique = false }) => {
   const { proTimeline, proEducations, proUi } = useProContent();
+  const formation = useRef(null);
+  const vu = useInView(formation, { once: true, amount: 0.25 });
+  const actif = statique || vu;
+
+  useSpotlight(formation, { selecteur: ".pro-edu__card" });
 
   return (
     <section id="parcours" className="pro-section pro-journey">
       <div className="pro-container">
-        <motion.div
-          className="pro-section__head"
-          variants={rise}
-          initial="hidden"
-          whileInView="show"
-          viewport={viewportOnce}
-        >
-          <p className="pro-section__eyebrow">{proUi.journey.eyebrow}</p>
-          <h2 className="pro-section__title">{proUi.journey.title}</h2>
-          <p className="pro-section__sub">{proUi.journey.sub}</p>
-        </motion.div>
+        <ProSectionHead
+          eyebrow={proUi.journey.eyebrow}
+          title={proUi.journey.title}
+          sub={proUi.journey.sub}
+          statique={statique}
+        />
 
         <div className="pro-journey__grid">
-          <div className="pro-timeline">
-            {proTimeline.map((step, i) => (
-              <motion.div
-                key={step.title}
-                className="pro-timeline__item"
-                variants={rise}
-                initial="hidden"
-                whileInView="show"
-                viewport={viewportOnce}
-                custom={i * 0.5}
-              >
-                <p className="pro-timeline__date">{step.date}</p>
-                <h3 className="pro-timeline__title">{step.title}</h3>
-                <p className="pro-timeline__company">
-                  <img src={step.icon} alt="" aria-hidden="true" />
-                  {step.company}
-                </p>
-                <p className="pro-timeline__text">{step.text}</p>
-              </motion.div>
-            ))}
-          </div>
+          <ProDrawnTimeline etapes={proTimeline} statique={statique} />
 
-          <motion.aside
-            className="pro-edu"
-            variants={rise}
-            initial="hidden"
-            whileInView="show"
-            viewport={viewportOnce}
-            custom={1}
-          >
-            <p className="pro-edu__label">{proUi.journey.eduLabel}</p>
-            {proEducations.map((edu) => (
-              <div key={edu.school} className="pro-edu__card">
+          <aside ref={formation} className={`pro-edu day-edu${actif ? " is-in" : ""}`}>
+            <p className="pro-edu__label day-eyebrow">
+              <span className="day-rule" aria-hidden="true" />
+              <span className="day-eyebrow__texte">{proUi.journey.eduLabel}</span>
+            </p>
+            {proEducations.map((edu, i) => (
+              <div
+                key={edu.school}
+                className="pro-edu__card"
+                style={{ "--day-fx-delai": `${120 + i * 90}ms` }}
+              >
                 <img src={edu.image} alt={edu.school} />
                 <div>
                   <strong>{edu.school}</strong>
@@ -66,7 +49,7 @@ const ProJourney = () => {
                 </div>
               </div>
             ))}
-          </motion.aside>
+          </aside>
         </div>
       </div>
     </section>

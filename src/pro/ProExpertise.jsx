@@ -1,10 +1,14 @@
 // src/pro/ProExpertise.jsx
+// Section « Expertises ». La tête se trace (filet + H2 mot à mot) et les cartes
+// entrent en cascade CSS pilotée par `.is-in` — un seul commit React — avec un
+// spotlight ambre qui suit la souris sur leur bord.
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useRef } from "react";
+import { useInView } from "framer-motion";
 import { FiTrendingUp, FiUsers, FiCompass } from "react-icons/fi";
 import { useProContent } from "../i18n/useContent";
-import { rise, viewportOnce } from "./proMotion";
+import ProSectionHead from "./ProSectionHead";
+import useSpotlight from "../hooks/useSpotlight";
 
 const ICONS = {
   trending: <FiTrendingUp />,
@@ -12,34 +16,30 @@ const ICONS = {
   compass: <FiCompass />,
 };
 
-const ProExpertise = () => {
+const ProExpertise = ({ statique = false }) => {
   const { proPillars, proUi } = useProContent();
+  const grille = useRef(null);
+  const vu = useInView(grille, { once: true, amount: 0.25 });
+  const actif = statique || vu;
+
+  useSpotlight(grille, { selecteur: ".pro-card" });
 
   return (
     <section id="expertises" className="pro-section pro-section--flush">
       <div className="pro-container">
-        <motion.div
-          className="pro-section__head"
-          variants={rise}
-          initial="hidden"
-          whileInView="show"
-          viewport={viewportOnce}
-        >
-          <p className="pro-section__eyebrow">{proUi.expertise.eyebrow}</p>
-          <h2 className="pro-section__title">{proUi.expertise.title}</h2>
-          <p className="pro-section__sub">{proUi.expertise.sub}</p>
-        </motion.div>
+        <ProSectionHead
+          eyebrow={proUi.expertise.eyebrow}
+          title={proUi.expertise.title}
+          sub={proUi.expertise.sub}
+          statique={statique}
+        />
 
-        <div className="pro-pillars">
+        <div ref={grille} className={`pro-pillars day-pillars${actif ? " is-in" : ""}`}>
           {proPillars.map((pillar, i) => (
-            <motion.article
+            <article
               key={pillar.title}
               className="pro-card"
-              variants={rise}
-              initial="hidden"
-              whileInView="show"
-              viewport={viewportOnce}
-              custom={i}
+              style={{ "--day-fx-delai": `${i * 110}ms` }}
             >
               <span className="pro-card__icon">{ICONS[pillar.icon]}</span>
               <h3 className="pro-card__title">{pillar.title}</h3>
@@ -49,7 +49,7 @@ const ProExpertise = () => {
                   <li key={point}>{point}</li>
                 ))}
               </ul>
-            </motion.article>
+            </article>
           ))}
         </div>
       </div>

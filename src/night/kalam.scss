@@ -1,0 +1,13 @@
+// src/night/kalam.scss
+// Kalam — la signature du prénom du hero nuit, et le seul endroit du site où
+// cette police est déclarée.
+//
+// Pourquoi un fichier dédié : un `@import` CSS doit précéder toute autre
+// instruction de la feuille émise, et Sass interdit `@use` après une règle.
+// Les deux contraintes ne se concilient qu'en isolant l'import — d'où le
+// `@use "kalam";` en PREMIÈRE instruction de `night.scss`.
+//
+// Ne pas ajouter Poppins ni Fraunces ici : elles sont déjà dans
+// src/index.css, chargé globalement.
+
+@import url("https://fonts.googleapis.com/css2?family=Kalam:wght@700&display=swap");

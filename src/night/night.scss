@@ -1,0 +1,77 @@
+// src/night/night.scss — la feuille de la facette nuit (/tech).
+// Importée en JS depuis `NightPage.jsx`, jamais par `@use` (qui la
+// dupliquerait) : c'est une feuille globale, comme `src/pro/pro.scss`.
+// Tout est scopé sous `.night-root`.
+//
+// `@use "kalam"` DOIT rester la toute première instruction : cette feuille
+// n'émet qu'un `@import url()` (Kalam, la police du prénom), et un `@import`
+// CSS doit précéder toute autre règle du fichier produit.
+@use "kalam";
+@use "styles/tokens";
+@use "styles/hero";
+@use "styles/cartes";
+@use "styles/sections";
+@use "styles/projets";
+@use "styles/parcours";
+@use "styles/contact";
+
+// ---------------------------------------------------------------------------
+// Mouvement réduit
+// ---------------------------------------------------------------------------
+// Les composants coupent déjà leurs animations JS via `useReducedMotion`.
+// Ce bloc s'occupe de ce qui vit uniquement en CSS : transitions, parallaxe,
+// masque du prénom, halo. Rien n'est masqué : tout est simplement posé.
+@media (prefers-reduced-motion: reduce) {
+  .night-root {
+    // Lumière figée sur la lune : plus de suivi, plus d'orientation.
+    --lx: 0.78;
+    --ly: 0.22;
+    --la: 225deg;
+  }
+
+  // Le prénom est écrit d'emblée : aucun masque, aucun point d'encre.
+  .night-nom__texte {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .night-nom__point {
+    display: none;
+  }
+
+  // Aucune parallaxe : la carte, la lune et l'ombre restent à leur place.
+  .night-portrait__parallaxe,
+  .night-portrait__lune-parallaxe,
+  .night-portrait__ombre {
+    transform: none;
+    transition: none;
+  }
+
+  // Les liserés des cartes restent allumés, doucement, sans transition.
+  .night-carte::before,
+  .night-carte::after {
+    opacity: 0.6;
+    transition: none;
+  }
+
+  // Ni soulèvement, ni agrandissement du visuel.
+  .night-carte--levee:hover {
+    transform: none;
+  }
+
+  .night-projet__visuel img {
+    transition: none;
+  }
+
+  .night-carte--levee:hover .night-projet__visuel img {
+    transform: none;
+  }
+
+  // Le reflet du bouton 3D ne joue pas.
+  .night-btn--3d {
+    background-position: 0 0;
+  }
+
+  // Les changements de couleur courts (navbar, dock, liens, focus) restent :
+  // ils n'impliquent aucun déplacement.
+}
