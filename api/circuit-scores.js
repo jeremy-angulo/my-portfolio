@@ -8,6 +8,13 @@
 // enchaîne les vérifications puis écrit dans Redis. Rien n'est écrit avant
 // que tout soit validé, pour qu'un nom refusé puisse être corrigé et
 // redéposé avec le même jeton.
+//
+// Retirer une ligne du tableau (la clé d'une personne est visible dans le
+// journal circuit:log, ou se déduit du nom : minuscules, sans accent ni
+// espace) :
+//
+//   curl -X DELETE -H "Authorization: Bearer $CIRCUIT_ADMIN_TOKEN" \
+//     "https://jeremyangulo.fr/api/circuit-scores?person=jeanmartin"
 import {
     BOARD_SIZE,
     KEY_BOARD,
