@@ -47,6 +47,7 @@ export class CircuitScores
         this.online = null
         this.run = null
         this.scores = []
+        this.total = 0
         this.source = 'local'
     }
 
@@ -62,6 +63,7 @@ export class CircuitScores
                 this.online = true
                 this.source = 'server'
                 this.scores = payload.scores
+                this.total = payload.total ?? payload.scores.length
 
                 return this.scores
             }
@@ -162,9 +164,20 @@ export class CircuitScores
                 this.online = true
                 this.source = 'server'
                 this.scores = payload.scores
+                this.total = payload.total ?? payload.scores.length
                 this.run = null
 
-                return { ok: true, scores: this.scores, rank: payload.rank, improved: payload.improved, name: payload.name }
+                return {
+                    ok: true,
+                    scores: this.scores,
+                    rank: payload.rank,
+                    total: this.total,
+                    improved: payload.improved,
+                    name: payload.name,
+                    // Temps de la dernière ligne visible : de quoi dire ce
+                    // qu'il manque pour entrer dans le tableau.
+                    lastVisibleMs: this.scores.length ? this.scores[this.scores.length - 1].timeMs : null,
+                }
             }
 
             // Un jeton déjà utilisé ou un nom refusé sont des réponses

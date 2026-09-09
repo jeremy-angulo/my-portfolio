@@ -1104,15 +1104,22 @@ export class CircuitArea extends Area
                 // visiteurs, ou l'appareil quand le serveur ne répond pas.
                 if(this.menu.noteElement)
                 {
-                    this.menu.noteElement.innerHTML = this.scores.source === 'server'
+                    const drivers = this.scores.total
+
+                    this.menu.noteElement.innerHTML = this.scores.source !== 'server'
                         ? t(
-                            'Public board: the best lap of every visitor. Finish a race to add your name.',
-                            'Tableau public : le meilleur tour de chaque visiteur. Termine une course pour y inscrire ton nom.'
-                        )
-                        : t(
                             'Board unreachable — showing the times saved on this device.',
                             'Tableau injoignable — voici les temps gardés sur cet appareil.'
                         )
+                        : drivers > 1
+                            ? t(
+                                `Public board — ${drivers} drivers, the best lap of each one.`,
+                                `Tableau public — ${drivers} pilotes, le meilleur tour de chacun.`
+                            )
+                            : t(
+                                'Public board: the best lap of every visitor. Finish a race to add your name.',
+                                'Tableau public : le meilleur tour de chaque visiteur. Termine une course pour y inscrire ton nom.'
+                            )
                 }
 
                 this.menu.leaderboardNeedsUpdate = false
@@ -1230,6 +1237,55 @@ export class CircuitArea extends Area
             }
         }
 
+        // « 3e sur 27 » plutôt que « 3e » : le rang seul ne dit rien du monde
+        // qu'on vient de battre.
+        const ordinal = (rank) =>
+        {
+            const tens = rank % 100
+            const units = rank % 10
+            const suffix = units === 1 && tens !== 11 ? 'st'
+                : units === 2 && tens !== 12 ? 'nd'
+                : units === 3 && tens !== 13 ? 'rd'
+                : 'th'
+
+            return t(`${rank}${suffix}`, `${rank}${rank === 1 ? 'er' : 'e'}`)
+        }
+
+        const resultMessage = (result, timeMs) =>
+        {
+            const { rank, total } = result
+
+            if(!rank)
+                return result.improved
+                    ? t('Saved on the public board.', 'Enregistré sur le tableau public.')
+                    : t('Your best lap stays on the board.', 'Ton meilleur tour reste au tableau.')
+
+            const place = total > 1
+                ? t(`${ordinal(rank)} of ${total}`, `${ordinal(rank)} sur ${total}`)
+                : ordinal(rank)
+
+            const head = result.improved
+                ? t(`Saved — ${place}.`, `Enregistré — ${place}.`)
+                : t(`Your best lap stays on the board — ${place}.`, `Ton meilleur tour reste au tableau — ${place}.`)
+
+            // Hors des lignes affichées : dire combien il manque, c'est la
+            // seule raison de remonter en voiture.
+            const visible = result.scores?.length ?? 0
+
+            if(result.improved && visible > 0 && rank > visible && typeof result.lastVisibleMs === 'number')
+            {
+                const gap = (timeMs - result.lastVisibleMs) / 1000
+
+                if(gap > 0)
+                    return `${head} ${t(
+                        `${gap.toFixed(1)}s faster to reach the board.`,
+                        `${gap.toFixed(1).replace('.', ',')} s de moins pour entrer dans le tableau.`
+                    )}`
+            }
+
+            return head
+        }
+
         const submit = async () =>
         {
             if(this.endModal.busy || !this.endModal.pending || !isComplete())
@@ -1237,6 +1293,7 @@ export class CircuitArea extends Area
 
             const firstName = sanatize(this.menu.firstNameInput.value).trim()
             const lastName = sanatize(this.menu.lastNameInput.value).trim()
+            const attemptMs = this.endModal.pending.timeMs
 
             this.endModal.busy = true
             this.menu.inputGroup.classList.add('is-busy')
@@ -1260,14 +1317,7 @@ export class CircuitArea extends Area
                 this.endModal.pending = null
                 this.menu.inputGroup.classList.add('is-done')
 
-                const rank = result.rank
-
-                if(result.improved && rank)
-                    feedback(t(`Saved — ${rank}${rank === 1 ? 'st' : rank === 2 ? 'nd' : rank === 3 ? 'rd' : 'th'} on the public board.`, `Enregistré — ${rank}${rank === 1 ? 'er' : 'e'} du tableau public.`), 'is-success')
-                else if(result.improved)
-                    feedback(t('Saved on the public board.', 'Enregistré sur le tableau public.'), 'is-success')
-                else
-                    feedback(t('Your best lap stays on the board.', 'Ton meilleur tour reste au tableau.'), 'is-success')
+                feedback(resultMessage(result, attemptMs), 'is-success')
 
                 // Achievement
                 this.game.achievements.setProgress('circuitLeaderboard', 1)

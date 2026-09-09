@@ -89878,12 +89878,12 @@ https://github.com/browserify/crypto-browserify`);
   };
   class CircuitScores {
     constructor() {
-      this.online = null, this.run = null, this.scores = [], this.source = "local";
+      this.online = null, this.run = null, this.scores = [], this.total = 0, this.source = "local";
     }
     async fetchBoard() {
       try {
         const { ok: e, payload: r } = await request(API_SCORES);
-        if (e && Array.isArray(r.scores)) return this.online = true, this.source = "server", this.scores = r.scores, this.scores;
+        if (e && Array.isArray(r.scores)) return this.online = true, this.source = "server", this.scores = r.scores, this.total = r.total ?? r.scores.length, this.scores;
       } catch {
       }
       return this.online = false, this.source = "local", this.scores = this.localScores(), this.scores;
@@ -89940,12 +89940,14 @@ https://github.com/browserify/crypto-browserify`);
           },
           body: JSON.stringify(d)
         });
-        return p && Array.isArray(m.scores) ? (this.online = true, this.source = "server", this.scores = m.scores, this.run = null, {
+        return p && Array.isArray(m.scores) ? (this.online = true, this.source = "server", this.scores = m.scores, this.total = m.total ?? m.scores.length, this.run = null, {
           ok: true,
           scores: this.scores,
           rank: m.rank,
+          total: this.total,
           improved: m.improved,
-          name: m.name
+          name: m.name,
+          lastVisibleMs: this.scores.length ? this.scores[this.scores.length - 1].timeMs : null
         }) : {
           ok: false,
           error: m.error ?? `http_${f}`,
@@ -90364,7 +90366,11 @@ https://github.com/browserify/crypto-browserify`);
                             <td class="time">${timeToRaceString(d.timeMs / 1e3)}</td>
                         </tr>
                     `, c++;
-          this.menu.leaderboardElement.innerHTML = h, a.length ? this.menu.leaderboardContainerElement.classList.remove("has-no-score") : this.menu.leaderboardContainerElement.classList.add("has-no-score"), this.menu.noteElement && (this.menu.noteElement.innerHTML = this.scores.source === "server" ? t$1("Public board: the best lap of every visitor. Finish a race to add your name.", "Tableau public : le meilleur tour de chaque visiteur. Termine une course pour y inscrire ton nom.") : t$1("Board unreachable \u2014 showing the times saved on this device.", "Tableau injoignable \u2014 voici les temps gard\xE9s sur cet appareil.")), this.menu.leaderboardNeedsUpdate = false;
+          if (this.menu.leaderboardElement.innerHTML = h, a.length ? this.menu.leaderboardContainerElement.classList.remove("has-no-score") : this.menu.leaderboardContainerElement.classList.add("has-no-score"), this.menu.noteElement) {
+            const d = this.scores.total;
+            this.menu.noteElement.innerHTML = this.scores.source !== "server" ? t$1("Board unreachable \u2014 showing the times saved on this device.", "Tableau injoignable \u2014 voici les temps gard\xE9s sur cet appareil.") : d > 1 ? t$1(`Public board \u2014 ${d} drivers, the best lap of each one.`, `Tableau public \u2014 ${d} pilotes, le meilleur tour de chacun.`) : t$1("Public board: the best lap of every visitor. Finish a race to add your name.", "Tableau public : le meilleur tour de chaque visiteur. Termine une course pour y inscrire ton nom.");
+          }
+          this.menu.leaderboardNeedsUpdate = false;
         }
       }, this.menu.instance.contentElement.querySelector(".js-button-restart").addEventListener("click", (o) => {
         o.preventDefault(), this.restart(), this.game.menu.close();
@@ -90375,15 +90381,15 @@ https://github.com/browserify/crypto-browserify`);
       });
     }
     setEndModal() {
-      this.endModal = {}, this.endModal.instance = this.game.modals.items.get("circuit-end"), this.endModal.timeElement = this.endModal.instance.element.querySelector(".js-time"), this.endModal.feedbackElement = this.endModal.instance.element.querySelector(".js-feedback"), this.endModal.pending = null, this.endModal.busy = false, this.endModal.instance.element.querySelector(".js-button-restart").addEventListener("click", (d) => {
-        d.preventDefault(), this.restart(), this.game.modals.close();
+      this.endModal = {}, this.endModal.instance = this.game.modals.items.get("circuit-end"), this.endModal.timeElement = this.endModal.instance.element.querySelector(".js-time"), this.endModal.feedbackElement = this.endModal.instance.element.querySelector(".js-feedback"), this.endModal.pending = null, this.endModal.busy = false, this.endModal.instance.element.querySelector(".js-button-restart").addEventListener("click", (f) => {
+        f.preventDefault(), this.restart(), this.game.modals.close();
       }), this.menu.inputGroup = this.endModal.instance.element.querySelector(".js-input-group"), this.menu.firstNameInput = this.menu.inputGroup.querySelector(".js-input-first-name"), this.menu.lastNameInput = this.menu.inputGroup.querySelector(".js-input-last-name"), this.menu.submitButton = this.menu.inputGroup.querySelector(".js-submit");
-      const r = (d = "") => d.replace(/[^\p{L}\p{M}' -]/gu, "").replace(/\s{2,}/g, " ").slice(0, 24), s = () => r(this.menu.firstNameInput.value).trim().length >= 2 && r(this.menu.lastNameInput.value).trim().length >= 1, o = () => {
+      const r = (f = "") => f.replace(/[^\p{L}\p{M}' -]/gu, "").replace(/\s{2,}/g, " ").slice(0, 24), s = () => r(this.menu.firstNameInput.value).trim().length >= 2 && r(this.menu.lastNameInput.value).trim().length >= 1, o = () => {
         s() ? this.menu.inputGroup.classList.add("is-valide") : this.menu.inputGroup.classList.remove("is-valide");
-      }, a = (d, p = "") => {
-        this.endModal.feedbackElement.textContent = d, this.endModal.feedbackElement.className = `js-feedback feedback${p ? ` ${p}` : ""}`;
-      }, h = (d) => {
-        switch (d) {
+      }, a = (f, m = "") => {
+        this.endModal.feedbackElement.textContent = f, this.endModal.feedbackElement.className = `js-feedback feedback${m ? ` ${m}` : ""}`;
+      }, h = (f) => {
+        switch (f) {
           case "first_name_length":
           case "last_name_length":
           case "name_characters":
@@ -90406,38 +90412,47 @@ https://github.com/browserify/crypto-browserify`);
           default:
             return t$1("Time saved on this device only.", "Temps gard\xE9 sur cet appareil seulement.");
         }
-      }, c = async () => {
+      }, c = (f) => {
+        const m = f % 100, b = f % 10;
+        return t$1(`${f}${b === 1 && m !== 11 ? "st" : b === 2 && m !== 12 ? "nd" : b === 3 && m !== 13 ? "rd" : "th"}`, `${f}${f === 1 ? "er" : "e"}`);
+      }, d = (f, m) => {
+        var _a2;
+        const { rank: b, total: w } = f;
+        if (!b) return f.improved ? t$1("Saved on the public board.", "Enregistr\xE9 sur le tableau public.") : t$1("Your best lap stays on the board.", "Ton meilleur tour reste au tableau.");
+        const M = w > 1 ? t$1(`${c(b)} of ${w}`, `${c(b)} sur ${w}`) : c(b), R = f.improved ? t$1(`Saved \u2014 ${M}.`, `Enregistr\xE9 \u2014 ${M}.`) : t$1(`Your best lap stays on the board \u2014 ${M}.`, `Ton meilleur tour reste au tableau \u2014 ${M}.`), V = ((_a2 = f.scores) == null ? void 0 : _a2.length) ?? 0;
+        if (f.improved && V > 0 && b > V && typeof f.lastVisibleMs == "number") {
+          const O = (m - f.lastVisibleMs) / 1e3;
+          if (O > 0) return `${R} ${t$1(`${O.toFixed(1)}s faster to reach the board.`, `${O.toFixed(1).replace(".", ",")} s de moins pour entrer dans le tableau.`)}`;
+        }
+        return R;
+      }, p = async () => {
         if (this.endModal.busy || !this.endModal.pending || !s()) return;
-        const d = r(this.menu.firstNameInput.value).trim(), p = r(this.menu.lastNameInput.value).trim();
+        const f = r(this.menu.firstNameInput.value).trim(), m = r(this.menu.lastNameInput.value).trim(), b = this.endModal.pending.timeMs;
         this.endModal.busy = true, this.menu.inputGroup.classList.add("is-busy"), a(t$1("Saving\u2026", "Enregistrement\u2026"));
-        const f = await this.scores.submit({
-          firstName: d,
-          lastName: p,
+        const w = await this.scores.submit({
+          firstName: f,
+          lastName: m,
           timeMs: this.endModal.pending.timeMs,
           splits: this.endModal.pending.splits
         });
-        if (this.endModal.busy = false, this.menu.inputGroup.classList.remove("is-busy"), this.leaderboard.update(f.scores), this.menu.updateLeaderboard(f.scores), f.ok) {
-          this.endModal.pending = null, this.menu.inputGroup.classList.add("is-done");
-          const m = f.rank;
-          f.improved && m ? a(t$1(`Saved \u2014 ${m}${m === 1 ? "st" : m === 2 ? "nd" : m === 3 ? "rd" : "th"} on the public board.`, `Enregistr\xE9 \u2014 ${m}${m === 1 ? "er" : "e"} du tableau public.`), "is-success") : f.improved ? a(t$1("Saved on the public board.", "Enregistr\xE9 sur le tableau public."), "is-success") : a(t$1("Your best lap stays on the board.", "Ton meilleur tour reste au tableau."), "is-success"), this.game.achievements.setProgress("circuitLeaderboard", 1);
-        } else a(h(f.error), "is-error"), f.offline && (this.endModal.pending = null, this.game.achievements.setProgress("circuitLeaderboard", 1));
+        this.endModal.busy = false, this.menu.inputGroup.classList.remove("is-busy"), this.leaderboard.update(w.scores), this.menu.updateLeaderboard(w.scores), w.ok ? (this.endModal.pending = null, this.menu.inputGroup.classList.add("is-done"), a(d(w, b), "is-success"), this.game.achievements.setProgress("circuitLeaderboard", 1)) : (a(h(w.error), "is-error"), w.offline && (this.endModal.pending = null, this.game.achievements.setProgress("circuitLeaderboard", 1)));
       };
-      for (const d of [
+      for (const f of [
         this.menu.firstNameInput,
         this.menu.lastNameInput
-      ]) d.addEventListener("input", () => {
-        const p = r(d.value);
-        p !== d.value && (d.value = p), o();
+      ]) f.addEventListener("input", () => {
+        const m = r(f.value);
+        m !== f.value && (f.value = m), o();
       });
-      this.menu.inputGroup.addEventListener("submit", (d) => {
-        d.preventDefault(), c();
-      }), this.endModal.prepare = (d, p) => {
+      this.menu.inputGroup.addEventListener("submit", (f) => {
+        f.preventDefault(), p();
+      }), this.endModal.prepare = (f, m) => {
         this.endModal.pending = {
-          timeMs: d,
-          splits: p
-        }, this.endModal.timeElement.textContent = timeToRaceString(d / 1e3), this.endModal.busy = false, this.menu.inputGroup.classList.remove("is-done", "is-busy");
-        const f = this.scores.savedName();
-        this.menu.firstNameInput.value = f.firstName, this.menu.lastNameInput.value = f.lastName, o(), a(this.scores.online === false ? t$1("Board unreachable \u2014 your time stays on this device.", "Tableau injoignable \u2014 ton temps reste sur cet appareil.") : "");
+          timeMs: f,
+          splits: m
+        }, this.endModal.timeElement.textContent = timeToRaceString(f / 1e3), this.endModal.busy = false, this.menu.inputGroup.classList.remove("is-done", "is-busy");
+        const b = this.scores.savedName();
+        this.menu.firstNameInput.value = b.firstName, this.menu.lastNameInput.value = b.lastName, o(), a(this.scores.online === false ? t$1("Board unreachable \u2014 your time stays on this device.", "Tableau injoignable \u2014 ton temps reste sur cet appareil.") : "");
       };
     }
     restart() {
@@ -105609,7 +105624,7 @@ ${e.tab}if ( ${m} ) {
           }
         ]
       ]), this.options = new Options(), this.respawns = new Respawns("landing"), this.view = new View(), this.rendering.setPostprocessing(), this.rendering.start(), this.reveal = new Reveal(), this.noises = new Noises(), this.weather = new Weather(), this.wind = new Wind(), this.tracks = new Tracks(), this.lighting = new Lighting(), this.fog = new Fog(), this.water = new Water(), this.materials = new Materials(), this.objects = new Objects(), this.explosions = new Explosions(), this.world = new World();
-      const h = __vitePreload(() => import("./rapier-MCb_h375.js").then(async (m) => {
+      const h = __vitePreload(() => import("./rapier-7xqWMkCK.js").then(async (m) => {
         await m.__tla;
         return m;
       }), [], import.meta.url), c = this.resourcesLoader.load([

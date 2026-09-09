@@ -68,12 +68,13 @@ const readLimit = (request) =>
 async function handleGet(request, response)
 {
     const scores = await readBoard(readLimit(request))
+    const total = Number(await redis([ 'ZCARD', KEY_BOARD ])) || 0
 
     // Un temps déposé doit apparaître vite pour les autres joueurs, mais le
     // tableau n'a pas besoin d'être à la seconde près : 15 s de cache CDN.
     response.setHeader('Cache-Control', 'public, max-age=0, s-maxage=15, stale-while-revalidate=60')
 
-    return response.status(200).json({ scores, size: scores.length })
+    return response.status(200).json({ scores, size: scores.length, total })
 }
 
 async function handlePost(request, response)
@@ -170,7 +171,13 @@ async function handlePost(request, response)
     await redisPipeline(writes)
 
     const scores = await readBoard(readLimit(request))
-    const rank = scores.findIndex((score) => score.name === name.display) + 1
+
+    // Le rang vient du classement complet, pas des seules lignes affichées :
+    // savoir qu'on est 14e sur 27 donne une raison de reprendre le volant.
+    const [ rankRaw, total ] = await redisPipeline([
+        [ 'ZRANK', KEY_BOARD, name.person ],
+        [ 'ZCARD', KEY_BOARD ],
+    ])
 
     response.setHeader('Cache-Control', 'no-store')
 
@@ -179,7 +186,8 @@ async function handlePost(request, response)
         improved,
         previousMs,
         name: name.display,
-        rank: rank > 0 ? rank : null,
+        rank: rankRaw === null || rankRaw === undefined ? null : Number(rankRaw) + 1,
+        total: Number(total) || scores.length,
         scores,
     })
 }

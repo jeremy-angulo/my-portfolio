@@ -51,7 +51,7 @@ export const MIN_SPLIT_DELTA_MS = 250
 export const MAX_RUNS_PER_HOUR = 60
 export const MAX_SUBMITS_PER_HOUR = 12
 
-export const BOARD_SIZE = 12
+export const BOARD_SIZE = 10
 export const MAX_BOARD_SIZE = 50
 
 // —— Redis (API REST) —————————————————————————————————————————————————
