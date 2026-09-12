@@ -10,7 +10,8 @@
     "host": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
-    "start": "vite preview"
+    "start": "vite preview",
+    "test": "node --test \"tests/*.test.js\""
   },
   "dependencies": {
     "@emailjs/browser": "^3.11.0",

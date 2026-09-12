@@ -4,7 +4,7 @@
 // Appelé par le jeu à chaque « Rejouer » (folio/sources/Game/CircuitScores.js).
 // Le jeton porte l'heure serveur du départ, l'empreinte d'adresse et une clé
 // de signature à usage unique ; il est inutilisable une seconde fois.
-import { hashIp, isConfigured, issueRun, redis, MAX_RUNS_PER_HOUR, MIN_TIME_MS } from './_lib/circuit.js'
+import { hashIp, isConfigured, issueRun, rateLimit, MAX_RUNS_PER_HOUR, MIN_TIME_MS } from './_lib/circuit.js'
 
 export default async function handler(request, response)
 {
@@ -20,14 +20,9 @@ export default async function handler(request, response)
 
     try
     {
-        const bucket = Math.floor(Date.now() / 3600000)
-        const key = `circuit:rl:run:${ipHash}:${bucket}`
-        const count = await redis([ 'INCR', key ])
+        const quota = await rateLimit('run', ipHash, MAX_RUNS_PER_HOUR)
 
-        if(count === 1)
-            await redis([ 'EXPIRE', key, 3600 ])
-
-        if(count > MAX_RUNS_PER_HOUR)
+        if(quota.exceeded)
             return response.status(429).json({ error: 'too_many_runs' })
     }
     catch
