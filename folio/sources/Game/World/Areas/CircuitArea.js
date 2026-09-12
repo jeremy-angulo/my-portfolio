@@ -1179,20 +1179,20 @@ export class CircuitArea extends Area
         })
 
         this.menu.inputGroup = this.endModal.instance.element.querySelector('.js-input-group')
-        this.menu.firstNameInput = this.menu.inputGroup.querySelector('.js-input-first-name')
-        this.menu.lastNameInput = this.menu.inputGroup.querySelector('.js-input-last-name')
+        this.menu.nameInput = this.menu.inputGroup.querySelector('.js-input-name')
         this.menu.submitButton = this.menu.inputGroup.querySelector('.js-submit')
 
         // Les lettres, l'espace, le trait d'union et l'apostrophe suffisent à
         // écrire un nom ; le serveur applique la même règle de son côté.
         const sanatize = (text = '') => text
-            .replace(/[^\p{L}\p{M}' -]/gu, '')
+            .replace(/[^\p{L}\p{M}' .-]/gu, '')
             .replace(/\s{2,}/g, ' ')
-            .slice(0, 24)
+            .slice(0, 40)
 
+        // Un nom, écrit comme le visiteur l'entend : prénom seul, prénom et
+        // nom, nom d'abord. Deux lettres suffisent à en faire un.
         const isComplete = () =>
-            sanatize(this.menu.firstNameInput.value).trim().length >= 2
-            && sanatize(this.menu.lastNameInput.value).trim().length >= 1
+            (sanatize(this.menu.nameInput.value).trim().match(/\p{L}/gu) ?? []).length >= 2
 
         const updateGroup = () =>
         {
@@ -1213,10 +1213,9 @@ export class CircuitArea extends Area
         {
             switch(error)
             {
-                case 'first_name_length':
-                case 'last_name_length':
+                case 'name_length':
                 case 'name_characters':
-                    return t('Please enter a real first and last name.', 'Indique un vrai prénom et un vrai nom.')
+                    return t('Please enter a real name.', 'Indique un vrai nom.')
                 case 'name_rejected':
                     return t('This name will not go on a public board.', 'Ce nom n’ira pas sur un tableau public.')
                 case 'already_submitted':
@@ -1291,8 +1290,7 @@ export class CircuitArea extends Area
             if(this.endModal.busy || !this.endModal.pending || !isComplete())
                 return
 
-            const firstName = sanatize(this.menu.firstNameInput.value).trim()
-            const lastName = sanatize(this.menu.lastNameInput.value).trim()
+            const name = sanatize(this.menu.nameInput.value).trim()
             const attemptMs = this.endModal.pending.timeMs
 
             this.endModal.busy = true
@@ -1300,8 +1298,7 @@ export class CircuitArea extends Area
             feedback(t('Saving…', 'Enregistrement…'))
 
             const result = await this.scores.submit({
-                firstName,
-                lastName,
+                name,
                 timeMs: this.endModal.pending.timeMs,
                 splits: this.endModal.pending.splits,
             })
@@ -1336,18 +1333,15 @@ export class CircuitArea extends Area
             }
         }
 
-        for(const input of [ this.menu.firstNameInput, this.menu.lastNameInput ])
+        this.menu.nameInput.addEventListener('input', () =>
         {
-            input.addEventListener('input', () =>
-            {
-                const cleaned = sanatize(input.value)
+            const cleaned = sanatize(this.menu.nameInput.value)
 
-                if(cleaned !== input.value)
-                    input.value = cleaned
+            if(cleaned !== this.menu.nameInput.value)
+                this.menu.nameInput.value = cleaned
 
-                updateGroup()
-            })
-        }
+            updateGroup()
+        })
 
         this.menu.inputGroup.addEventListener('submit', (event) =>
         {
@@ -1369,9 +1363,7 @@ export class CircuitArea extends Area
             this.endModal.busy = false
             this.menu.inputGroup.classList.remove('is-done', 'is-busy')
 
-            const saved = this.scores.savedName()
-            this.menu.firstNameInput.value = saved.firstName
-            this.menu.lastNameInput.value = saved.lastName
+            this.menu.nameInput.value = this.scores.savedName()
 
             updateGroup()
 

@@ -26,7 +26,23 @@ export const signedRun = ({ ageMs = 40000, ipHash = null, runId = 'run-de-test' 
 export const splitsFor = (timeMs) => [ 1200, Math.round(timeMs * 0.35), Math.round(timeMs * 0.7), timeMs ]
 
 // Le corps exact qu'enverrait le jeu à la fin d'une course.
-export function submission({ timeMs = 32000, firstName = 'Jérémy', lastName = 'Angulo', ...rest } = {})
+export function submission({ timeMs = 32000, name = 'Jérémy Angulo', ...rest } = {})
+{
+    const { payload, token } = signedRun(rest)
+    const splits = rest.splits ?? splitsFor(timeMs)
+
+    return {
+        payload,
+        body: {
+            token, timeMs, splits, name,
+            signature: signSubmission(payload.key, { runId: payload.rid, timeMs, splits, name }),
+        },
+    }
+}
+
+// Le corps qu'enverrait un navigateur qui garde encore l'ancien bundle, du
+// temps où la modale demandait le prénom et le nom séparément.
+export function legacySubmission({ timeMs = 32000, firstName = 'Jérémy', lastName = 'Angulo', ...rest } = {})
 {
     const { payload, token } = signedRun(rest)
     const splits = rest.splits ?? splitsFor(timeMs)

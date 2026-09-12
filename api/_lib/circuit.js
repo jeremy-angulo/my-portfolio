@@ -49,6 +49,11 @@ export const MIN_SPLIT_DELTA_MS = 250
 export const MAX_RUNS_PER_HOUR = 60
 export const MAX_SUBMITS_PER_HOUR = 12
 
+// Un nom complet tient dans 40 signes ; le panneau du circuit réduit la
+// police pour les plus longs plutôt que de les couper.
+export const MIN_NAME_LENGTH = 2
+export const MAX_NAME_LENGTH = 40
+
 export const BOARD_SIZE = 10
 export const MAX_BOARD_SIZE = 50
 
@@ -185,8 +190,14 @@ export function readRunToken(token)
 // Signature du dépôt, calculée par le client avec la clé de sa course
 // (Web Crypto). Elle n'est pas un secret partagé — elle oblige simplement à
 // passer par le vrai chemin du jeu plutôt que par un POST improvisé.
-export const submissionMessage = ({ runId, timeMs, splits, firstName, lastName }) =>
-    `${runId}|${timeMs}|${splits.join(',')}|${firstName}|${lastName}`
+//
+// Le jeu n'envoie plus qu'un nom. La forme à deux champs reste acceptée le
+// temps que les navigateurs qui gardent l'ancien bundle en cache (un jour au
+// plus) l'abandonnent ; elle pourra disparaître ensuite.
+export const submissionMessage = ({ runId, timeMs, splits, name, firstName, lastName }) =>
+    typeof name === 'string'
+        ? `${runId}|${timeMs}|${splits.join(',')}|${name}`
+        : `${runId}|${timeMs}|${splits.join(',')}|${firstName}|${lastName}`
 
 export const signSubmission = (runKey, fields) =>
     hmac(Buffer.from(runKey, 'hex'), submissionMessage(fields)).toString('hex')
@@ -208,33 +219,32 @@ const titleCase = (text) => text
     .toLocaleLowerCase('fr')
     .replace(/(^|[\s'-])(\p{L})/gu, (match, prefix, letter) => prefix + letter.toLocaleUpperCase('fr'))
 
-const cleanPart = (value) => String(value ?? '')
+const clean = (value) => String(value ?? '')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 32)
+    .slice(0, MAX_NAME_LENGTH)
 
-// Prénom en capitale initiale, nom en majuscules : lisible sur le panneau du
-// circuit comme dans le menu, et sans ambiguïté sur l'ordre des deux champs.
-export function normalizeName(firstNameRaw, lastNameRaw)
+// Un seul champ, libre : « Jérémy Angulo », « Angulo Jérémy », un prénom
+// seul — c'est au visiteur de décider ce qu'il montre. On ne corrige la casse
+// que si elle est uniforme (tout en minuscules ou tout en majuscules) : sinon
+// « de la Tour » et « McGregor » y perdraient.
+export function normalizeName(nameRaw)
 {
-    const firstName = cleanPart(firstNameRaw)
-    const lastName = cleanPart(lastNameRaw)
+    const name = clean(nameRaw)
 
-    if(firstName.length < 2 || firstName.length > 18)
-        return { error: 'first_name_length' }
+    if(name.length < MIN_NAME_LENGTH || name.length > MAX_NAME_LENGTH)
+        return { error: 'name_length' }
 
-    if(lastName.length < 1 || lastName.length > 24)
-        return { error: 'last_name_length' }
-
-    if(!NAME_ALLOWED.test(firstName) || !NAME_ALLOWED.test(lastName))
+    if(!NAME_ALLOWED.test(name) || (name.match(/\p{L}/gu) ?? []).length < 2)
         return { error: 'name_characters' }
 
-    const folded = foldAccents(`${firstName} ${lastName}`).toLowerCase()
+    const folded = foldAccents(name).toLowerCase()
 
     if(BLOCKED.some((word) => folded.includes(foldAccents(word))))
         return { error: 'name_rejected' }
 
-    const display = `${titleCase(firstName)} ${lastName.toLocaleUpperCase('fr')}`
+    const uniform = name === name.toLocaleLowerCase('fr') || name === name.toLocaleUpperCase('fr')
+    const display = uniform ? titleCase(name) : name
 
     // Clé d'unicité : une personne n'occupe qu'une ligne, son meilleur temps.
     // Un nom écrit hors alphabet latin (cyrillique, grec, chinois…) ne laisse

@@ -81,7 +81,13 @@ async function handlePost(request, response)
         return response.status(400).json({ error: checked.error })
     }
 
-    const name = normalizeName(body.firstName, body.lastName)
+    // Le jeu n'envoie plus qu'un nom ; un navigateur qui garde l'ancien bundle
+    // en cache envoie encore deux champs. On signe avec ce qui a été envoyé.
+    const written = typeof body.name === 'string'
+        ? { name: String(body.name) }
+        : { firstName: String(body.firstName ?? ''), lastName: String(body.lastName ?? '') }
+
+    const name = normalizeName(written.name ?? `${written.firstName} ${written.lastName}`)
     if(name.error)
         return response.status(400).json({ error: name.error })
 
@@ -91,8 +97,7 @@ async function handlePost(request, response)
         runId: payload.rid,
         timeMs: checked.timeMs,
         splits: checked.splits,
-        firstName: String(body.firstName ?? ''),
-        lastName: String(body.lastName ?? ''),
+        ...written,
     })
 
     if(String(body.signature ?? '') !== expected)

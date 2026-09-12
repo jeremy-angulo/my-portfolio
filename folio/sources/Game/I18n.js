@@ -105,8 +105,7 @@ const domFr = {
     'circuit.controls': 'Commandes',
 
     'ce.yourTime': 'Ton temps',
-    'ce.firstName': 'Prénom',
-    'ce.lastName': 'Nom',
+    'ce.name': 'Ton nom',
     'ce.privacy': 'Ton nom et ton temps s’affichent sur le tableau public du circuit.',
     'ce.submit': 'Valider',
     'ce.or': 'ou',

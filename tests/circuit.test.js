@@ -20,7 +20,7 @@ const {
 
 const scores = (await import('../api/circuit-scores.js')).default
 const run = (await import('../api/circuit-run.js')).default
-const { fakeRequest, fakeResponse, fakeDatabase, ipOf, splitsFor, submission } = await import('./helpers.js')
+const { fakeRequest, fakeResponse, fakeDatabase, ipOf, legacySubmission, splitsFor, submission } = await import('./helpers.js')
 
 const post = async (body, database) =>
 {
@@ -30,33 +30,54 @@ const post = async (body, database) =>
 }
 
 // —— Noms ——————————————————————————————————————————————————————————————
-test('un nom est affiché prénom en capitale, nom en majuscules', () =>
+test('un nom est repris tel qu\'il est écrit', () =>
 {
-    assert.equal(normalizeName('jérémy', 'angulo').display, 'Jérémy ANGULO')
-    assert.equal(normalizeName('  JEAN-luc  ', 'de la Tour').display, 'Jean-Luc DE LA TOUR')
+    assert.equal(normalizeName('Jérémy Angulo').display, 'Jérémy Angulo')
+    assert.equal(normalizeName('Jean-Luc de la Tour').display, 'Jean-Luc de la Tour')
+    assert.equal(normalizeName('  Camille   Rousseau  ').display, 'Camille Rousseau')
+})
+
+test('une casse uniforme est remise en capitales initiales', () =>
+{
+    assert.equal(normalizeName('jeremy angulo').display, 'Jeremy Angulo')
+    assert.equal(normalizeName('JEREMY ANGULO').display, 'Jeremy Angulo')
+})
+
+test('un prénom seul suffit', () =>
+{
+    assert.equal(normalizeName('Camille').display, 'Camille')
+    assert.equal(normalizeName('Camille').error, undefined)
 })
 
 test('une personne garde la même ligne quelle que soit la casse ou les accents', () =>
 {
-    assert.equal(normalizeName('Jérémy', 'Angulo').person, normalizeName('JEREMY', 'angulo').person)
+    assert.equal(normalizeName('Jérémy Angulo').person, normalizeName('JEREMY ANGULO').person)
 })
 
 test('un nom hors alphabet latin reste accepté et reçoit une clé stable', () =>
 {
-    const first = normalizeName('Иван', 'Петров')
-    const second = normalizeName('Иван', 'Петров')
+    const first = normalizeName('Иван Петров')
 
     assert.equal(first.error, undefined)
-    assert.equal(first.person, second.person)
-    assert.notEqual(first.person, normalizeName('Ольга', 'Петрова').person)
+    assert.equal(first.person, normalizeName('Иван Петров').person)
+    assert.notEqual(first.person, normalizeName('Ольга Петрова').person)
 })
 
 test('les noms impossibles ou insultants sont refusés', () =>
 {
-    assert.equal(normalizeName('J', 'Angulo').error, 'first_name_length')
-    assert.equal(normalizeName('Jérémy', '').error, 'last_name_length')
-    assert.equal(normalizeName('<script>', 'Angulo').error, 'name_characters')
-    assert.equal(normalizeName('Gros', 'Connard').error, 'name_rejected')
+    assert.equal(normalizeName('J').error, 'name_length')
+    assert.equal(normalizeName('').error, 'name_length')
+    assert.equal(normalizeName('A.').error, 'name_characters')
+    assert.equal(normalizeName('<script>').error, 'name_characters')
+    assert.equal(normalizeName('Gros Connard').error, 'name_rejected')
+})
+
+test('un nom trop long est ramené à la largeur du panneau', () =>
+{
+    const display = normalizeName('Jean'.repeat(12)).display
+
+    assert.equal(display.length, 40)
+    assert.ok(display.startsWith('Jean'))
 })
 
 // —— Jetons de course —————————————————————————————————————————————————
@@ -126,7 +147,7 @@ test('un temps déposé rejoint le tableau avec son rang sur tout le monde', asy
     const { response } = await post(body, database)
 
     assert.equal(response.statusCode, 200)
-    assert.equal(response.payload.name, 'Jérémy ANGULO')
+    assert.equal(response.payload.name, 'Jérémy Angulo')
     assert.equal(response.payload.improved, true)
     assert.equal(response.payload.previousMs, null)
     assert.equal(response.payload.rank, 2)
@@ -173,7 +194,7 @@ test('un temps retouché après coup est refusé sans rien écrire', async () =>
 test('un nom refusé laisse une seconde chance avec le même jeton', async () =>
 {
     const database = fakeDatabase()
-    const refused = submission({ firstName: 'Gros', lastName: 'Connard', runId: 'course-a-corriger' })
+    const refused = submission({ name: 'Gros Connard', runId: 'course-a-corriger' })
 
     const first = await post(refused.body, database)
     assert.equal(first.response.statusCode, 400)
@@ -181,11 +202,11 @@ test('un nom refusé laisse une seconde chance avec le même jeton', async () =>
 
     const timeMs = 32000
     const splits = splitsFor(timeMs)
+    const name = 'Jérémy Angulo'
     const corrected = {
         ...refused.body,
-        firstName: 'Jérémy',
-        lastName: 'Angulo',
-        signature: signSubmission(refused.payload.key, { runId: refused.payload.rid, timeMs, splits, firstName: 'Jérémy', lastName: 'Angulo' }),
+        name,
+        signature: signSubmission(refused.payload.key, { runId: refused.payload.rid, timeMs, splits, name }),
     }
 
     const second = await post(corrected, database)
@@ -203,6 +224,17 @@ test('un script qui s\'acharne est arrêté par le quota', async () =>
 
     assert.equal(response.statusCode, 429)
     assert.equal(response.payload.error, 'too_many_submits')
+})
+
+test('un dépôt venu de l\'ancien bundle, en deux champs, passe encore', async () =>
+{
+    const database = fakeDatabase()
+    const { body } = legacySubmission({ firstName: 'Camille', lastName: 'Rousseau', runId: 'course-ancienne' })
+
+    const { response } = await post(body, database)
+
+    assert.equal(response.statusCode, 200)
+    assert.equal(response.payload.name, 'Camille Rousseau')
 })
 
 test('le tableau se lit sans jeton et annonce le total', async () =>

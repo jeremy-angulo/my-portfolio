@@ -19,7 +19,7 @@ const scores = (await import('../api/circuit-scores.js')).default
 const { fakeRequest, fakeResponse, submission } = await import('./helpers.js')
 
 const PERSON = 'zzzsondedebase'
-const NAME = { firstName: 'Zzz', lastName: 'Sondedebase' }
+const NAME = { name: 'Zzz Sondedebase' }
 
 const call = async (request) =>
 {
@@ -54,7 +54,7 @@ test('la vraie base accepte un temps, le classe, puis le rend', { skip: !live &&
     assert.equal(first.statusCode, 200, JSON.stringify(first.payload))
     assert.equal(first.payload.improved, true)
     assert.equal(first.payload.previousMs, null)
-    assert.equal(first.payload.name, 'Zzz SONDEDEBASE')
+    assert.equal(first.payload.name, 'Zzz Sondedebase')
     assert.ok(first.payload.rank >= 1)
     assert.ok(first.payload.total >= 1)
 
@@ -68,7 +68,7 @@ test('la vraie base accepte un temps, le classe, puis le rend', { skip: !live &&
     assert.equal(slower.payload.previousMs, 38000)
 
     const board = await call(fakeRequest({ method: 'GET', url: '/api/circuit-scores?limit=50' }))
-    const mine = board.payload.scores.find((entry) => entry.name === 'Zzz SONDEDEBASE')
+    const mine = board.payload.scores.find((entry) => entry.name === 'Zzz Sondedebase')
     assert.equal(mine.timeMs, 38000)
     assert.ok(Number.isFinite(mine.at))
 
@@ -81,7 +81,7 @@ test('la vraie base accepte un temps, le classe, puis le rend', { skip: !live &&
     assert.equal(removed.payload.found, true)
 
     const after = await call(fakeRequest({ method: 'GET', url: '/api/circuit-scores?limit=50' }))
-    assert.equal(after.payload.scores.some((entry) => entry.name === 'Zzz SONDEDEBASE'), false)
+    assert.equal(after.payload.scores.some((entry) => entry.name === 'Zzz Sondedebase'), false)
 })
 
 test('la base refuse un appel sans le secret serveur', { skip: !live && 'base non configurée' }, async () =>

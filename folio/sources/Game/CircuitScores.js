@@ -124,16 +124,15 @@ export class CircuitScores
     }
 
     // Renvoie { ok, error, scores, rank, improved, offline }
-    async submit({ firstName, lastName, timeMs, splits })
+    async submit({ name, timeMs, splits })
     {
-        const first = String(firstName ?? '').trim()
-        const last = String(lastName ?? '').trim()
+        const written = String(name ?? '').replace(/\s+/g, ' ').trim()
 
-        this.rememberName(first, last)
+        this.rememberName(written)
 
         // Toujours garder une trace locale : même hors ligne, le joueur
         // retrouve son temps au prochain passage.
-        const local = this.insertLocal(`${first} ${last.toLocaleUpperCase('fr')}`.trim(), timeMs)
+        const local = this.insertLocal(written, timeMs)
 
         if(!this.run || !crypto?.subtle)
         {
@@ -145,13 +144,12 @@ export class CircuitScores
             token: this.run.token,
             timeMs,
             splits,
-            firstName: first,
-            lastName: last,
+            name: written,
         }
 
         try
         {
-            body.signature = await this.sign(`${this.run.runId}|${timeMs}|${splits.join(',')}|${first}|${last}`)
+            body.signature = await this.sign(`${this.run.runId}|${timeMs}|${splits.join(',')}|${written}`)
 
             const { ok, status, payload } = await request(API_SCORES, {
                 method: 'POST',
@@ -192,25 +190,31 @@ export class CircuitScores
     }
 
     // —— Mémoire de l'appareil ————————————————————————————————————————
+    // Le nom est retenu pour être reproposé à la course suivante. L'ancienne
+    // forme (deux champs) est encore relue, pour ne pas faire retaper son nom
+    // à quelqu'un qui l'avait déjà donné.
     savedName()
     {
         try
         {
             const saved = JSON.parse(localStorage.getItem(NAME_KEY))
 
-            if(saved && typeof saved.firstName === 'string' && typeof saved.lastName === 'string')
+            if(typeof saved === 'string')
                 return saved
+
+            if(saved && typeof saved.firstName === 'string')
+                return `${saved.firstName} ${saved.lastName ?? ''}`.trim()
         }
         catch(error) {}
 
-        return { firstName: '', lastName: '' }
+        return ''
     }
 
-    rememberName(firstName, lastName)
+    rememberName(name)
     {
         try
         {
-            localStorage.setItem(NAME_KEY, JSON.stringify({ firstName, lastName }))
+            localStorage.setItem(NAME_KEY, JSON.stringify(name))
         }
         catch(error) {}
     }

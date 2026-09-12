@@ -34271,8 +34271,7 @@ var<${s}> ${e} : ${h};`;
     "circuit.end": "Abandonner",
     "circuit.controls": "Commandes",
     "ce.yourTime": "Ton temps",
-    "ce.firstName": "Pr\xE9nom",
-    "ce.lastName": "Nom",
+    "ce.name": "Ton nom",
     "ce.privacy": "Ton nom et ton temps s\u2019affichent sur le tableau public du circuit.",
     "ce.submit": "Valider",
     "ce.or": "ou",
@@ -89914,43 +89913,42 @@ https://github.com/browserify/crypto-browserify`);
       ]);
       return bytesToHex(await crypto.subtle.sign("HMAC", r, new TextEncoder().encode(e)));
     }
-    async submit({ firstName: e, lastName: r, timeMs: s, splits: o }) {
-      const a = String(e ?? "").trim(), h = String(r ?? "").trim();
-      this.rememberName(a, h);
-      const c = this.insertLocal(`${a} ${h.toLocaleUpperCase("fr")}`.trim(), s);
-      if (!this.run || !(crypto == null ? void 0 : crypto.subtle)) return this.scores = this.online === false ? c : this.scores, {
+    async submit({ name: e, timeMs: r, splits: s }) {
+      const o = String(e ?? "").replace(/\s+/g, " ").trim();
+      this.rememberName(o);
+      const a = this.insertLocal(o, r);
+      if (!this.run || !(crypto == null ? void 0 : crypto.subtle)) return this.scores = this.online === false ? a : this.scores, {
         ok: false,
         offline: true,
         error: "offline",
         scores: this.scores
       };
-      const d = {
+      const h = {
         token: this.run.token,
-        timeMs: s,
-        splits: o,
-        firstName: a,
-        lastName: h
+        timeMs: r,
+        splits: s,
+        name: o
       };
       try {
-        d.signature = await this.sign(`${this.run.runId}|${s}|${o.join(",")}|${a}|${h}`);
-        const { ok: p, status: f, payload: m } = await request(API_SCORES, {
+        h.signature = await this.sign(`${this.run.runId}|${r}|${s.join(",")}|${o}`);
+        const { ok: c, status: d, payload: p } = await request(API_SCORES, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(d)
+          body: JSON.stringify(h)
         });
-        return p && Array.isArray(m.scores) ? (this.online = true, this.source = "server", this.scores = m.scores, this.total = m.total ?? m.scores.length, this.run = null, {
+        return c && Array.isArray(p.scores) ? (this.online = true, this.source = "server", this.scores = p.scores, this.total = p.total ?? p.scores.length, this.run = null, {
           ok: true,
           scores: this.scores,
-          rank: m.rank,
+          rank: p.rank,
           total: this.total,
-          improved: m.improved,
-          name: m.name,
+          improved: p.improved,
+          name: p.name,
           lastVisibleMs: this.scores.length ? this.scores[this.scores.length - 1].timeMs : null
         }) : {
           ok: false,
-          error: m.error ?? `http_${f}`,
+          error: p.error ?? `http_${d}`,
           scores: this.scores
         };
       } catch {
@@ -89958,27 +89956,22 @@ https://github.com/browserify/crypto-browserify`);
           ok: false,
           offline: true,
           error: "network",
-          scores: c
+          scores: a
         };
       }
     }
     savedName() {
       try {
         const e = JSON.parse(localStorage.getItem(NAME_KEY));
-        if (e && typeof e.firstName == "string" && typeof e.lastName == "string") return e;
+        if (typeof e == "string") return e;
+        if (e && typeof e.firstName == "string") return `${e.firstName} ${e.lastName ?? ""}`.trim();
       } catch {
       }
-      return {
-        firstName: "",
-        lastName: ""
-      };
+      return "";
     }
-    rememberName(e, r) {
+    rememberName(e) {
       try {
-        localStorage.setItem(NAME_KEY, JSON.stringify({
-          firstName: e,
-          lastName: r
-        }));
+        localStorage.setItem(NAME_KEY, JSON.stringify(e));
       } catch {
       }
     }
@@ -90383,17 +90376,16 @@ https://github.com/browserify/crypto-browserify`);
     setEndModal() {
       this.endModal = {}, this.endModal.instance = this.game.modals.items.get("circuit-end"), this.endModal.timeElement = this.endModal.instance.element.querySelector(".js-time"), this.endModal.feedbackElement = this.endModal.instance.element.querySelector(".js-feedback"), this.endModal.pending = null, this.endModal.busy = false, this.endModal.instance.element.querySelector(".js-button-restart").addEventListener("click", (f) => {
         f.preventDefault(), this.restart(), this.game.modals.close();
-      }), this.menu.inputGroup = this.endModal.instance.element.querySelector(".js-input-group"), this.menu.firstNameInput = this.menu.inputGroup.querySelector(".js-input-first-name"), this.menu.lastNameInput = this.menu.inputGroup.querySelector(".js-input-last-name"), this.menu.submitButton = this.menu.inputGroup.querySelector(".js-submit");
-      const r = (f = "") => f.replace(/[^\p{L}\p{M}' -]/gu, "").replace(/\s{2,}/g, " ").slice(0, 24), s = () => r(this.menu.firstNameInput.value).trim().length >= 2 && r(this.menu.lastNameInput.value).trim().length >= 1, o = () => {
+      }), this.menu.inputGroup = this.endModal.instance.element.querySelector(".js-input-group"), this.menu.nameInput = this.menu.inputGroup.querySelector(".js-input-name"), this.menu.submitButton = this.menu.inputGroup.querySelector(".js-submit");
+      const r = (f = "") => f.replace(/[^\p{L}\p{M}' .-]/gu, "").replace(/\s{2,}/g, " ").slice(0, 40), s = () => (r(this.menu.nameInput.value).trim().match(new RegExp("\\p{L}", "gu")) ?? []).length >= 2, o = () => {
         s() ? this.menu.inputGroup.classList.add("is-valide") : this.menu.inputGroup.classList.remove("is-valide");
       }, a = (f, m = "") => {
         this.endModal.feedbackElement.textContent = f, this.endModal.feedbackElement.className = `js-feedback feedback${m ? ` ${m}` : ""}`;
       }, h = (f) => {
         switch (f) {
-          case "first_name_length":
-          case "last_name_length":
+          case "name_length":
           case "name_characters":
-            return t$1("Please enter a real first and last name.", "Indique un vrai pr\xE9nom et un vrai nom.");
+            return t$1("Please enter a real name.", "Indique un vrai nom.");
           case "name_rejected":
             return t$1("This name will not go on a public board.", "Ce nom n\u2019ira pas sur un tableau public.");
           case "already_submitted":
@@ -90427,32 +90419,25 @@ https://github.com/browserify/crypto-browserify`);
         return R;
       }, p = async () => {
         if (this.endModal.busy || !this.endModal.pending || !s()) return;
-        const f = r(this.menu.firstNameInput.value).trim(), m = r(this.menu.lastNameInput.value).trim(), b = this.endModal.pending.timeMs;
+        const f = r(this.menu.nameInput.value).trim(), m = this.endModal.pending.timeMs;
         this.endModal.busy = true, this.menu.inputGroup.classList.add("is-busy"), a(t$1("Saving\u2026", "Enregistrement\u2026"));
-        const w = await this.scores.submit({
-          firstName: f,
-          lastName: m,
+        const b = await this.scores.submit({
+          name: f,
           timeMs: this.endModal.pending.timeMs,
           splits: this.endModal.pending.splits
         });
-        this.endModal.busy = false, this.menu.inputGroup.classList.remove("is-busy"), this.leaderboard.update(w.scores), this.menu.updateLeaderboard(w.scores), w.ok ? (this.endModal.pending = null, this.menu.inputGroup.classList.add("is-done"), a(d(w, b), "is-success"), this.game.achievements.setProgress("circuitLeaderboard", 1)) : (a(h(w.error), "is-error"), w.offline && (this.endModal.pending = null, this.game.achievements.setProgress("circuitLeaderboard", 1)));
+        this.endModal.busy = false, this.menu.inputGroup.classList.remove("is-busy"), this.leaderboard.update(b.scores), this.menu.updateLeaderboard(b.scores), b.ok ? (this.endModal.pending = null, this.menu.inputGroup.classList.add("is-done"), a(d(b, m), "is-success"), this.game.achievements.setProgress("circuitLeaderboard", 1)) : (a(h(b.error), "is-error"), b.offline && (this.endModal.pending = null, this.game.achievements.setProgress("circuitLeaderboard", 1)));
       };
-      for (const f of [
-        this.menu.firstNameInput,
-        this.menu.lastNameInput
-      ]) f.addEventListener("input", () => {
-        const m = r(f.value);
-        m !== f.value && (f.value = m), o();
-      });
-      this.menu.inputGroup.addEventListener("submit", (f) => {
+      this.menu.nameInput.addEventListener("input", () => {
+        const f = r(this.menu.nameInput.value);
+        f !== this.menu.nameInput.value && (this.menu.nameInput.value = f), o();
+      }), this.menu.inputGroup.addEventListener("submit", (f) => {
         f.preventDefault(), p();
       }), this.endModal.prepare = (f, m) => {
         this.endModal.pending = {
           timeMs: f,
           splits: m
-        }, this.endModal.timeElement.textContent = timeToRaceString(f / 1e3), this.endModal.busy = false, this.menu.inputGroup.classList.remove("is-done", "is-busy");
-        const b = this.scores.savedName();
-        this.menu.firstNameInput.value = b.firstName, this.menu.lastNameInput.value = b.lastName, o(), a(this.scores.online === false ? t$1("Board unreachable \u2014 your time stays on this device.", "Tableau injoignable \u2014 ton temps reste sur cet appareil.") : "");
+        }, this.endModal.timeElement.textContent = timeToRaceString(f / 1e3), this.endModal.busy = false, this.menu.inputGroup.classList.remove("is-done", "is-busy"), this.menu.nameInput.value = this.scores.savedName(), o(), a(this.scores.online === false ? t$1("Board unreachable \u2014 your time stays on this device.", "Tableau injoignable \u2014 ton temps reste sur cet appareil.") : "");
       };
     }
     restart() {
@@ -105624,7 +105609,7 @@ ${e.tab}if ( ${m} ) {
           }
         ]
       ]), this.options = new Options(), this.respawns = new Respawns("landing"), this.view = new View(), this.rendering.setPostprocessing(), this.rendering.start(), this.reveal = new Reveal(), this.noises = new Noises(), this.weather = new Weather(), this.wind = new Wind(), this.tracks = new Tracks(), this.lighting = new Lighting(), this.fog = new Fog(), this.water = new Water(), this.materials = new Materials(), this.objects = new Objects(), this.explosions = new Explosions(), this.world = new World();
-      const h = __vitePreload(() => import("./rapier-7xqWMkCK.js").then(async (m) => {
+      const h = __vitePreload(() => import("./rapier-OOPuMKEn.js").then(async (m) => {
         await m.__tla;
         return m;
       }), [], import.meta.url), c = this.resourcesLoader.load([
