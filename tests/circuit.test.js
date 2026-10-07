@@ -286,6 +286,20 @@ test('le départ d\'une course délivre un jeton utilisable', async () =>
     assert.equal(response.payload.minTimeMs, MIN_TIME_MS)
 })
 
+test('la route de réveil interroge la base et ne garde rien en cache', async () =>
+{
+    const database = fakeDatabase({ board: [ { person: 'alice', name: 'Alice MARTIN', timeMs: 28000, at: 1 } ] })
+    const keepalive = (await import('../api/circuit-keepalive.js')).default
+
+    const response = fakeResponse()
+    await keepalive(fakeRequest({ method: 'GET', url: '/api/circuit-keepalive' }), response)
+
+    assert.equal(response.statusCode, 200)
+    assert.equal(response.payload.total, 1)
+    assert.equal(response.headers['cache-control'], 'no-store')
+    assert.equal(database.calls.at(-1).name, 'circuit_board')
+})
+
 test('sans base configurée, l\'API le dit au lieu de planter', async () =>
 {
     const previous = process.env.CIRCUIT_DB_URL
