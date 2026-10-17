@@ -38,8 +38,8 @@ test('les zones reçoivent leur nom et leur part des sessions', () =>
     const { world } = shapeWorld(RAW, { days: DAYS })
 
     assert.deepEqual(world.zones, [
-        { label: 'Circuit', sessions: 2, share: 100 },
-        { label: 'Arrivée', sessions: 1, share: 50 },
+        { key: 'circuit', label: 'Circuit', sessions: 2, share: 100 },
+        { key: 'landing', label: 'Arrivée', sessions: 1, share: 50 },
     ])
 })
 

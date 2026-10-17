@@ -157,8 +157,16 @@ export function shapeWorld(raw, { days = [], windowDays = days.length } = {})
     const sessions = Number(raw.sessions) || 0
     const perDay = new Map((raw.daily ?? []).map((row) => [ String(row.day).slice(0, 10), Number(row.sessions) || 0 ]))
 
-    const zones = merge(raw.zones, (key) => ZONE_LABELS[key] ?? key, [ 'sessions' ])
-        .map((row) => ({ ...row, share: share(row.sessions, sessions) }))
+    // La clé de zone reste à côté du libellé : la carte de /statistiques
+    // s'en sert pour poser chaque lieu à sa place.
+    const zones = (raw.zones ?? [])
+        .map((row) => ({
+            key: row.label,
+            label: ZONE_LABELS[row.label] ?? row.label,
+            sessions: Number(row.sessions) || 0,
+            share: share(Number(row.sessions) || 0, sessions),
+        }))
+        .sort((a, b) => b.sessions - a.sessions)
 
     const devices = merge(raw.devices, (key) => DEVICE_LABELS[key] ?? key, [ 'sessions' ])
         .map((row) => ({ ...row, share: share(row.sessions, sessions) }))

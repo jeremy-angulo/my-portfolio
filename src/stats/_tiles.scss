@@ -1,8 +1,8 @@
 // src/stats/_tiles.scss — la mosaïque de /statistiques : grille 12 colonnes
 // et classes de span par largeur, libellés de groupe, tuile de base et ses
 // variantes (hero, paire, courbe, squelette), KPI, bandeau de disponibilité,
-// squelette (lignes, blocs, silhouette de courbe), légende et cadre de la
-// heatmap, état vide encadré, texte masqué.
+// squelette (lignes, blocs, silhouette de courbe), état vide encadré, texte
+// masqué. La carte du monde 3D a son propre partiel (_worldmap.scss).
 // Importé par StatsPage.scss ; les JSX n'importent aucun partiel.
 
 @use "./vars" as *;
@@ -196,52 +196,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  // Exploration : total, légende et pied — colonne à droite de la carte sur
-  // desktop et tablette (voir plus bas), sous la carte sur mobile.
-  &__aside {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-
-    .heat-legend,
-    .tile__foot {
-      margin-top: 0;
-    }
-
-    // La réglette cède la place plutôt que de déborder d'une colonne étroite.
-    .heat-legend__ramp {
-      flex: 1 1 24px;
-      width: auto;
-      max-width: 80px;
-    }
-  }
-
-  // « 1 240 / visites de zone » : le total de la heatmap, à la manière d'une
-  // cellule KPI (l'unité reste hors des libellés de groupe : ce sont des
-  // visites, pas des évènements).
-  &__stat {
-    margin: 0;
-    min-width: 0;
-  }
-
-  &__stat-value {
-    display: block;
-    font-family: "Poppins", sans-serif;
-    font-weight: 600;
-    font-size: 26px;
-    line-height: 1.05;
-    color: var(--day-ink);
-    font-variant-numeric: tabular-nums;
-  }
-
-  &__stat-label {
-    display: block;
-    margin-top: 4px;
-    font-size: 12px;
-    color: var(--day-muted);
-  }
-
   // Appareils : trois listes côte à côte (Écran / Navigateur / Système).
   &__cols {
     display: grid;
@@ -286,49 +240,12 @@
     flex-direction: column;
   }
 
-  // Exploration : carte et colonne d'explication côte à côte, alignées en
-  // haut du corps comme les premières lignes des classements voisins. Sur
-  // desktop la carte est réduite à 172 px pour que la tuile ne dépasse pas
-  // ses voisines (Zones / Succès) de 200 px de blanc ; le canvas de 640 px
-  // reste lisible à cette taille.
-  &--explore .tile__body {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-
-    > * {
-      min-width: 0;
-    }
-
-    .heatmap {
-      flex: 0 0 172px;
-      margin-inline: 0;
-    }
-
-    .tile__aside {
-      flex: 1 1 0;
-    }
-  }
-
   @media (max-width: $bp-mobile) {
     padding: 16px;
 
     &__cols {
       grid-template-columns: minmax(0, 1fr);
       gap: 18px;
-    }
-
-    // Mobile : carte pleine largeur, le reste en dessous.
-    &--explore .tile__body {
-      display: block;
-
-      .heatmap {
-        margin-inline: auto;
-      }
-
-      .tile__aside {
-        margin-top: 12px;
-      }
     }
   }
 }
@@ -349,29 +266,6 @@
     margin: 0;
     border-top: 0;
     border-left: 1px solid var(--day-line);
-  }
-}
-
-// Tablette (601–1023, Exploration est pleine largeur `md-6`) : carte 360 px
-// à gauche ; total, légende et pied composés verticalement dans la colonne
-// de droite, centrés sur la hauteur de la carte.
-@media (max-width: $bp-tablet) and (min-width: #{$bp-mobile + 1px}) {
-  .tile--explore .tile__body {
-    align-items: center;
-    gap: 24px;
-
-    .heatmap {
-      flex-basis: 360px;
-    }
-
-    .tile__aside {
-      gap: 12px;
-    }
-
-    .tile__foot {
-      font-size: 13px;
-      line-height: 1.6;
-    }
   }
 }
 
@@ -741,56 +635,6 @@
   max-width: 100%;
 }
 
-
-// -------------------------------------------------------------- Heatmap
-// L'image de la mini-carte du jeu (folio) sert de fond ; le canvas dessine la
-// densité par-dessus, aux mêmes coordonnées normalisées (Map.worldToMap).
-// Pleine largeur de sa tuile : 640 px de canvas réduits à ≈ 300 px.
-
-.heatmap {
-  position: relative;
-  width: 100%;
-  max-width: 100%;
-  aspect-ratio: 1 / 1;
-  margin-inline: auto;
-  border-radius: $radius-inner;
-  overflow: hidden;
-  border: 1px solid var(--day-line);
-  background: #0e0b1c;
-
-  &__map {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.55;
-  }
-
-  &__canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-}
-
-.heat-legend {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  font-size: 12px;
-  color: var(--day-muted);
-
-  &__ramp {
-    width: 80px;
-    height: 6px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, rgba(180, 83, 9, 0), var(--day-amber-deep));
-    flex-shrink: 0;
-  }
-}
 
 // ------------------------------------------------------------------ États
 

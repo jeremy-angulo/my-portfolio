@@ -184,3 +184,18 @@ export const niceScale = (max, target = 3) => {
   for (let value = step; value <= top + step / 1e6; value += step) ticks.push(round(value));
   return { step, top, ticks };
 };
+
+// « 45 s », « 4 min 12 », « 1 h 05 » — durées du monde 3D (secondes), avec
+// des espaces insécables pour que le nombre ne quitte jamais son unité.
+export const formatDuration = (seconds) => {
+  if (seconds == null || !Number.isFinite(Number(seconds))) return "—";
+  const s = Math.round(Number(seconds));
+  const sp = "\u00a0";
+  if (s < 60) return `${s}${sp}s`;
+  if (s < 3600) {
+    const rest = s % 60;
+    return `${Math.floor(s / 60)}${sp}min${rest ? `${sp}${String(rest).padStart(2, "0")}` : ""}`;
+  }
+  const minutes = Math.floor((s % 3600) / 60);
+  return `${Math.floor(s / 3600)}${sp}h${minutes ? `${sp}${String(minutes).padStart(2, "0")}` : ""}`;
+};
