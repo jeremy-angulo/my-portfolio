@@ -20,6 +20,7 @@ import {
     MAX_SUBMITS_PER_HOUR,
     hashIp,
     isConfigured,
+    logRefusal,
     normalizeName,
     rateLimit,
     readRunToken,
@@ -57,29 +58,26 @@ async function handlePost(request, response)
 
     const payload = readRunToken(body.token)
     if(!payload)
+    {
+        await logRefusal('invalid_token', { ipHash, timeMs: body.timeMs })
         return response.status(400).json({ error: 'invalid_token' })
+    }
+
+    // Chaque refus de ce dépôt est journalisé avec la course qu'il concerne.
+    const refuse = async (status, error) =>
+    {
+        await logRefusal(error, { ipHash, runId: payload.rid, timeMs: body.timeMs })
+        return response.status(status).json({ error })
+    }
 
     // Quota de dépôts : au-delà, c'est un script, pas un joueur.
     const quota = await rateLimit('submit', ipHash, MAX_SUBMITS_PER_HOUR)
     if(quota.exceeded)
-        return response.status(429).json({ error: 'too_many_submits' })
-
-    // Journal des refus, borné côté base : il sert à régler les contrôles,
-    // pas à retracer les visiteurs.
-    const declaredTime = Number(body.timeMs)
-    const logReject = (error) => rpc('circuit_reject', {
-        p_error: error,
-        p_ip_hash: ipHash,
-        p_run_id: payload.rid,
-        p_time_ms: Number.isFinite(declaredTime) ? Math.trunc(declaredTime) : null,
-    }).catch(() => {})
+        return refuse(429, 'too_many_submits')
 
     const checked = verifySubmission({ payload, body, ipHash })
     if(checked.error)
-    {
-        await logReject(checked.error)
-        return response.status(400).json({ error: checked.error })
-    }
+        return refuse(400, checked.error)
 
     // Le jeu n'envoie plus qu'un nom ; un navigateur qui garde l'ancien bundle
     // en cache envoie encore deux champs. On signe avec ce qui a été envoyé.
@@ -89,7 +87,7 @@ async function handlePost(request, response)
 
     const name = normalizeName(written.name ?? `${written.firstName} ${written.lastName}`)
     if(name.error)
-        return response.status(400).json({ error: name.error })
+        return refuse(400, name.error)
 
     // Signature du dépôt avec la clé de la course : le POST doit venir du jeu,
     // pas d'une requête recopiée à la main.
@@ -101,10 +99,7 @@ async function handlePost(request, response)
     })
 
     if(String(body.signature ?? '') !== expected)
-    {
-        await logReject('bad_signature')
-        return response.status(400).json({ error: 'bad_signature' })
-    }
+        return refuse(400, 'bad_signature')
 
     // Le jeton est consommé dans la même transaction que l'écriture : deux
     // dépôts simultanés de la même course ne peuvent pas passer tous les deux.
@@ -120,7 +115,7 @@ async function handlePost(request, response)
     })
 
     if(result?.error)
-        return response.status(409).json({ error: result.error })
+        return refuse(409, result.error)
 
     response.setHeader('Cache-Control', 'no-store')
 

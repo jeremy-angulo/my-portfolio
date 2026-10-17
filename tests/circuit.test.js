@@ -14,7 +14,7 @@ process.env.CIRCUIT_DB_KEY = 'cle-publiable-de-test'
 process.env.CIRCUIT_DB_SECRET = 'secret-serveur-de-test'
 
 const {
-    COUNTDOWN_MS, MAX_SUBMITS_PER_HOUR, MIN_TIME_MS,
+    COUNTDOWN_MS, MAX_RUNS_PER_HOUR, MAX_SUBMITS_PER_HOUR, MIN_TIME_MS,
     issueRun, normalizeName, readRunToken, signSubmission, verifySubmission,
 } = await import('../api/_lib/circuit.js')
 
@@ -70,6 +70,18 @@ test('les noms impossibles ou insultants sont refusés', () =>
     assert.equal(normalizeName('A.').error, 'name_characters')
     assert.equal(normalizeName('<script>').error, 'name_characters')
     assert.equal(normalizeName('Gros Connard').error, 'name_rejected')
+})
+
+test('des noms courants ne sont pas pris pour des insultes', () =>
+{
+    for(const name of [ 'Dominique Martin', 'Véronique Faure', 'Monique Roux', 'Kenji Yamashita', 'Paul Dickson', 'Anne Pedersen' ])
+        assert.equal(normalizeName(name).error, undefined, name)
+})
+
+test('une insulte écrite en mot entier reste refusée', () =>
+{
+    assert.equal(normalizeName('Jean Nique').error, 'name_rejected')
+    assert.equal(normalizeName('Gros-Connard').error, 'name_rejected')
 })
 
 test('un nom trop long est ramené à la largeur du panneau', () =>
@@ -224,6 +236,48 @@ test('un script qui s\'acharne est arrêté par le quota', async () =>
 
     assert.equal(response.statusCode, 429)
     assert.equal(response.payload.error, 'too_many_submits')
+})
+
+test('un nom refusé est journalisé', async () =>
+{
+    const database = fakeDatabase()
+    await post(submission({ name: 'Gros Connard', runId: 'course-nom' }).body, database)
+
+    assert.equal(database.rejects.at(-1).p_error, 'name_rejected')
+    assert.equal(database.rejects.at(-1).p_run_id, 'course-nom')
+})
+
+test('un jeton illisible est journalisé', async () =>
+{
+    const database = fakeDatabase()
+    const { response } = await post({ token: 'bidon', timeMs: 32000 }, database)
+
+    assert.equal(response.statusCode, 400)
+    assert.equal(database.rejects.at(-1).p_error, 'invalid_token')
+})
+
+test('un dépôt bloqué par le quota est journalisé', async () =>
+{
+    const database = fakeDatabase()
+
+    for(let index = 0; index <= MAX_SUBMITS_PER_HOUR; index += 1)
+        await post(submission({ runId: `course-quota-${index}` }).body, database)
+
+    assert.equal(database.rejects.at(-1).p_error, 'too_many_submits')
+})
+
+test('un départ bloqué par le quota est journalisé', async () =>
+{
+    const database = fakeDatabase()
+
+    for(let index = 0; index <= MAX_RUNS_PER_HOUR; index += 1)
+        await run(fakeRequest({ method: 'POST', url: '/api/circuit-run' }), fakeResponse())
+
+    const response = fakeResponse()
+    await run(fakeRequest({ method: 'POST', url: '/api/circuit-run' }), response)
+
+    assert.equal(response.statusCode, 429)
+    assert.equal(database.rejects.at(-1).p_error, 'too_many_runs')
 })
 
 test('un dépôt venu de l\'ancien bundle, en deux champs, passe encore', async () =>

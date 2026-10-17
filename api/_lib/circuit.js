@@ -44,10 +44,14 @@ export const MAX_SPLITS = 40
 // ligne de départ, franchie dès les premiers mètres) échappe à la règle.
 export const MIN_SPLIT_DELTA_MS = 250
 
-// Quotas par adresse et par heure. Large pour un joueur qui s'acharne,
-// étroit pour un script qui empile les tentatives.
-export const MAX_RUNS_PER_HOUR = 60
-export const MAX_SUBMITS_PER_HOUR = 12
+// Quotas par adresse et par heure. Une adresse n'est pas une personne : tout
+// un bureau sort souvent par la même IP publique, et chaque « R » pour
+// reprendre le premier virage consomme un départ. Les premiers quotas (60 et
+// 12) bloquaient un groupe de collègues en quelques minutes, sans trace. Ces
+// plafonds ne protègent que la base d'une boucle folle : un script ne peut de
+// toute façon pas déposer plus vite que l'horloge serveur ne le permet.
+export const MAX_RUNS_PER_HOUR = 600
+export const MAX_SUBMITS_PER_HOUR = 60
 
 // Un nom complet tient dans 40 signes ; le panneau du circuit réduit la
 // police pour les plus longs plutôt que de les couper.
@@ -116,6 +120,24 @@ export async function rateLimit(kind, ipHash, max)
     const hits = Number(await rpc('circuit_hit', { p_bucket: bucket, p_ttl_seconds: 3600 }))
 
     return { hits, exceeded: hits > max }
+}
+
+// —— Journal des refus ——————————————————————————————————————————————————
+// Tout refus y passe, quelle qu'en soit la raison : quota, jeton, nom ou
+// anti-triche. Sans lui, un joueur bloqué ne laisse aucune trace et on ne
+// peut pas expliquer après coup pourquoi son temps n'est jamais apparu.
+// Le journal est borné côté base (200 lignes) ; une erreur d'écriture ne
+// doit jamais masquer la réponse au joueur.
+export const logRefusal = (error, { ipHash = null, runId = null, timeMs = null } = {}) =>
+{
+    const time = Number(timeMs)
+
+    return rpc('circuit_reject', {
+        p_error: error,
+        p_ip_hash: ipHash,
+        p_run_id: runId,
+        p_time_ms: Number.isFinite(time) ? Math.trunc(time) : null,
+    }).catch(() => {})
 }
 
 // —— Signatures ————————————————————————————————————————————————————————
@@ -205,15 +227,19 @@ export const signSubmission = (runKey, fields) =>
 // —— Noms —————————————————————————————————————————————————————————————
 const NAME_ALLOWED = /^[\p{L}][\p{L}\p{M}' .-]*$/u
 
+export const foldAccents = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
 // Liste courte et volontairement grossière : elle écarte les blagues les plus
 // évidentes sur un tableau public. La modération fine passe par le DELETE.
 const BLOCKED = [
-    'connard', 'connasse', 'enculé', 'encule', 'pute', 'putain', 'salope', 'merde', 'bite', 'couille',
-    'nique', 'ntm', 'fdp', 'batard', 'bâtard', 'pédé', 'pede', 'negro', 'nègre', 'negre',
-    'fuck', 'shit', 'bitch', 'cunt', 'dick', 'nigg', 'penis', 'asshole', 'hitler', 'nazi',
+    'connard', 'connasse', 'encule', 'pute', 'putain', 'salope', 'merde', 'bite', 'couille',
+    'nique', 'ntm', 'fdp', 'batard', 'pd', 'nazi', 'hitler',
+    'fuck', 'shit', 'bitch', 'cunt', 'penis', 'asshole', 'nigger', 'nigga',
 ]
 
-export const foldAccents = (text) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+// Comparés une fois pliés (sans accents, en minuscules), comme le nom lui-même.
+const BLOCKED_WORDS = new Set(BLOCKED.map((word) => foldAccents(word).toLowerCase()))
+
 
 const titleCase = (text) => text
     .toLocaleLowerCase('fr')
@@ -240,7 +266,11 @@ export function normalizeName(nameRaw)
 
     const folded = foldAccents(name).toLowerCase()
 
-    if(BLOCKED.some((word) => folded.includes(foldAccents(word))))
+    // Mot entier seulement : chercher des morceaux refusait « Dominique »
+    // (nique), « Yamashita » (shit) ou « Pedersen » (pede).
+    const words = folded.split(/[\s'.-]+/)
+
+    if(words.some((word) => BLOCKED_WORDS.has(word)))
         return { error: 'name_rejected' }
 
     const uniform = name === name.toLocaleLowerCase('fr') || name === name.toLocaleUpperCase('fr')
