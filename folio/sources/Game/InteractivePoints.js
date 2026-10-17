@@ -519,6 +519,10 @@ export class InteractivePoints
                 gsap.to(threshold, { value: 0.5, ease: 'elastic.out(1.3,0.6)', duration: 1.5, overwrite: true })
             } })
 
+            // Mesure : le libellé du point, dans la langue du joueur ; les
+            // deux langues sont regroupées côté serveur (api/stats.js).
+            this.game.telemetry?.track('interaction', text)
+
             // Callback
             if(typeof item.interactCallback === 'function')
                 item.interactCallback()

@@ -72,9 +72,11 @@ export function fakeResponse()
         statusCode: null,
         headers: {},
         payload: null,
+        ended: false,
         setHeader(name, value) { this.headers[name.toLowerCase()] = value },
         status(code) { this.statusCode = code; return this },
         json(payload) { this.payload = payload; return this },
+        end() { this.ended = true; return this },
     }
 }
 
@@ -83,7 +85,7 @@ export function fakeResponse()
 // qu'il envoie à la base, sans dépendre du réseau.
 export function fakeDatabase({ board = [], claimed = new Set(), hits = new Map() } = {})
 {
-    const state = { board: [ ...board ], claimed, hits, calls: [], rejects: [] }
+    const state = { board: [ ...board ], claimed, hits, calls: [], rejects: [], batches: [] }
 
     const ranked = () => [ ...state.board ].sort((a, b) => a.timeMs - b.timeMs || a.at - b.at)
 
@@ -152,6 +154,12 @@ export function fakeDatabase({ board = [], claimed = new Set(), hits = new Map()
                 total: state.board.length,
                 scores: boardPayload(args.p_limit).scores,
             })
+        }
+
+        if(name === 'world_ingest')
+        {
+            state.batches.push(args)
+            return new Response(null, { status: 204 })
         }
 
         if(name === 'circuit_remove')

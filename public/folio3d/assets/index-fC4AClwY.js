@@ -87316,6 +87316,7 @@ https://github.com/browserify/crypto-browserify`);
           overwrite: true
         }), this.sounds.conceal.play(), typeof $.concealCallback == "function" && $.concealCallback();
       }, $.interact = () => {
+        var _a2;
         gsapWithCSS.to(ge, {
           value: 0.6,
           ease: "power2.out",
@@ -87329,7 +87330,7 @@ https://github.com/browserify/crypto-browserify`);
               overwrite: true
             });
           }
-        }), typeof $.interactCallback == "function" && $.interactCallback();
+        }), (_a2 = this.game.telemetry) == null ? void 0 : _a2.track("interaction", r), typeof $.interactCallback == "function" && $.interactCallback();
       }, $.show = () => {
         $.isIn ? $.reveal() : $.conceal(), this.needsTest = true;
       }, o === _InteractivePoints.STATE_CONCEALED && (this.revealed ? ($.state = o, $.intersect.active = false, x.visible = true, ge.value = 0.25) : ($.state = _InteractivePoints.STATE_HIDDEN, $.showAfterReveal = true)), this.game.debug.active && (this.debugPanel.addBinding(ge, "value", {
@@ -89890,19 +89891,18 @@ https://github.com/browserify/crypto-browserify`);
     async start() {
       this.run = null;
       try {
-        const { ok: e, payload: r } = await request(API_RUN, {
+        const { ok: e, status: r, payload: s } = await request(API_RUN, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
           body: "{}"
         });
-        if (e && r.token) return this.online = true, this.run = r, true;
-        this.online = false;
+        return e && s.token ? (this.online = true, this.run = s, "token") : (this.online = false, r === 429 ? "refused" : "unavailable");
       } catch {
         this.online = false;
       }
-      return false;
+      return "offline";
     }
     async sign(e) {
       const r = await crypto.subtle.importKey("raw", hexToBytes(this.run.runKey), {
@@ -90418,6 +90418,7 @@ https://github.com/browserify/crypto-browserify`);
         }
         return R;
       }, p = async () => {
+        var _a2;
         if (this.endModal.busy || !this.endModal.pending || !s()) return;
         const f = r(this.menu.nameInput.value).trim(), m = this.endModal.pending.timeMs;
         this.endModal.busy = true, this.menu.inputGroup.classList.add("is-busy"), a(t$1("Saving\u2026", "Enregistrement\u2026"));
@@ -90426,7 +90427,7 @@ https://github.com/browserify/crypto-browserify`);
           timeMs: this.endModal.pending.timeMs,
           splits: this.endModal.pending.splits
         });
-        this.endModal.busy = false, this.menu.inputGroup.classList.remove("is-busy"), this.leaderboard.update(b.scores), this.menu.updateLeaderboard(b.scores), b.ok ? (this.endModal.pending = null, this.menu.inputGroup.classList.add("is-done"), a(d(b, m), "is-success"), this.game.achievements.setProgress("circuitLeaderboard", 1)) : (a(h(b.error), "is-error"), b.offline && (this.endModal.pending = null, this.game.achievements.setProgress("circuitLeaderboard", 1)));
+        this.endModal.busy = false, this.menu.inputGroup.classList.remove("is-busy"), this.leaderboard.update(b.scores), this.menu.updateLeaderboard(b.scores), (_a2 = this.game.telemetry) == null ? void 0 : _a2.track("race_submit", b.ok ? "ok" : b.offline ? "offline" : b.error), b.ok ? (this.endModal.pending = null, this.menu.inputGroup.classList.add("is-done"), a(d(b, m), "is-success"), this.game.achievements.setProgress("circuitLeaderboard", 1)) : (a(h(b.error), "is-error"), b.offline && (this.endModal.pending = null, this.game.achievements.setProgress("circuitLeaderboard", 1)));
       };
       this.menu.nameInput.addEventListener("input", () => {
         const f = r(this.menu.nameInput.value);
@@ -90441,7 +90442,10 @@ https://github.com/browserify/crypto-browserify`);
       };
     }
     restart() {
-      this.state !== _CircuitArea.STATE_STARTING && (this.scores.start(), this.frustum.alwaysVisible = true, this.timer.end(), this.state = _CircuitArea.STATE_STARTING, this.interactivePoint.hide(), this.game.player.state = Player.STATE_LOCKED, this.game.inputs.filters.clear(), this.game.inputs.filters.add("racing"), this.startAnimation.timeline.pause(), this.game.overlay.show(() => {
+      this.state !== _CircuitArea.STATE_STARTING && (this.scores.start().then((e) => {
+        var _a2;
+        return (_a2 = this.game.telemetry) == null ? void 0 : _a2.track("race_start", e);
+      }), this.frustum.alwaysVisible = true, this.timer.end(), this.state = _CircuitArea.STATE_STARTING, this.interactivePoint.hide(), this.game.player.state = Player.STATE_LOCKED, this.game.inputs.filters.clear(), this.game.inputs.filters.add("racing"), this.startAnimation.timeline.pause(), this.game.overlay.show(() => {
         this.menu.racingButtons.classList.add("is-active"), this.game.physicalVehicle.moveTo(this.startPosition.position, this.startPosition.rotation), this.game.world.floor && this.game.world.floor.physical.body.setEnabled(false), this.roadBody.setEnabled(true), this.startingLights.reset(), this.checkpoints.doorReached.mesh.visible = false, this.checkpoints.doorTarget.mesh.visible = false, this.checkpoints.items[0].setTarget(), this.checkpoints.reachedCount = 0, this.checkpoints.last = null, this.checkpoints.timings = [], this.resetObjects.reset(), this.game.world.explosiveCrates.reset(), this.game.weather.override.start({
           humidity: 0,
           electricField: 0,
@@ -90471,7 +90475,8 @@ https://github.com/browserify/crypto-browserify`);
       });
     }
     finish(e = false) {
-      this.state === _CircuitArea.STATE_RUNNING && (this.state = _CircuitArea.STATE_ENDING, this.timer.end(), e && this.timer.hide(), this.checkpoints.target = null, this.checkpoints.doorTarget.mesh.visible = false, e || this.sounds.finish.play(), gsapWithCSS.delayedCall(e ? 1 : 4, () => {
+      var _a2, _b;
+      this.state === _CircuitArea.STATE_RUNNING && (this.state = _CircuitArea.STATE_ENDING, this.timer.end(), e && this.timer.hide(), e ? (_a2 = this.game.telemetry) == null ? void 0 : _a2.track("race_abandon") : (_b = this.game.telemetry) == null ? void 0 : _b.track("race_finish", null, Math.round(this.timer.elapsedTime * 1e3)), this.checkpoints.target = null, this.checkpoints.doorTarget.mesh.visible = false, e || this.sounds.finish.play(), gsapWithCSS.delayedCall(e ? 1 : 4, () => {
         this.game.overlay.show(() => {
           this.state = _CircuitArea.STATE_PENDING, this.frustum.alwaysVisible = false, this.menu.racingButtons.classList.remove("is-active"), this.interactivePoint.show(), this.game.inputs.filters.clear(), this.game.inputs.filters.add("wandering");
           const r = this.game.respawns.getByName("circuit");
@@ -96949,7 +96954,7 @@ https://github.com/browserify/crypto-browserify`);
         d.itemElement = document.createElement("div"), d.itemElement.classList.add("achievement"), d.itemElement.innerHTML = f, d.progressCurrentElement = d.itemElement.querySelector(".current"), d.barFillElement = d.itemElement.querySelector(".bar .fill"), e.append(d.itemElement), d.achieve = (m = true) => {
           var _a2;
           if (d.achieved = true, d.itemElement.classList.add("is-achieved"), !m) {
-            (_a2 = this.game.telemetry) == null ? void 0 : _a2.trackEvent("achievement_unlock", h), this.globalProgress.update(), this.rewards.update(), this.game.world.confetti && (this.game.world.confetti.pop(this.game.player.position.clone()), this.game.world.confetti.pop(this.game.player.position.clone().add(new Vector3$1(1, -1, 1.5))), this.game.world.confetti.pop(this.game.player.position.clone().add(new Vector3$1(1, -1, -1.5)))), this.sounds.achieve.play();
+            (_a2 = this.game.telemetry) == null ? void 0 : _a2.track("achievement", typeof s == "string" ? s : s.fr), this.globalProgress.update(), this.rewards.update(), this.game.world.confetti && (this.game.world.confetti.pop(this.game.player.position.clone()), this.game.world.confetti.pop(this.game.player.position.clone().add(new Vector3$1(1, -1, 1.5))), this.game.world.confetti.pop(this.game.player.position.clone().add(new Vector3$1(1, -1, -1.5)))), this.sounds.achieve.play();
             const b = `
                         <div class="top">
                             <div class="title">${h}</div>
@@ -105478,86 +105483,85 @@ ${e.tab}if ( ${m} ) {
       }
     }
   };
-  const GRID_SIZE = 48, SAMPLE_INTERVAL = 1, FLUSH_INTERVAL = 20, GOATCOUNTER_CODE = "jeremy-angulo", AREA_LABELS = {
-    achievements: "Succ\xE8s",
-    altar: "Autel",
-    behindTheScene: "Coulisses",
-    bowling: "Bowling",
-    career: "Parcours",
-    circuit: "Circuit",
-    cookie: "Cookies",
-    lab: "Labo",
-    landing: "Arriv\xE9e",
-    projects: "Projets",
-    social: "R\xE9seaux sociaux",
-    toilet: "Zone secr\xE8te",
-    timeMachine: "Machine \xE0 remonter le temps"
+  const GRID_SIZE = 48, SAMPLE_INTERVAL = 1, FLUSH_INTERVAL = 20, MAX_FRAME_GAP = 2, ENDPOINT = "/api/world", newSessionId = () => {
+    if (typeof (crypto == null ? void 0 : crypto.randomUUID) == "function") return crypto.randomUUID();
+    const l = crypto.getRandomValues(new Uint8Array(16));
+    l[6] = l[6] & 15 | 64, l[8] = l[8] & 63 | 128;
+    const e = [
+      ...l
+    ].map((r) => r.toString(16).padStart(2, "0")).join("");
+    return `${e.slice(0, 8)}-${e.slice(8, 12)}-${e.slice(12, 16)}-${e.slice(16, 20)}-${e.slice(20)}`;
+  }, deviceKind = () => {
+    var _a2, _b, _c;
+    return ((_a2 = window.matchMedia) == null ? void 0 : _a2.call(window, "(pointer: coarse)").matches) ? Math.min(((_b = window.screen) == null ? void 0 : _b.width) ?? window.innerWidth, ((_c = window.screen) == null ? void 0 : _c.height) ?? window.innerHeight) >= 600 ? "tablet" : "mobile" : "desktop";
   };
-  let loadPromise = null;
-  const loadGoatCounter = () => loadPromise || (loadPromise = new Promise((l) => {
-    const e = document.createElement("script");
-    e.async = true, e.src = "//gc.zgo.at/count.js", e.dataset.goatcounter = `https://${GOATCOUNTER_CODE}.goatcounter.com/count`, e.dataset.goatcounterSettings = JSON.stringify({
-      no_onload: true
-    }), e.onload = () => l(true), e.onerror = () => l(false), document.head.appendChild(e);
-  }), loadPromise);
   class Telemetry {
     constructor() {
-      this.game = Game.getInstance(), this.worldSize = this.game.terrain.size, this.counts = /* @__PURE__ */ new Map(), this.sampleAccum = 0, this.flushAccum = 0, this.seenAreas = /* @__PURE__ */ new Set(), this.game.ticker.events.on("tick", () => {
+      var _a2, _b, _c;
+      this.game = Game.getInstance(), this.worldSize = this.game.terrain.size, this.session = {
+        id: newSessionId(),
+        lang,
+        device: deviceKind(),
+        renderer: ((_c = (_b = (_a2 = this.game.rendering) == null ? void 0 : _a2.renderer) == null ? void 0 : _b.backend) == null ? void 0 : _c.isWebGPUBackend) ? "webgpu" : "webgl2",
+        loadMs: Math.round(performance.now()),
+        embedded: window.self !== window.top,
+        activeS: 0
+      }, this.activeSeconds = 0, this.lastTick = performance.now() / 1e3, this.events = [], this.counts = /* @__PURE__ */ new Map(), this.sampleAccum = 0, this.flushAccum = 0, this.seenAreas = /* @__PURE__ */ new Set(), this.game.ticker.events.on("tick", () => {
         this.update();
       }, 20), window.addEventListener("pagehide", () => this.flush()), document.addEventListener("visibilitychange", () => {
         document.visibilityState === "hidden" && this.flush();
-      }), this.setupAreaTracking();
+      }), this.flush(true);
     }
-    setupAreaTracking() {
+    watchAreas() {
       var _a2;
       const e = (_a2 = this.game.world) == null ? void 0 : _a2.areas;
       if (e) for (const [r, s] of Object.entries(e)) !(s == null ? void 0 : s.events) || typeof s.events.on != "function" || s.events.on("boundingIn", () => {
-        this.seenAreas.has(r) || (this.seenAreas.add(r), this.trackEvent("zone_enter", AREA_LABELS[r] ?? r));
+        this.seenAreas.has(r) || (this.seenAreas.add(r), this.track("zone", r));
       });
     }
-    trackEvent(e, r) {
-      loadGoatCounter().then((s) => {
-        var _a2;
-        !s || typeof ((_a2 = window.goatcounter) == null ? void 0 : _a2.count) != "function" || window.goatcounter.count({
-          path: r ? `${e}: ${r}` : e,
-          title: e,
-          event: true
-        });
-      });
+    track(e, r = null, s = null) {
+      const o = {
+        kind: e
+      };
+      r != null && (o.detail = String(r).slice(0, 60)), Number.isInteger(s) && (o.value = s), this.events.push(o);
     }
     update() {
-      const e = this.game.ticker.delta;
-      this.sampleAccum += e, this.flushAccum += e, this.sampleAccum >= SAMPLE_INTERVAL && (this.sampleAccum = 0, this.sample()), this.flushAccum >= FLUSH_INTERVAL && (this.flushAccum = 0, this.flush());
+      const e = performance.now() / 1e3, r = e - this.lastTick;
+      this.lastTick = e;
+      const s = r > MAX_FRAME_GAP ? 0 : r;
+      this.activeSeconds += s, this.sampleAccum += s, this.flushAccum += s, this.sampleAccum >= SAMPLE_INTERVAL && (this.sampleAccum = 0, this.sample()), this.flushAccum >= FLUSH_INTERVAL && (this.flushAccum = 0, this.flush());
     }
     sample() {
       const e = this.game.player.position, r = Math.min(1, Math.max(0, e.x / this.worldSize + 0.5)), s = Math.min(1, Math.max(0, e.z / this.worldSize + 0.5)), o = Math.min(GRID_SIZE - 1, Math.floor(r * GRID_SIZE)), a = Math.min(GRID_SIZE - 1, Math.floor(s * GRID_SIZE)), h = `${o},${a}`;
       this.counts.set(h, (this.counts.get(h) ?? 0) + 1);
     }
-    flush() {
-      if (this.counts.size === 0) return;
-      const e = [];
-      for (const [o, a] of this.counts) {
-        const [h, c] = o.split(",").map(Number);
-        e.push({
-          x: h,
-          z: c,
-          n: a
+    flush(e = false) {
+      if (!e && this.events.length === 0 && this.counts.size === 0) return;
+      const r = [];
+      for (const [a, h] of this.counts) {
+        const [c, d] = a.split(",").map(Number);
+        r.push({
+          x: c,
+          z: d,
+          n: h
         });
       }
-      this.counts.clear();
-      const r = JSON.stringify({
-        cells: e
+      this.session.activeS = Math.round(this.activeSeconds);
+      const s = JSON.stringify({
+        session: this.session,
+        events: this.events.splice(0, this.events.length),
+        cells: r
       });
-      (navigator.sendBeacon ? navigator.sendBeacon("/api/track-zones", new Blob([
-        r
+      this.counts.clear(), (navigator.sendBeacon ? navigator.sendBeacon(ENDPOINT, new Blob([
+        s
       ], {
         type: "application/json"
-      })) : false) || fetch("/api/track-zones", {
+      })) : false) || fetch(ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: r,
+        body: s,
         keepalive: true
       }).catch(() => {
       });
@@ -105609,7 +105613,7 @@ ${e.tab}if ( ${m} ) {
           }
         ]
       ]), this.options = new Options(), this.respawns = new Respawns("landing"), this.view = new View(), this.rendering.setPostprocessing(), this.rendering.start(), this.reveal = new Reveal(), this.noises = new Noises(), this.weather = new Weather(), this.wind = new Wind(), this.tracks = new Tracks(), this.lighting = new Lighting(), this.fog = new Fog(), this.water = new Water(), this.materials = new Materials(), this.objects = new Objects(), this.explosions = new Explosions(), this.world = new World();
-      const h = __vitePreload(() => import("./rapier-OOPuMKEn.js").then(async (m) => {
+      const h = __vitePreload(() => import("./rapier-BMT-QCYD.js").then(async (m) => {
         await m.__tla;
         return m;
       }), [], import.meta.url), c = this.resourcesLoader.load([
@@ -105954,7 +105958,7 @@ ${e.tab}if ( ${m} ) {
       this.RAPIER = p, this.resources = {
         ...d,
         ...this.resources
-      }, this.terrain = new Terrain(), this.physics = new Physics(), this.wireframe = new PhysicsWireframe(), this.physicalVehicle = new PhysicsVehicle(), this.zones = new Zones(), this.player = new Player(), this.telemetry = new Telemetry(), this.closingManager = new ClosingManager(), this.interactivePoints = new InteractivePoints(), this.konamiCode = new KonamiCode(), this.achievements = new Achievements(), this.map = new Map$1(), this.title = new Title(), this.world.step(1), this.overlay = new Overlay(), this.lighting.updateShadowCasters(true), this.quality.level === 0 && this.rendering.renderer.backend.isWebGPUBackend && PreRenderer.render(), this.ticker.wait(3, () => {
+      }, this.terrain = new Terrain(), this.physics = new Physics(), this.wireframe = new PhysicsWireframe(), this.physicalVehicle = new PhysicsVehicle(), this.zones = new Zones(), this.player = new Player(), this.telemetry = new Telemetry(), this.closingManager = new ClosingManager(), this.interactivePoints = new InteractivePoints(), this.konamiCode = new KonamiCode(), this.achievements = new Achievements(), this.map = new Map$1(), this.title = new Title(), this.world.step(1), this.telemetry.watchAreas(), this.overlay = new Overlay(), this.lighting.updateShadowCasters(true), this.quality.level === 0 && this.rendering.renderer.backend.isWebGPUBackend && PreRenderer.render(), this.ticker.wait(3, () => {
         this.reveal.updateStep(0);
       }), this.debug.active && this.achievements.setProgress("debug", 1);
     }

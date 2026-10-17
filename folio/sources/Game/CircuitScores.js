@@ -80,13 +80,17 @@ export class CircuitScores
     // —— Course ————————————————————————————————————————————————————————
     // Appelé au départ : sans jeton, le temps ne sera pas publiable, mais la
     // course se déroule normalement et le temps reste gardé sur l'appareil.
+    //
+    // Renvoie l'issue, pour la mesure d'audience : 'token' (le temps pourra
+    // être publié), 'refused' (quota atteint), 'unavailable' (le serveur a
+    // répondu une erreur) ou 'offline' (aucune réponse).
     async start()
     {
         this.run = null
 
         try
         {
-            const { ok, payload } = await request(API_RUN, {
+            const { ok, status, payload } = await request(API_RUN, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: '{}',
@@ -97,17 +101,19 @@ export class CircuitScores
                 this.online = true
                 this.run = payload
 
-                return true
+                return 'token'
             }
 
             this.online = false
+
+            return status === 429 ? 'refused' : 'unavailable'
         }
         catch(error)
         {
             this.online = false
         }
 
-        return false
+        return 'offline'
     }
 
     async sign(message)

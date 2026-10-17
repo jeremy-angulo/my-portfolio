@@ -215,6 +215,8 @@ export class Game
         this.title = new Title()
         // this.monitoring = new Monitoring()
         this.world.step(1)
+        // Les zones n'existent qu'à partir d'ici.
+        this.telemetry.watchAreas()
         this.overlay = new Overlay()
 
         // Le monde est en place : on applique le palier issu de l'audit à la

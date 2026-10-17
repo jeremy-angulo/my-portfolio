@@ -1,6 +1,6 @@
 // api/stats.js — Fonction serveur Vercel qui lit tout ce que /statistiques
-// affiche : audience et contenu (GoatCounter), disponibilité et exploration
-// 3D (Better Stack).
+// affiche : audience et contenu (GoatCounter), disponibilité (Better Stack),
+// et le monde 3D (mesure propre au site, base Postgres — voir api/world.js).
 //
 // Pourquoi une fonction serveur plutôt qu'un appel depuis la page : les jetons
 // d'API (GoatCounter, Better Stack) donnent un accès large aux comptes
@@ -13,16 +13,19 @@
 //   STATS_PASSPHRASE          phrase attendue pour consulter la page (secret)
 //   BETTERSTACK_API_TOKEN     jeton d'équipe Better Stack (secret, optionnel — uptime)
 //   BETTERSTACK_MONITOR_ID    id du monitor Uptime à afficher (optionnel)
-//   BETTERSTACK_SQL_USERNAME  identifiants de la connexion SQL API Better Stack
-//   BETTERSTACK_SQL_PASSWORD  (secrets, optionnels — carte "Exploration 3D")
+//   CIRCUIT_DB_URL / CIRCUIT_DB_KEY / CIRCUIT_DB_SECRET
+//                             base Postgres du site (optionnelle — monde 3D)
 //
-// Toutes les sections Better Stack sont optionnelles : sans leurs variables,
-// la réponse omet simplement le champ correspondant — le tableau de bord
-// d'audience GoatCounter reste utilisable seul.
+// La disponibilité et le monde 3D sont optionnels : sans leurs variables, ou
+// en cas de panne, la réponse omet simplement le champ correspondant — le
+// tableau de bord d'audience GoatCounter reste utilisable seul.
 //
 // GoatCounter ne purge jamais l'historique de son propre chef (à la différence
 // de Vercel Web Analytics et ses 31 jours) : la plage demandée n'est donc
 // limitée que par bon sens, pas par une contrainte du service.
+import { isConfigured as worldConfigured, rpc } from './_lib/circuit.js'
+import { shapeWorld } from './_lib/world-report.js'
+
 const MAX_DAYS = 1825
 
 // v0 n'expose pas de total site entier : on le calcule en additionnant les
@@ -30,14 +33,6 @@ const MAX_DAYS = 1825
 // par mois ça tient dans un seul appel (limite 100, largement suffisant).
 const HITS_LIMIT = 100
 
-// Source Telemetry Better Stack dédiée à la grille de zones du monde 3D (voir
-// folio/sources/Game/Telemetry.js pour l'écriture, api/track-zones.js pour
-// l'ingestion). Rétention fixée à 3 jours sur cette source — voir fetchHeatmap.
-const ZONES_TABLE = 't590823_jeremyangulo_3d_zones'
-const ZONES_SQL_HOST = 'eu-central-1a-connect.betterstackdata.com'
-const ZONES_GRID_SIZE = 48
-const ZONES_RETENTION_DAYS = 3
-const ZONES_MAX_ROWS = 20000
 
 const iso = (date) => date.toISOString().slice(0, 10)
 const addDays = (date, n) => new Date(date.getTime() + n * 86400000)
@@ -186,92 +181,6 @@ function buildBehaviour(eventHits)
     }
 }
 
-async function queryZonesSQL(sql)
-{
-    const username = process.env.BETTERSTACK_SQL_USERNAME
-    const password = process.env.BETTERSTACK_SQL_PASSWORD
-
-    const response = await fetch(`https://${ZONES_SQL_HOST}?output_format_pretty_row_numbers=0`, {
-        method: 'POST',
-        headers: {
-            Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`,
-            'Content-type': 'plain/text',
-        },
-        body: sql,
-    })
-
-    if(!response.ok)
-    {
-        const detail = await response.text().catch(() => '')
-        throw new Error(`betterstack sql → HTTP ${response.status} ${detail.slice(0, 200)}`)
-    }
-
-    const text = await response.text()
-    return text
-        .split('\n')
-        .filter(Boolean)
-        .map((line) => JSON.parse(line))
-}
-
-// La grille d'exploration du monde 3D : toujours les 3 derniers jours (la
-// source Better Stack dédiée a une rétention fixée à 3 jours, indépendante de
-// la plage choisie ailleurs sur le tableau de bord — pas la peine de demander
-// plus, il n'y aurait rien à lire).
-async function fetchHeatmap()
-{
-    if(!process.env.BETTERSTACK_SQL_USERNAME || !process.env.BETTERSTACK_SQL_PASSWORD)
-        return null
-
-    const sql = `
-        SELECT raw FROM (
-          SELECT dt, raw FROM remote(${ZONES_TABLE}_logs) WHERE dt > now() - INTERVAL ${ZONES_RETENTION_DAYS} DAY
-          UNION ALL
-          SELECT dt, raw FROM s3Cluster(primary, ${ZONES_TABLE}_s3) WHERE _row_type = 1 AND dt > now() - INTERVAL ${ZONES_RETENTION_DAYS} DAY
-        )
-        LIMIT ${ZONES_MAX_ROWS}
-        FORMAT JSONEachRow
-    `.trim()
-
-    try
-    {
-        const rows = await queryZonesSQL(sql)
-        const grid = new Map()
-        let total = 0
-
-        for(const row of rows)
-        {
-            let parsed
-            try { parsed = JSON.parse(row.raw) }
-            catch { continue }
-
-            for(const cell of parsed?.cells ?? [])
-            {
-                const x = Number(cell?.x)
-                const z = Number(cell?.z)
-                const n = Number(cell?.n)
-                if(!Number.isInteger(x) || !Number.isInteger(z) || !(n > 0)) continue
-
-                const key = `${x},${z}`
-                grid.set(key, (grid.get(key) ?? 0) + n)
-                total += n
-            }
-        }
-
-        const cells = [ ...grid.entries() ].map(([ key, n ]) => {
-            const [ x, z ] = key.split(',').map(Number)
-            return { x, z, n }
-        })
-
-        return { gridSize: ZONES_GRID_SIZE, windowDays: ZONES_RETENTION_DAYS, total, cells }
-    }
-    catch
-    {
-        // Section bonus : une panne côté Better Stack ne doit pas casser le
-        // reste du tableau de bord.
-        return null
-    }
-}
-
 // Pages vues de la période équivalente immédiatement précédente (ex. les 31
 // jours avant les 31 jours affichés), pour la flèche de variation sous les
 // totaux. Une requête légère : pas de daily=1, seul le total nous intéresse.
@@ -348,6 +257,12 @@ export default async function handler(request, response)
             return results
         }
 
+        // Le monde 3D vit dans une autre base : sa lecture part en même temps
+        // que la file GoatCounter, qui prend déjà quatre secondes à elle seule.
+        const worldReport = worldConfigured()
+            ? rpc('world_report', { p_from: since.toISOString(), p_to: until.toISOString() }).catch(() => null)
+            : Promise.resolve(null)
+
         const [ hits, sizes, locations, toprefs, browsers, systems, previousPageviews ] = await sequential([
             () => query(base, 'stats/hits', token, { ...upstreamRange, daily: 1, limit: HITS_LIMIT }),
             () => query(base, 'stats/sizes', token, upstreamRange),
@@ -410,8 +325,12 @@ export default async function handler(request, response)
             }
         }
 
-        const heatmap = await fetchHeatmap()
-        const { content, game } = buildBehaviour(eventHits)
+        // `game` (zones et succès vus par GoatCounter) n'est plus affiché : le
+        // monde 3D a sa propre mesure, plus complète. Ses compartiments restent
+        // dans buildBehaviour pour que l'historique de ces évènements ne vienne
+        // pas grossir les « intentions ».
+        const { content } = buildBehaviour(eventHits)
+        const { world, heatmap } = shapeWorld(await worldReport, { days: days_, windowDays: days })
 
         response.setHeader('Cache-Control', 'private, max-age=300')
         return response.status(200).json({
@@ -433,8 +352,8 @@ export default async function handler(request, response)
             countries: toBars(locations?.stats),
             referrers: toBars(toprefs?.stats),
             content,
-            game,
             uptime,
+            world,
             heatmap,
         })
     }

@@ -1,8 +1,8 @@
 // src/stats/Dashboard.jsx — composition de la mosaïque de /statistiques dans
 // l'ordre DOM = ordre visuel : bloc de tête (courbe, Pages vues, paire),
 // bandeau de disponibilité, puis les trois groupes Audience / Lecture /
-// Monde 3D. Les tuiles optionnelles (disponibilité, exploration) ne sont pas
-// montées quand la donnée manque et les voisines reprennent la largeur.
+// Monde 3D (ce dernier dans WorldSection.jsx). Les tuiles optionnelles
+// (disponibilité, monde 3D) ne sont pas montées quand la donnée manque.
 //
 // Seul le corps des tuiles porte `key={days}` (via `bodyKey`) : les
 // enveloppes ne sont jamais rekeyées, l'entrée `rise` ne se rejoue pas.
@@ -17,7 +17,7 @@ import TrendChart from "./TrendChart";
 import RankList from "./RankList";
 import ColumnChart from "./ColumnChart";
 import SplitBar from "./SplitBar";
-import HeatmapCard from "./HeatmapCard";
+import WorldSection from "./WorldSection";
 import { cleanReferrer, countryRow, DEVICE_LABELS, nf } from "./format";
 
 const NBSP = " ";
@@ -53,8 +53,6 @@ const Dashboard = ({
   const totals = data?.totals ?? {};
   const series = list(data?.series);
   const content = data?.content ?? {};
-  const game = data?.game ?? {};
-  const heatmap = data?.heatmap ?? null;
 
   // Préparation des classements avec les aides de format.js.
   const referrers = list(data?.referrers).map(cleanReferrer);
@@ -72,9 +70,6 @@ const Dashboard = ({
     first && last && (first.pageviews ?? 0) > 0
       ? `${nf.format(last.pageviews ?? 0)} sur ${nf.format(first.pageviews)} atteignent 100${NBSP}%`
       : null;
-
-  // Zones / Succès : la place de l'Exploration est reprise quand elle manque.
-  const gameSpan = heatmap ? "span-4 md-3" : "span-6 md-3";
 
   const chartMeta =
     totals.average != null && totals.peak != null
@@ -164,42 +159,7 @@ const Dashboard = ({
         </Tile>
 
         {/* ------------------------------------------------------ Monde 3D */}
-        <GroupLabel id="monde3d" label="Monde 3D" unit="évènements" />
-
-        <Tile className={gameSpan} title="Zones découvertes" bodyKey={days}>
-          <RankList rows={game.zones} max={8} />
-        </Tile>
-        <Tile className={gameSpan} title="Succès débloqués" bodyKey={days}>
-          <RankList rows={game.achievements} max={8} />
-        </Tile>
-
-        {/* Le total, la légende et le pied vivent dans le corps
-            (`.tile__aside`), pas dans la tête ni en prop `foot` : ils forment
-            la colonne à droite de la carte (desktop et tablette) et se
-            posent sous elle sur mobile. Dans la tête, titre + puce tiennent
-            sur une ligne à toutes les largeurs. */}
-        {heatmap ? (
-          <Tile
-            className="tile--explore span-4 md-6"
-            title="Exploration"
-            chip={`${heatmap.windowDays ?? 3} derniers jours`}
-            bodyKey={days}
-          >
-            <HeatmapCard heatmap={heatmap} />
-            <div className="tile__aside">
-              <p className="tile__stat">
-                <span className="tile__stat-value">{nf.format(heatmap.total ?? 0)}</span>
-                <span className="tile__stat-label">visites de zone</span>
-              </p>
-              <div className="heat-legend" aria-hidden="true">
-                <span>moins</span>
-                <span className="heat-legend__ramp" />
-                <span>plus</span>
-              </div>
-              <p className="tile__foot">Fenêtre glissante, indépendante de la période</p>
-            </div>
-          </Tile>
-        ) : null}
+        <WorldSection world={data?.world} heatmap={data?.heatmap} days={days} />
       </Bento>
     </motion.div>
   );

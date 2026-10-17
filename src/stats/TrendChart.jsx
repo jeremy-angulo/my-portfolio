@@ -75,7 +75,9 @@ const TOOLTIP_GAP = 10;
 
 const toDate = (day) => new Date(`${day}T00:00:00`);
 
-const TrendChart = ({ series, average, peak, height = 232 }) => {
+// `unit` : [singulier, pluriel] de ce que compte la courbe — des pages vues
+// par défaut, des sessions pour le monde 3D.
+const TrendChart = ({ series, average, peak, height = 232, unit = ["page vue", "pages vues"] }) => {
   const rootRef = useRef(null);
   const width = useMeasuredWidth(rootRef, FALLBACK_WIDTH);
   const gradientId = useId();
@@ -183,7 +185,7 @@ const TrendChart = ({ series, average, peak, height = 232 }) => {
         onPointerLeave={clearPointer}
         onPointerCancel={clearPointer}
         role="img"
-        aria-label="Pages vues par jour sur la période sélectionnée"
+        aria-label={`${unit[1].charAt(0).toUpperCase()}${unit[1].slice(1)} par jour sur la période sélectionnée`}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -268,7 +270,7 @@ const TrendChart = ({ series, average, peak, height = 232 }) => {
         <div className={tooltipClass} style={{ left: `${active.x}px`, top: `${tooltipTop}px` }}>
           <strong>{weekdayShort.format(toDate(active.day))}</strong>
           <span>
-            {nf.format(active.pageviews)} {active.pageviews === 1 ? "page vue" : "pages vues"}
+            {nf.format(active.pageviews)} {active.pageviews === 1 ? unit[0] : unit[1]}
           </span>
           {activeIsPeak ? <span className="trend-chart__tooltip-peak">meilleur jour</span> : null}
         </div>

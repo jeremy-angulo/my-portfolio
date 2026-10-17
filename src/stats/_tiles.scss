@@ -552,6 +552,29 @@
   }
 }
 
+// Deux répartitions empilées dans une même tuile étroite (Départs et
+// dépôts) : l'écart sépare les deux blocs sans filet.
+.tile__stack {
+  display: grid;
+  gap: 22px;
+}
+
+// Quatre chiffres du monde 3D : la même cellule, quatre colonnes au lieu de
+// deux, repliées en deux sur mobile (la bordure suit la colonne, pas l'ordre).
+.kpi-pair--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  row-gap: 18px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    .kpi-pair__cell:nth-child(odd) {
+      border-left: 0;
+      padding-left: 0;
+    }
+  }
+}
+
 // ----------------------------------------------------------- Disponibilité
 // Bandeau bas sur sa propre rangée : point de statut, disponibilité,
 // interruptions, source à droite (reprise en `title`, masquée sur mobile).

@@ -441,9 +441,10 @@ export class Achievements
                 if(!_silent)
                 {
                     // Débloqué pour de vrai en jeu (pas une restauration
-                    // silencieuse depuis la sauvegarde) : compté pour la carte
-                    // "Points d'intérêt & succès" de /statistiques.
-                    this.game.telemetry?.trackEvent('achievement_unlock', title)
+                    // silencieuse depuis la sauvegarde) : compté dans
+                    // /statistiques, sous son titre français quelle que soit
+                    // la langue du joueur, pour ne pas compter deux fois.
+                    this.game.telemetry?.track('achievement', typeof rawTitle === 'string' ? rawTitle : rawTitle.fr)
 
                     this.globalProgress.update()
                     this.rewards.update()

@@ -1309,6 +1309,9 @@ export class CircuitArea extends Area
             this.leaderboard.update(result.scores)
             this.menu.updateLeaderboard(result.scores)
 
+            // Mesure : publié, gardé sur l'appareil, ou refusé (avec la raison).
+            this.game.telemetry?.track('race_submit', result.ok ? 'ok' : result.offline ? 'offline' : result.error)
+
             if(result.ok)
             {
                 this.endModal.pending = null
@@ -1379,8 +1382,9 @@ export class CircuitArea extends Area
             return
 
         // Jeton de course : demandé au départ, il est la seule façon de
-        // publier le temps à l'arrivée (voir CircuitScores).
-        this.scores.start()
+        // publier le temps à l'arrivée (voir CircuitScores). L'issue est
+        // mesurée : un départ sans jeton explique un temps jamais publié.
+        this.scores.start().then((outcome) => this.game.telemetry?.track('race_start', outcome))
 
         // Area frustum
         this.frustum.alwaysVisible = true
@@ -1529,6 +1533,12 @@ export class CircuitArea extends Area
         this.timer.end()
         if(forced)
             this.timer.hide()
+
+        // Mesure : un tour bouclé avec son chrono, ou un abandon.
+        if(forced)
+            this.game.telemetry?.track('race_abandon')
+        else
+            this.game.telemetry?.track('race_finish', null, Math.round(this.timer.elapsedTime * 1000))
 
         // Checkpoints
         this.checkpoints.target = null

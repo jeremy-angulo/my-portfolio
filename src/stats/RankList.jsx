@@ -8,9 +8,13 @@ import { nf } from "./format";
 import Empty from "./Empty";
 
 /**
- * @param {{ rows: Array<{label: string, pageviews: number, title?: string}>, max?: number }} props
+ * `total` : base des pourcentages quand elle n'est pas la somme des lignes.
+ * Une session visite plusieurs zones : « 40 % » doit y dire « 40 % des
+ * sessions », pas « 40 % des entrées de zone ».
+ *
+ * @param {{ rows: Array<{label: string, pageviews: number, title?: string}>, max?: number, total?: number }} props
  */
-const RankList = ({ rows: allRows, max = 8 }) => {
+const RankList = ({ rows: allRows, max = 8, total }) => {
   // État local : réinitialisé par le `key={days}` du corps de tuile.
   const [expanded, setExpanded] = useState(false);
 
@@ -25,7 +29,7 @@ const RankList = ({ rows: allRows, max = 8 }) => {
 
   // Les parts se calculent sur TOUTES les lignes > 0, pas seulement les
   // visibles : « Tout afficher » ne change aucun pourcentage.
-  const sum = rows.reduce((acc, row) => acc + (row.pageviews ?? 0), 0);
+  const sum = total > 0 ? total : rows.reduce((acc, row) => acc + (row.pageviews ?? 0), 0);
   const visible = expanded ? rows : rows.slice(0, max);
   // Le remplissage, lui, est relatif au max des lignes affichées.
   const top = Math.max(...visible.map((row) => row.pageviews ?? 0), 1);
