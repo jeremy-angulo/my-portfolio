@@ -37,6 +37,22 @@ const HITS_LIMIT = 100
 const iso = (date) => date.toISOString().slice(0, 10)
 const addDays = (date, n) => new Date(date.getTime() + n * 86400000)
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// GoatCounter répond parfois une erreur passagère : 429 (son débit est très
+// serré), 5xx, et un 404 {"error":"not found"} au premier chargement de
+// /statistiques. Ce 404-là n'est pas une URL fausse : c'est la réponse de sa
+// couche d'erreurs quand une de ses requêtes SQL ne trouve aucune ligne, ce
+// qui lui arrive le temps d'intégrer des visites toutes fraîches. Deux
+// nouvelles tentatives espacées suffisent ; un vrai chemin faux échoue de
+// même, trois secondes plus tard.
+// Délais en millisecondes : la pause entre deux appels de la file (le débit
+// de GoatCounter est très serré) et l'attente avant chaque nouvelle
+// tentative. Exportés pour que les tests puissent les ramener à zéro.
+export const timing = { pause: 600, retries: [ 1200, 2500 ] }
+
+const isTransient = (status) => status === 404 || status === 429 || status >= 500
+
 async function query(base, path, token, params)
 {
     const url = new URL(`${base}/${path}`)
@@ -47,20 +63,35 @@ async function query(base, path, token, params)
             url.searchParams.set(key, String(value))
     }
 
-    const response = await fetch(url, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
-    })
-
-    if(!response.ok)
+    for(let attempt = 0; ; attempt++)
     {
+        const response = await fetch(url, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        })
+
+        if(response.ok)
+            return response.json()
+
         const detail = await response.text().catch(() => '')
+
+        if(attempt < timing.retries.length && isTransient(response.status))
+        {
+            // Un 429 annonce parfois son délai : on le respecte, plafonné.
+            const retryAfter = Number(response.headers.get('retry-after'))
+            const delay = Number.isFinite(retryAfter) && retryAfter > 0
+                ? Math.min(retryAfter * 1000, 5000)
+                : timing.retries[attempt]
+
+            console.error(`stats: ${path} → HTTP ${response.status}, nouvel essai dans ${delay} ms`, detail.slice(0, 120))
+            await wait(delay)
+            continue
+        }
+
         throw new Error(`${path} → HTTP ${response.status} ${detail.slice(0, 200)}`)
     }
-
-    return response.json()
 }
 
 async function queryBetterStack(path, token)
@@ -245,14 +276,13 @@ export default async function handler(request, response)
         // même à 3 requêtes concurrentes, avec un délai de réessai de l'ordre
         // de quelques dizaines de ms) : les 7 appels partent donc en série,
         // chacun espacé d'une petite pause plutôt qu'en Promise.all.
-        const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
         const sequential = async (calls) =>
         {
             const results = []
             for(const call of calls)
             {
                 results.push(await call())
-                await wait(600)
+                await wait(timing.pause)
             }
             return results
         }
@@ -263,13 +293,23 @@ export default async function handler(request, response)
             ? rpc('world_report', { p_from: since.toISOString(), p_to: until.toISOString() }).catch(() => null)
             : Promise.resolve(null)
 
+        // Seules les pages vues (stats/hits) sont indispensables : elles font
+        // les totaux, la courbe, les pages et toute la lecture. Écrans,
+        // pays, provenances, navigateurs et systèmes peuvent manquer — leur
+        // tuile affiche alors son état vide au lieu d'emporter toute la page.
+        const optional = (call) => () => call().catch((error) =>
+        {
+            console.error('stats: donnée secondaire indisponible', error.message)
+            return null
+        })
+
         const [ hits, sizes, locations, toprefs, browsers, systems, previousPageviews ] = await sequential([
             () => query(base, 'stats/hits', token, { ...upstreamRange, daily: 1, limit: HITS_LIMIT }),
-            () => query(base, 'stats/sizes', token, upstreamRange),
-            () => query(base, 'stats/locations', token, { ...upstreamRange, limit: 12 }),
-            () => query(base, 'stats/toprefs', token, { ...upstreamRange, limit: 12 }),
-            () => query(base, 'stats/browsers', token, { ...upstreamRange, limit: 10 }),
-            () => query(base, 'stats/systems', token, { ...upstreamRange, limit: 10 }),
+            optional(() => query(base, 'stats/sizes', token, upstreamRange)),
+            optional(() => query(base, 'stats/locations', token, { ...upstreamRange, limit: 12 })),
+            optional(() => query(base, 'stats/toprefs', token, { ...upstreamRange, limit: 12 })),
+            optional(() => query(base, 'stats/browsers', token, { ...upstreamRange, limit: 10 })),
+            optional(() => query(base, 'stats/systems', token, { ...upstreamRange, limit: 10 })),
             () => fetchPreviousTotal(base, token, since, days),
         ])
 

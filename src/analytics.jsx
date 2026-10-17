@@ -48,7 +48,15 @@ const loadScript = () => {
   return loadPromise;
 };
 
+// La page privée /statistiques n'est jamais mesurée : ce sont les visites du
+// propriétaire qui consulte ses chiffres, pas du public. Elle déclenchait en
+// plus, à chaque premier chargement, une page vue chez GoatCounter au moment
+// même où api/stats.js l'interrogeait — et GoatCounter répondait alors
+// parfois « not found » (voir query() dans api/stats.js).
+const isPrivatePage = () => window.location.pathname.startsWith("/statistiques");
+
 const sendPageview = async (pathname) => {
+  if (isPrivatePage()) return;
   const ready = await loadScript();
   if (!ready || typeof window.goatcounter?.count !== "function") return;
   window.goatcounter.count({ path: pathname, title: document.title });
@@ -58,6 +66,7 @@ const sendPageview = async (pathname) => {
 // évènement nommé plutôt que comme une page — pas de vraie URL à donner.
 // Exporté : réutilisé par FacetToggle.jsx pour le basculement jour/nuit.
 export const trackEvent = async (name, detail) => {
+  if (isPrivatePage()) return;
   const ready = await loadScript();
   if (!ready || typeof window.goatcounter?.count !== "function") return;
   window.goatcounter.count({
